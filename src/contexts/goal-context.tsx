@@ -1,14 +1,8 @@
 "use client";
 
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+
 import type { Goal } from "@/domain/entities/goal";
-import {
-	type ReactNode,
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
 
 interface GoalFormData {
 	title: string;
@@ -31,72 +25,41 @@ interface GoalContextType {
 
 const GoalContext = createContext<GoalContextType | undefined>(undefined);
 
-interface GoalProviderProps {
-	children: ReactNode;
-}
-
-export function GoalProvider({ children }: GoalProviderProps) {
+export function GoalProvider({ children }: { children: React.ReactNode }) {
+	console.log("🎯 GoalProvider - INICIALIZANDO CONTEXTO SIMPLES");
 	const [goals, setGoals] = useState<Goal[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
 	const fetchGoals = useCallback(async () => {
+		console.log("🎯 fetchGoals - INICIANDO");
 		try {
+			console.log("🎯 fetchGoals - setLoading(true)");
 			setLoading(true);
 			setError(null);
 
-			// TODO: Implementar chamada real para a API
-			// Por enquanto, vamos usar dados mockados
-			const mockGoals: Goal[] = [
-				{
-					id: "1",
-					title: "Aprender React Avançado",
-					description:
-						"Dominar hooks avançados, context API e performance",
-					targetDate: new Date("2024-12-31"),
-					status: "IN_PROGRESS",
-					priority: "HIGH",
-					category: "LEARNING",
-					tags: ["react", "frontend", "javascript"],
-					userId: "user1",
-					createdAt: new Date("2024-01-01"),
-					updatedAt: new Date("2024-01-01"),
-				},
-				{
-					id: "2",
-					title: "Correr 5km",
-					description: "Treinar para completar uma corrida de 5km",
-					targetDate: new Date("2024-06-30"),
-					status: "IN_PROGRESS",
-					priority: "MEDIUM",
-					category: "HEALTH",
-					tags: ["corrida", "saúde", "fitness"],
-					userId: "user1",
-					createdAt: new Date("2024-01-01"),
-					updatedAt: new Date("2024-01-01"),
-				},
-				{
-					id: "3",
-					title: "Ler 12 livros este ano",
-					description: "Ler pelo menos um livro por mês",
-					targetDate: new Date("2024-12-31"),
-					status: "IN_PROGRESS",
-					priority: "LOW",
-					category: "PERSONAL",
-					tags: ["leitura", "desenvolvimento pessoal"],
-					userId: "user1",
-					createdAt: new Date("2024-01-01"),
-					updatedAt: new Date("2024-01-01"),
-				},
-			];
+			console.log("🎯 fetchGoals - fazendo fetch para /api/goals");
+			const response = await fetch("/api/goals");
+			console.log("🎯 fetchGoals - response:", response.status, response.ok);
 
-			setGoals(mockGoals);
+			if (!response.ok) {
+				throw new Error("Erro ao carregar metas");
+			}
+
+			const goals = await response.json();
+			console.log("🎯 fetchGoals - goals recebidas:", goals.length);
+			console.log("🎯 fetchGoals - chamando setGoals");
+			setGoals(goals);
+			console.log("🎯 fetchGoals - setGoals executado");
 		} catch (err) {
+			console.log("🎯 fetchGoals - ERRO:", err);
 			setError(
 				err instanceof Error ? err.message : "Erro ao carregar metas",
 			);
 		} finally {
+			console.log("🎯 fetchGoals - setLoading(false)");
 			setLoading(false);
+			console.log("🎯 fetchGoals - FINALIZADO");
 		}
 	}, []);
 
@@ -104,16 +67,19 @@ export function GoalProvider({ children }: GoalProviderProps) {
 		try {
 			setError(null);
 
-			// TODO: Implementar chamada real para a API
-			const newGoal: Goal = {
-				id: Date.now().toString(),
-				...data,
-				status: "IN_PROGRESS",
-				userId: "user1", // TODO: Pegar do contexto de autenticação
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
+			const response = await fetch("/api/goals", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
 
+			if (!response.ok) {
+				throw new Error("Erro ao criar meta");
+			}
+
+			const newGoal = await response.json();
 			setGoals((prev) => [newGoal, ...prev]);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Erro ao criar meta");
@@ -125,13 +91,21 @@ export function GoalProvider({ children }: GoalProviderProps) {
 		try {
 			setError(null);
 
-			// TODO: Implementar chamada real para a API
+			const response = await fetch(`/api/goals/${id}`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao atualizar meta");
+			}
+
+			const updatedGoal = await response.json();
 			setGoals((prev) =>
-				prev.map((goal) =>
-					goal.id === id
-						? { ...goal, ...data, updatedAt: new Date() }
-						: goal,
-				),
+				prev.map((goal) => (goal.id === id ? updatedGoal : goal)),
 			);
 		} catch (err) {
 			setError(
@@ -145,7 +119,14 @@ export function GoalProvider({ children }: GoalProviderProps) {
 		try {
 			setError(null);
 
-			// TODO: Implementar chamada real para a API
+			const response = await fetch(`/api/goals/${id}`, {
+				method: "DELETE",
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao excluir meta");
+			}
+
 			setGoals((prev) => prev.filter((goal) => goal.id !== id));
 		} catch (err) {
 			setError(
@@ -160,6 +141,7 @@ export function GoalProvider({ children }: GoalProviderProps) {
 	};
 
 	useEffect(() => {
+		console.log("🎯 useEffect - EXECUTANDO fetchGoals");
 		fetchGoals();
 	}, [fetchGoals]);
 
@@ -174,7 +156,9 @@ export function GoalProvider({ children }: GoalProviderProps) {
 	};
 
 	return (
-		<GoalContext.Provider value={value}>{children}</GoalContext.Provider>
+		<GoalContext.Provider value={value}>
+			{children}
+		</GoalContext.Provider>
 	);
 }
 

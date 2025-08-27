@@ -1,13 +1,13 @@
-import { InJsonFileTodoRepository } from "@/infra/repositories/frontend/json-file-todo-repository";
-import type { CreateTodoInput } from "@/use-cases/todo/create-todo/create-todo-dto";
-import { CreateTodoUseCase } from "@/use-cases/todo/create-todo/create-todo-use-case";
+import type { CreateTodoInput } from "@/application/use-cases/todo/create-todo/create-todo-dto";
+import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
+import { ApiTodoRepository } from "@/infra/repositories/http/api-todo-repository";
 
-describe("shold be able to create a todo", () => {
+describe("should be able to create a todo", () => {
 	let useCase: CreateTodoUseCase;
-	let todoRepository: InJsonFileTodoRepository;
+	let todoRepository: ApiTodoRepository;
 
 	beforeEach(() => {
-		todoRepository = new InJsonFileTodoRepository();
+		todoRepository = new ApiTodoRepository();
 		useCase = new CreateTodoUseCase(todoRepository);
 	});
 

@@ -1,4 +1,4 @@
-import { PrismaDailyLogRepository } from "@/infra/repositories/database/prisma-daily-log-repository";
+import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
 import type { NextRequest } from "next/server";
 
 const dailyLogRepository = new PrismaDailyLogRepository();

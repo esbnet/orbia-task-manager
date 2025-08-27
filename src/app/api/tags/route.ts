@@ -1,4 +1,4 @@
-import { PrismaTagRepository } from "@/infra/repositories/database/prisma-tag-repository";
+import { PrismaTagRepository } from "@/infra/database/prisma/prisma-tag-repository";
 import type { NextRequest } from "next/server";
 
 const tagRepo = new PrismaTagRepository();

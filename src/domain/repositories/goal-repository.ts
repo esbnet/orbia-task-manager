@@ -1,12 +1,19 @@
-import type { Goal } from "../entities/goal";
-import type { GenericRepository } from "./generic-repository";
+import type {
+	CategoryRepository,
+	PriorityRepository,
+	TaggableRepository,
+	UserOwnedDateQueryRepository,
+	UserOwnedStatusRepository,
+} from "./base-repository";
 
-export interface GoalRepository extends GenericRepository<Goal> {
-	findByUserId(userId: string): Promise<Goal[]>;
-	findByStatus(userId: string, status: Goal["status"]): Promise<Goal[]>;
-	findByPriority(userId: string, priority: Goal["priority"]): Promise<Goal[]>;
-	findByCategory(userId: string, category: Goal["category"]): Promise<Goal[]>;
-	findByTags(userId: string, tags: string[]): Promise<Goal[]>;
-	findOverdue(userId: string): Promise<Goal[]>;
-	findDueSoon(userId: string, days: number): Promise<Goal[]>;
+import type { Goal } from "../entities/goal";
+
+// Goal repository with all necessary functionality
+export interface GoalRepository
+	extends UserOwnedStatusRepository<Goal, Goal["status"]>,
+		PriorityRepository<Goal, Goal["priority"]>,
+		CategoryRepository<Goal, Goal["category"]>,
+		TaggableRepository<Goal>,
+		UserOwnedDateQueryRepository<Goal> {
+	// Goal-specific methods can be added here if needed
 }

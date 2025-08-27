@@ -1,9 +1,9 @@
-import { PrismaHabitRepository } from "@/infra/repositories/database/prisma-habit-repository";
-import { CreateHabitUseCase } from "@/use-cases/habit/create-habit/create-habit-use-case";
-import { DeleteHabitUseCase } from "@/use-cases/habit/delete-habit-use-case/delete-habit-use-case";
-import { ListHabitUseCase } from "@/use-cases/habit/list-habit-use-case/list-habit-use-case";
-import { ToggleCompleteUseCase } from "@/use-cases/habit/toggle-complete-habit/toggle-complete-use-case";
-import { UpdateHabitUseCase } from "@/use-cases/habit/update-habit/update-habit-use-case";
+import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
+import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit-use-case/delete-habit-use-case";
+import { ListHabitUseCase } from "@/application/use-cases/habit/list-habit-use-case/list-habit-use-case";
+import { ToggleCompleteUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-use-case";
+import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
+import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import type { NextRequest } from "next/server";
 
 // Instância única do repositório
@@ -17,13 +17,24 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-	const { title, observations, difficulty, tags, reset, createdAt } =
-		await request.json();
+	const {
+		title,
+		observations,
+		difficulty,
+		priority,
+		category,
+		tags,
+		reset,
+		createdAt
+	} = await request.json();
+
 	const useCase = new CreateHabitUseCase(habitRepository);
 	const result = await useCase.execute({
 		title,
 		observations,
 		difficulty,
+		priority,
+		category,
 		tags,
 		reset,
 		createdAt,

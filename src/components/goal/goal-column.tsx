@@ -1,27 +1,32 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Plus, Target, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useGoals } from "@/contexts/goal-context";
 import type { Goal } from "@/domain/entities/goal";
-import { useState } from "react";
 import { GoalCard } from "./goal-card";
 import { GoalForm } from "./goal-form";
+import { useGoals } from "@/contexts/goal-context";
+import { useState } from "react";
 
 export function GoalColumn() {
-	const { goals, createGoal, updateGoal, deleteGoal } = useGoals();
+	const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+
+	// Debug logs
+	console.log("GoalColumn - goals:", goals);
+	console.log("GoalColumn - loading:", loading);
+	console.log("GoalColumn - error:", error);
 
 	const inProgressGoals = goals.filter(
 		(goal) => goal.status === "IN_PROGRESS",
 	);
 	const completedGoals = goals.filter((goal) => goal.status === "COMPLETED");
 	const overdueGoals = goals.filter(
-		(goal) => goal.status === "IN_PROGRESS" && goal.targetDate < new Date(),
+		(goal) => goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date(),
 	);
 
 	const handleCreateGoal = async (goalData: {
@@ -47,6 +52,7 @@ export function GoalColumn() {
 		if (editingGoal) {
 			await updateGoal(editingGoal.id, goalData);
 			setEditingGoal(null);
+			setIsFormOpen(false);
 		}
 	};
 
@@ -83,11 +89,14 @@ export function GoalColumn() {
 						<div className="flex items-center gap-2">
 							<Target className="w-6 h-6 text-purple-600" />
 							<CardTitle className="font-bold text-purple-900 text-xl">
-								Metas & Objetivos
+								Metas
 							</CardTitle>
 						</div>
 						<Button
-							onClick={() => setIsFormOpen(true)}
+							onClick={() => {
+								setEditingGoal(null);
+								setIsFormOpen(true);
+							}}
 							size="sm"
 							className="bg-purple-600 hover:bg-purple-700 text-white"
 						>
@@ -110,38 +119,37 @@ export function GoalColumn() {
 				</CardContent>
 			</Card>
 
-			{/* Goals List */}
-			<div className="space-y-4">
-				{overdueGoals.length > 0 && (
-					<div>
-						<h3 className="flex items-center gap-1 mb-2 font-semibold text-red-600 text-sm">
-							<AlertTriangle className="w-4 h-4" />
-							Metas Atrasadas
-						</h3>
-						<div className="space-y-3">
-							{overdueGoals.map((goal) => (
-								<GoalCard
-									key={goal.id}
-									goal={goal}
-									onEdit={openEditForm}
-									onDelete={handleDeleteGoal}
-									onStatusChange={handleStatusChange}
-								/>
-							))}
-						</div>
-					</div>
-				)}
+			{/* Loading State */}
+			{loading && (
+				<Card className="bg-blue-50 border-blue-200">
+					<CardContent className="py-8 text-center">
+						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<p className="text-blue-600">Carregando metas...</p>
+					</CardContent>
+				</Card>
+			)}
 
-				{inProgressGoals.length > 0 && (
-					<div>
-						<h3 className="flex items-center gap-1 mb-2 font-semibold text-blue-600 text-sm">
-							<Target className="w-4 h-4" />
-							Em Andamento
-						</h3>
-						<div className="space-y-3">
-							{inProgressGoals
-								.filter((goal) => goal.targetDate >= new Date())
-								.map((goal) => (
+			{/* Error State */}
+			{error && (
+				<Card className="bg-red-50 border-red-200">
+					<CardContent className="py-8 text-center">
+						<AlertTriangle className="mx-auto mb-3 w-8 h-8 text-red-500" />
+						<p className="text-red-600">Erro ao carregar metas: {error}</p>
+					</CardContent>
+				</Card>
+			)}
+
+			{/* Goals List */}
+			{!loading && !error && (
+				<div className="space-y-4">
+					{overdueGoals.length > 0 && (
+						<div>
+							<h3 className="flex items-center gap-1 mb-2 font-semibold text-red-600 text-sm">
+								<AlertTriangle className="w-4 h-4" />
+								Metas Atrasadas
+							</h3>
+							<div className="space-y-3">
+								{overdueGoals.map((goal) => (
 									<GoalCard
 										key={goal.id}
 										goal={goal}
@@ -150,72 +158,95 @@ export function GoalColumn() {
 										onStatusChange={handleStatusChange}
 									/>
 								))}
+							</div>
 						</div>
-					</div>
-				)}
+					)}
 
-				{completedGoals.length > 0 && (
-					<div>
-						<h3 className="flex items-center gap-1 mb-2 font-semibold text-green-600 text-sm">
-							<TrendingUp className="w-4 h-4" />
-							Concluídas
-						</h3>
-						<div className="space-y-3">
-							{completedGoals.slice(0, 3).map((goal) => (
-								<GoalCard
-									key={goal.id}
-									goal={goal}
-									onEdit={openEditForm}
-									onDelete={handleDeleteGoal}
-									onStatusChange={handleStatusChange}
-								/>
-							))}
-							{completedGoals.length > 3 && (
-								<div className="py-2 text-center">
-									<Badge
-										variant="outline"
-										className="text-gray-600"
-									>
-										+{completedGoals.length - 3} metas
-										concluídas
-									</Badge>
-								</div>
-							)}
-						</div>
-					</div>
-				)}
-
-				{goals.length === 0 && (
-					<Card className="bg-gray-50 border-gray-300 border-dashed">
-						<CardContent className="py-8 text-center">
-							<Target className="mx-auto mb-3 w-12 h-12 text-gray-400" />
-							<h3 className="mb-2 font-medium text-gray-600 text-lg">
-								Nenhuma meta definida
+					{inProgressGoals.length > 0 && (
+						<div>
+							<h3 className="flex items-center gap-1 mb-2 font-semibold text-blue-600 text-sm">
+								<Target className="w-4 h-4" />
+								Em Andamento
 							</h3>
-							<p className="mb-4 text-gray-500">
-								Comece criando sua primeira meta para organizar
-								seus objetivos
-							</p>
-							<Button
-								onClick={() => setIsFormOpen(true)}
-								className="bg-purple-600 hover:bg-purple-700"
-							>
-								<Plus className="mr-2 w-4 h-4" />
-								Criar Primeira Meta
-							</Button>
-						</CardContent>
-					</Card>
-				)}
-			</div>
+							<div className="space-y-3">
+								{inProgressGoals
+									.filter((goal) => new Date(goal.targetDate) >= new Date())
+									.map((goal) => (
+										<GoalCard
+											key={goal.id}
+											goal={goal}
+											onEdit={openEditForm}
+											onStatusChange={handleStatusChange}
+										/>
+									))}
+							</div>
+						</div>
+					)}
+
+					{completedGoals.length > 0 && (
+						<div>
+							<h3 className="flex items-center gap-1 mb-2 font-semibold text-green-600 text-sm">
+								<TrendingUp className="w-4 h-4" />
+								Concluídas
+							</h3>
+							<div className="space-y-3">
+								{completedGoals.slice(0, 3).map((goal) => (
+									<GoalCard
+										key={goal.id}
+										goal={goal}
+										onEdit={openEditForm}
+										onStatusChange={handleStatusChange}
+									/>
+								))}
+								{completedGoals.length > 3 && (
+									<div className="py-2 text-center">
+										<Badge
+											variant="outline"
+											className="text-gray-600"
+										>
+											+{completedGoals.length - 3} metas
+											concluídas
+										</Badge>
+									</div>
+								)}
+							</div>
+						</div>
+					)}
+
+					{goals.length === 0 && (
+						<Card className="bg-gray-50 border-gray-300 border-dashed">
+							<CardContent className="py-8 text-center">
+								<Target className="mx-auto mb-3 w-12 h-12 text-gray-400" />
+								<h3 className="mb-2 font-medium text-gray-600 text-lg">
+									Nenhuma meta definida
+								</h3>
+								<p className="mb-4 text-gray-500">
+									Comece criando sua primeira meta para organizar
+									seus objetivos
+								</p>
+								<Button
+									onClick={() => {
+										setEditingGoal(null);
+										setIsFormOpen(true);
+									}}
+									className="bg-purple-600 hover:bg-purple-700"
+								>
+									<Plus className="mr-2 w-4 h-4" />
+									Criar Primeira Meta
+								</Button>
+							</CardContent>
+						</Card>
+					)}
+				</div>
+			)}
 
 			{/* Goal Form Modal */}
-			{isFormOpen && (
-				<GoalForm
-					goal={editingGoal}
-					onSubmit={editingGoal ? handleEditGoal : handleCreateGoal}
-					onCancel={closeForm}
-				/>
-			)}
+			<GoalForm
+				goal={editingGoal}
+				onSubmit={editingGoal ? handleEditGoal : handleCreateGoal}
+				onCancel={closeForm}
+				open={isFormOpen}
+			/>
 		</div>
 	);
 }

@@ -2,9 +2,13 @@
 
 import {
 	Dialog,
+	DialogClose,
 	DialogContent,
+	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
+	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
 	Popover,
@@ -18,7 +22,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -26,9 +30,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useGoals } from "@/contexts/goal-context";
 import type { Goal } from "@/domain/entities/goal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface GoalFormData {
 	title: string;
@@ -43,6 +49,7 @@ interface GoalFormProps {
 	goal?: Goal | null;
 	onSubmit: (data: GoalFormData) => void;
 	onCancel: () => void;
+	open?: boolean;
 }
 
 const priorities: Goal["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -53,7 +60,7 @@ const categories: Goal["category"][] = [
 	"LEARNING",
 ];
 
-export function GoalForm({ goal, onSubmit, onCancel }: GoalFormProps) {
+export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProps) {
 	const [formData, setFormData] = useState<GoalFormData>({
 		title: "",
 		description: "",
@@ -63,10 +70,11 @@ export function GoalForm({ goal, onSubmit, onCancel }: GoalFormProps) {
 		tags: [],
 	});
 	const [newTag, setNewTag] = useState("");
-	const [isOpen, setIsOpen] = useState(true);
 
 	useEffect(() => {
-		if (goal) {
+		// Se a goal tem ID, é uma edição, senão é criação
+		if (goal && goal.id) {
+			// Modo edição: preencher com dados da goal
 			setFormData({
 				title: goal.title,
 				description: goal.description,
@@ -75,19 +83,27 @@ export function GoalForm({ goal, onSubmit, onCancel }: GoalFormProps) {
 				category: goal.category,
 				tags: goal.tags,
 			});
+		} else {
+			// Modo criação: limpar todos os campos
+			setFormData({
+				title: "",
+				description: "",
+				targetDate: new Date(),
+				priority: "MEDIUM",
+				category: "PERSONAL",
+				tags: [],
+			});
 		}
-	}, [goal]);
+	}, [goal?.id, goal?.title, goal?.description, goal?.targetDate, goal?.priority, goal?.category, goal?.tags, goal]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (formData.title.trim() && formData.targetDate) {
 			onSubmit(formData);
-			setIsOpen(false);
 		}
 	};
 
 	const handleCancel = () => {
-		setIsOpen(false);
 		onCancel();
 	};
 
@@ -116,7 +132,7 @@ export function GoalForm({ goal, onSubmit, onCancel }: GoalFormProps) {
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
+		<Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
 			<DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle className="font-bold text-xl">
@@ -314,6 +330,67 @@ export function GoalForm({ goal, onSubmit, onCancel }: GoalFormProps) {
 						</Button>
 					</div>
 				</form>
+
+				{/* Botão de delete - só aparece no modo edição */}
+				{goal && goal.id && (
+					<div className="flex justify-center items-center mt-4 w-full">
+						<DialogConfirmDelete id={goal.id} onCancel={handleCancel} />
+					</div>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+function DialogConfirmDelete({ id, onCancel }: { id: string; onCancel: () => void }) {
+	const [isDeleting, setIsDeleting] = useState(false);
+	const { deleteGoal } = useGoals();
+
+	const onDelete = async () => {
+		if (isDeleting) return;
+		setIsDeleting(true);
+		try {
+			await deleteGoal(id);
+			toast.success("Meta excluída com sucesso!");
+			onCancel(); // Fecha o formulário após deletar
+		} catch (error) {
+			toast.error("Erro ao excluir meta" + error);
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
+	return (
+		<Dialog>
+			<DialogTrigger asChild>
+				<Button
+					variant="link"
+					className="flex justify-center items-center hover:bg-background/20 rounded-lg text-destructive cursor-pointer"
+				>
+					<Trash2 size={16} className="mr-1" />
+					Deletar esta meta
+				</Button>
+			</DialogTrigger>
+			<DialogContent className="sm:max-w-[425px]">
+				<DialogHeader>
+					<DialogTitle>Você tem certeza?</DialogTitle>
+					<DialogDescription>
+						Confirmando a exclusão, você não poderá desfazer essa ação.
+					</DialogDescription>
+				</DialogHeader>
+				<DialogFooter>
+					<Button
+						type="submit"
+						variant="destructive"
+						onClick={onDelete}
+						disabled={isDeleting}
+					>
+						{isDeleting ? "Excluindo..." : "Excluir"}
+					</Button>
+					<DialogClose asChild>
+						<Button variant="outline">Cancelar</Button>
+					</DialogClose>
+				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);

@@ -1,8 +1,8 @@
-import { PrismaDailyRepository } from "@/infra/repositories/database/prisma-daily-repository";
-import { CreateDailyUseCase } from "@/use-cases/daily/create-daily/create-daily-use-case";
-import { DeleteDailyUseCase } from "@/use-cases/daily/delete-daily-use-case/delete-daily-use-case";
-import { ListDailyUseCase } from "@/use-cases/daily/list-daily/list-daily-use-case";
-import { UpdateDailyUseCase } from "@/use-cases/daily/update-daily/update-daily-use-case";
+import { CreateDailyUseCase } from "@/application/use-cases/daily/create-daily/create-daily-use-case";
+import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily-use-case/delete-daily-use-case";
+import { ListDailyUseCase } from "@/application/use-cases/daily/list-daily/list-daily-use-case";
+import { UpdateDailyUseCase } from "@/application/use-cases/daily/update-daily/update-daily-use-case";
+import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import type { NextRequest } from "next/server";
 
 // Instância única do repositório

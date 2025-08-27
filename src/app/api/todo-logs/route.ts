@@ -1,4 +1,4 @@
-import { PrismaTodoLogRepository } from "@/infra/repositories/database/prisma-todo-log-repository";
+import { PrismaTodoLogRepository } from "@/infra/database/prisma/prisma-todo-log-repository";
 import type { NextRequest } from "next/server";
 
 const todoLogRepository = new PrismaTodoLogRepository();

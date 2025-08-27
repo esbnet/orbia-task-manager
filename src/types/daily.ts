@@ -13,6 +13,7 @@ export interface DailyRepeat {
 
 export interface Daily {
 	id: string;
+	userId: string;
 	title: string;
 	observations: string;
 	tasks: string[];

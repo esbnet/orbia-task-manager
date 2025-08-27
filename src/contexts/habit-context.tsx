@@ -1,32 +1,30 @@
 "use client";
 
+import type { Habit } from "@/domain/entities/habit";
+import type { HabitFormData } from "@/types/habit";
 import {
 	type ReactNode,
 	createContext,
+	useCallback,
 	useContext,
 	useEffect,
 	useState,
 } from "react";
 
-import type { Habit, HabitReset } from "@/types";
-
-import { ApiHabitRepository } from "@/infra/repositories/backend/api-habit-repository";
-import type { HabitDifficulty } from "@/types/habit";
-import { CreateHabitUseCase } from "@/use-cases/habit/create-habit/create-habit-use-case";
-import { DeleteHabitUseCase } from "@/use-cases/habit/delete-habit-use-case/delete-habit-use-case";
-import { ListHabitUseCase } from "@/use-cases/habit/list-habit-use-case/list-habit-use-case";
-import { UpdateHabitUseCase } from "@/use-cases/habit/update-habit/update-habit-use-case";
+import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
+import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit-use-case/delete-habit-use-case";
+import { ListHabitUseCase } from "@/application/use-cases/habit/list-habit-use-case/list-habit-use-case";
+import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
+import { ApiHabitRepository } from "@/infra/repositories/http/api-habit-repository";
 
 interface HabitContextType {
 	habits: Habit[];
-	isLoading: boolean;
+	loading: boolean;
 	error: string | null;
-	addHabit: (habit: Omit<Habit, "id" | "createdAt">) => Promise<void>;
-	updateHabit: (habit: Habit) => Promise<void>;
+	createHabit: (data: HabitFormData) => Promise<void>;
+	updateHabit: (id: string, data: Partial<Habit>) => Promise<void>;
 	deleteHabit: (id: string) => Promise<void>;
-	toggleComplete: (id: string) => Promise<void>;
-	getHabit: (id: string) => Habit | undefined;
-	reorderHabits: (habits: Habit[]) => Promise<void>;
+	refreshHabits: () => Promise<void>;
 	completeHabit: (habit: Habit) => Promise<void>;
 }
 
@@ -38,7 +36,7 @@ interface HabitProviderProps {
 
 export function HabitProvider({ children }: HabitProviderProps) {
 	const [habits, setHabits] = useState<Habit[]>([]);
-	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
 
 	const habitRepository = new ApiHabitRepository();
@@ -47,160 +45,121 @@ export function HabitProvider({ children }: HabitProviderProps) {
 	const deleteHabitUseCase = new DeleteHabitUseCase(habitRepository);
 	const listHabitUseCase = new ListHabitUseCase(habitRepository);
 
-	const fetchHabits = async () => {
+	const fetchHabits = useCallback(async () => {
 		try {
-			setIsLoading(true);
-			const result = await listHabitUseCase.execute();
-			setHabits(result.habits as unknown as Habit[]);
+			setLoading(true);
 			setError(null);
+
+			const result = await listHabitUseCase.execute();
+			setHabits(result.habits);
 		} catch (err) {
-			setError("Failed to fetch habits");
-			console.error('Habit fetch error:', err);
+			setError(err instanceof Error ? err.message : "Erro ao carregar hábitos");
 		} finally {
-			setIsLoading(false);
+			setLoading(false);
 		}
-	};
+	}, [listHabitUseCase]);
 
-	useEffect(() => {
-		fetchHabits();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	const addHabit = async (
-		habit: Omit<Habit, "id" | "createdAt">,
-	): Promise<void> => {
+	const createHabit = async (data: HabitFormData) => {
 		try {
+			setError(null);
+
 			const result = await createHabitUseCase.execute({
-				title: habit.title,
-				observations: habit.observations || "",
-				difficulty: (habit.difficulty as HabitDifficulty) || "Fácil",
-				tags: habit.tags || [],
-				reset: (habit.reset as HabitReset) || "Diariamente",
+				title: data.title,
+				observations: data.observations,
+				difficulty: data.difficulty,
+				priority: data.priority,
+				category: data.category,
+				tags: data.tags,
+				reset: data.reset,
 				createdAt: new Date(),
 			});
 
-			setHabits((prevHabits) => [...prevHabits, result.habit]);
+			setHabits((prev) => [result.habit, ...prev]);
 		} catch (err) {
-			setError("Failed to add habit");
-			console.error(err);
+			setError(err instanceof Error ? err.message : "Erro ao criar hábito");
+			throw err;
 		}
 	};
 
-	const updateHabit = async (habit: Habit) => {
+	const updateHabit = async (id: string, data: Partial<Habit>) => {
 		try {
-			const updatedHabitOutput = await updateHabitUseCase.execute(habit); // returns UpdateHabitOutput
-			const updatedHabit: Habit = {
-				...habit,
-				...updatedHabitOutput,
-			};
-			setHabits((prevHabits) =>
-				prevHabits.map((t) =>
-					t.id === updatedHabit.id ? updatedHabit : t,
-				),
+			setError(null);
+
+			// Buscar o hábito atual
+			const currentHabit = habits.find(h => h.id === id);
+			if (!currentHabit) {
+				throw new Error("Hábito não encontrado");
+			}
+
+			// Criar objeto completo para o use case
+			const updatedHabit = { ...currentHabit, ...data, updatedAt: new Date() };
+
+			const result = await updateHabitUseCase.execute(updatedHabit);
+
+			setHabits((prev) =>
+				prev.map((habit) => habit.id === id ? result : habit),
 			);
 		} catch (err) {
-			setError("Failed to update habit");
-			console.error(err);
+			setError(
+				err instanceof Error ? err.message : "Erro ao atualizar hábito",
+			);
+			throw err;
 		}
 	};
 
 	const deleteHabit = async (id: string) => {
 		try {
+			setError(null);
+
 			await deleteHabitUseCase.execute({ id });
-			setHabits((prevHabits) =>
-				prevHabits.filter((habit) => habit.id !== id),
+			setHabits((prev) => prev.filter((habit) => habit.id !== id));
+		} catch (err) {
+			setError(
+				err instanceof Error ? err.message : "Erro ao excluir hábito",
 			);
-		} catch (err) {
-			setError("Failed to delete habit");
-			console.error(err);
+			throw err;
 		}
 	};
 
-	const toggleComplete = async (id: string) => {
-		try {
-			const updatedHabitFromRepo =
-				await habitRepository.toggleComplete(id);
-
-			const updatedHabit: Habit = {
-				...updatedHabitFromRepo,
-			} as Habit;
-
-			setHabits((prevHabits) =>
-				prevHabits.map((habit) =>
-					habit.id === id ? updatedHabit : habit,
-				),
-			);
-		} catch (err) {
-			setError("Falha ao completar tarefa");
-			console.error(err);
-		}
+	const refreshHabits = async () => {
+		await fetchHabits();
 	};
 
-	const getHabit = (id: string) => {
-		return habits.find((habit) => habit.id === id);
-	};
 
-	const reorderHabits = async (reorderedHabits: Habit[]) => {
-		try {
-			const habitsWithOrder = reorderedHabits.map((habit, index) => ({
-				...habit,
-				order: index,
-			}));
-
-			setHabits(habitsWithOrder);
-
-			// Salvar a nova ordem no backend
-			for (const habit of habitsWithOrder) {
-				await updateHabitUseCase.execute(habit);
-			}
-		} catch (err) {
-			setError("Failed to reorder habits");
-			console.error(err);
-		}
-	};
 
 	const completeHabit = async (habit: Habit) => {
 		try {
-			const completeHabitWithLogUseCase = new (
-				await import(
-					"@/use-cases/habit/complete-habit-with-log/complete-habit-with-log-use-case"
-				)
-			).CompleteHabitWithLogUseCase(
-				habitRepository,
-				new (
-					await import(
-						"@/infra/repositories/database/prisma-habit-log-repository"
-					)
-				).PrismaHabitLogRepository(),
-			);
+			setLoading(true);
+			setError(null);
 
-			const result = await completeHabitWithLogUseCase.execute({ habit });
+			// Usar o método toggleComplete do repositório para marcar como completo
+			const updatedHabit = await habitRepository.toggleComplete(habit.id);
+
 			setHabits((prevHabits) =>
 				prevHabits.map((h) =>
-					h.id === habit.id ? result.updatedHabit : h,
+					h.id === habit.id ? updatedHabit : h,
 				),
 			);
 		} catch (err) {
-			setError("Failed to complete habit");
-			console.error(err);
+			setError(err instanceof Error ? err.message : "Erro ao completar hábito");
+			console.error("Erro ao completar hábito:", err);
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const today = new Date().toISOString().split("T")[0];
-	const visibleHabits = habits.filter(
-		(habit) => habit.lastCompletedDate !== today,
-	);
+	useEffect(() => {
+		fetchHabits();
+	}, [fetchHabits]);
 
-	const value = {
-		habits: visibleHabits.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-		isLoading,
+	const value: HabitContextType = {
+		habits,
+		loading,
 		error,
-		addHabit,
+		createHabit,
 		updateHabit,
 		deleteHabit,
-		toggleComplete,
-		getHabit,
-		reorderHabits,
+		refreshHabits,
 		completeHabit,
 	};
 
@@ -209,11 +168,10 @@ export function HabitProvider({ children }: HabitProviderProps) {
 	);
 }
 
-// Custom hook to use the HabitContext
-export function useHabitContext() {
+export function useHabits(): HabitContextType {
 	const context = useContext(HabitContext);
 	if (context === undefined) {
-		throw new Error("useHabitContext must be used within a HabitProvider");
+		throw new Error("useHabits deve ser usado dentro de um HabitProvider");
 	}
 	return context;
 }

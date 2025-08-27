@@ -1,5 +1,5 @@
-import { PrismaHabitLogRepository } from "@/infra/repositories/database/prisma-habit-log-repository";
-import { CompleteHabitUseCase } from "@/use-cases/habit/complete-habit/complete-habit-use-case";
+import { CompleteHabitUseCase } from "@/application/use-cases/habit/complete-habit/complete-habit-use-case";
+import { PrismaHabitLogRepository } from "@/infra/database/prisma/prisma-habit-log-repository";
 import type { NextRequest } from "next/server";
 
 // const habitLogRepository = new InJsonFileHabitLogRepository();

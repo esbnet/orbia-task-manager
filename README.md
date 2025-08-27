@@ -312,10 +312,8 @@ npm run db:push:dev
 npm run db:push:prod
 ```
 
-Copy
 🎯 Benefícios:
 ✅ Consistência: PostgreSQL em ambos ambientes
 ✅ Recursos avançados: Arrays, JSON, etc. em desenvolvimento
 ✅ Paridade: Mesmo comportamento local e produção
 ✅ Alternância fácil: Scripts automatizados
-

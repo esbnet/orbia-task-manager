@@ -1,60 +1,129 @@
-import { Checkbox } from "@/components/ui/checkbox";
-import { GripVertical } from "lucide-react";
-import type { Todo } from "../../types";
-import { toast } from "sonner";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+	Calendar,
+	CheckCircle,
+	Edit,
+	Tag
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useTodoContext } from "@/contexts/todo-context";
+import { toast } from "sonner";
+import type { Todo } from "../../types";
 
-type Props = {
+interface TodoCardProps {
 	todo: Todo;
-	dragHandleProps?: any;
-	onEditClick?: () => void;
-};
-
-export function TodoCard({ todo, dragHandleProps, onEditClick }: Props) {
-	return (
-		<TodoItem
-			todo={todo}
-			dragHandleProps={dragHandleProps}
-			onEditClick={onEditClick}
-		/>
-	);
+	onEdit?: (todo: Todo) => void;
+	onComplete?: (id: string) => Promise<void>;
+	isCompleted?: boolean;
 }
 
-function TodoItem({ todo, dragHandleProps, onEditClick }: Props) {
-	const { completeTodo } = useTodoContext();
+const difficultyConfig = {
+	"Trivial": { color: "bg-gray-100 text-gray-800", stars: "⭐" },
+	"Fácil": { color: "bg-green-100 text-green-800", stars: "⭐⭐" },
+	"Médio": { color: "bg-yellow-100 text-yellow-800", stars: "⭐⭐⭐" },
+	"Difícil": { color: "bg-red-100 text-red-800", stars: "⭐⭐⭐⭐" },
+};
 
-	const onComplete = async (checked: boolean) => {
-		if (checked) {
+export function TodoCard({
+	todo,
+	onEdit,
+	onComplete,
+	isCompleted = false
+}: TodoCardProps) {
+	const { completeTodo } = useTodoContext();
+	const difficulty = difficultyConfig[todo.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
+
+	const handleComplete = async () => {
+		if (onComplete) {
+			await onComplete(todo.id);
+		} else {
 			await completeTodo(todo);
 			toast.success(`Afazer "${todo.title}" concluído!`);
 		}
 	};
 
 	return (
-		<div className="flex justify-between items-center gap-2 bg-background/30 shadow-sm hover:shadow-md p-1 border-blue-300 border-l-4 rounded-sm transition-all duration-200 ease-in-out">
-			<div
-				className="hover:bg-background/10 py-2 rounded-sm cursor-grab"
-				{...dragHandleProps}
-				title="Arraste para mover a tarefa"
-			>
-				<GripVertical size={16} className="text-foreground" />
-			</div>
-			<div className="flex justify-between items-center gap-1 w-full">
-				<div className="flex items-center gap-2">
-					<Checkbox
-						onCheckedChange={onComplete}
-						className="hover:bg-foreground/10 border-foreground/30 focus-visible:ring-0 focus-visible:ring-offset-0 w-5 h-5 focus-visible:bg-accent-foreground hover:cursor-pointer"
-						onClick={(e) => e.stopPropagation()}
-					/>
-					<span
-						className="overflow-hidden text-foreground/60 hover:text-foreground/80 line-clamp-1 hyphens-auto cursor-pointer"
-						onClick={onEditClick}
-						title={todo.title}
-					>
-						{todo.title}
-					</span>
+		<Card className="hover:shadow-md transition-shadow duration-200">
+			<CardHeader className="pb-3">
+				<div className="flex justify-between items-start">
+					<div className="flex-1">
+						<div className="flex items-center justify-between mb-2">
+							<div className="flex items-center gap-2">
+								<h3 className="font-semibold text-gray-900 line-clamp-1">
+									{todo.title}
+								</h3>
+								{isCompleted && (
+									<CheckCircle className="w-5 h-5 text-green-600" />
+								)}
+							</div>
+							
+							{/* Botões movidos para o topo */}
+							<div className="flex items-center gap-1">
+								{!isCompleted && (
+									<Button
+										onClick={handleComplete}
+										size="sm"
+										className="bg-blue-600 hover:bg-blue-700 text-white"
+									>
+										<CheckCircle className="mr-1 w-4 h-4" />
+										Completar
+									</Button>
+								)}
+								{onEdit && (
+									<Button
+										onClick={() => onEdit(todo)}
+										variant="outline"
+										size="sm"
+									>
+										<Edit className="w-4 h-4" />
+									</Button>
+								)}
+							</div>
+						</div>
+
+						<div className="flex items-center gap-2 mb-2">
+							<Badge className={`text-xs ${difficulty.color}`}>
+								{difficulty.stars} {todo.difficulty}
+							</Badge>
+							{todo.startDate && (
+								<div className="flex items-center gap-1 text-blue-600 text-sm">
+									<Calendar className="w-4 h-4" />
+									<span>{new Date(todo.startDate).toLocaleDateString()}</span>
+								</div>
+							)}
+						</div>
+
+						{todo.observations && (
+							<p className="mb-2 text-gray-600 text-sm line-clamp-2">
+								{todo.observations}
+							</p>
+						)}
+					</div>
 				</div>
-			</div>
-		</div>
+			</CardHeader>
+
+			<CardContent className="pt-0">
+				{/* Área das tags com ícone */}
+				{todo.tags && todo.tags.length > 0 && (
+					<div className="flex items-center gap-2">
+						<Tag className="w-4 h-4 text-gray-500" />
+						<div className="flex gap-1">
+							{todo.tags.slice(0, 2).map((tag) => (
+								<Badge key={tag} variant="outline" className="text-xs">
+									{tag}
+								</Badge>
+							))}
+							{todo.tags.length > 2 && (
+								<Badge variant="outline" className="text-xs">
+									+{todo.tags.length - 2}
+								</Badge>
+							)}
+						</div>
+					</div>
+				)}
+			</CardContent>
+		</Card>
 	);
 }

@@ -1,3 +1,12 @@
+import type {
+    CompletableRepository,
+    LogRepository,
+    OrderableRepository,
+    SubtaskRepository,
+    TaggableRepository,
+    UserOwnedRepository,
+} from "./base-repository";
+
 import type { Daily } from "../entities/daily";
 import type { DailyLog } from "../entities/daily-log";
 import type { DailySubtask } from "../entities/daily-subtask";
@@ -7,26 +16,46 @@ import type { Tag } from "../entities/tag";
 import type { Todo } from "../entities/todo";
 import type { TodoLog } from "../entities/todo-log";
 import type { TodoSubtask } from "../entities/todo-subtask";
-import type { GenericRepository } from "./generic-repository";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DailyRepository extends GenericRepository<Daily> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DailyLogRepository extends GenericRepository<DailyLog> {}
-export interface DailySubtaskRepository
-	extends GenericRepository<DailySubtask> {
+// Daily repository with user ownership, completion, ordering, and tagging
+export interface DailyRepository
+	extends UserOwnedRepository<Daily>,
+		CompletableRepository<Daily>,
+		OrderableRepository<Daily>,
+		TaggableRepository<Daily> {}
+
+// Daily log repository
+export interface DailyLogRepository extends LogRepository<DailyLog> {}
+
+// Daily subtask repository
+export interface DailySubtaskRepository extends SubtaskRepository<DailySubtask> {
 	listByDailyId(dailyId: string): Promise<DailySubtask[]>;
 }
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface HabitRepository extends GenericRepository<Habit> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface HabitLogRepository extends GenericRepository<HabitLog> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TagRepository extends GenericRepository<Tag> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TodoRepository extends GenericRepository<Todo> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TodoLogRepository extends GenericRepository<TodoLog> {}
-export interface TodoSubtaskRepository extends GenericRepository<TodoSubtask> {
+
+// Habit repository with user ownership, completion, ordering, and tagging
+export interface HabitRepository
+	extends UserOwnedRepository<Habit>,
+		CompletableRepository<Habit>,
+		OrderableRepository<Habit>,
+		TaggableRepository<Habit> {}
+
+// Habit log repository
+export interface HabitLogRepository extends LogRepository<HabitLog> {}
+
+// Tag repository with user ownership
+export interface TagRepository extends UserOwnedRepository<Tag> {}
+
+// Todo repository with user ownership, completion, ordering, and tagging
+export interface TodoRepository
+	extends UserOwnedRepository<Todo>,
+		CompletableRepository<Todo>,
+		OrderableRepository<Todo>,
+		TaggableRepository<Todo> {}
+
+// Todo log repository
+export interface TodoLogRepository extends LogRepository<TodoLog> {}
+
+// Todo subtask repository
+export interface TodoSubtaskRepository extends SubtaskRepository<TodoSubtask> {
 	listByTodoId(todoId: string): Promise<TodoSubtask[]>;
 }

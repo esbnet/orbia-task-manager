@@ -6,7 +6,8 @@ import { HabitColumn } from "@/components/habit/habit-column";
 import { TodoColumn } from "@/components/todo/todo-column";
 import { DailyProvider } from "@/contexts/daily-context";
 import { DailySubtaskProvider } from "@/contexts/daily-subtask-context";
-import { HabitProvider } from "@/contexts/habit-context";
+import { GoalProvider } from "@/contexts/goal-context";
+import { HabitProvider } from "@/contexts/habit-context-refactored";
 import { TagsProvider } from "@/contexts/tags-context";
 import { TodoProvider } from "@/contexts/todo-context";
 import { TodoSubtaskProvider } from "@/contexts/todo-subtask-context";
@@ -28,7 +29,9 @@ export function ClientProviders() {
 						<TodoColumn />
 					</TodoSubtaskProvider>
 				</TodoProvider>
-				<GoalColumn />
+				<GoalProvider>
+					<GoalColumn />
+				</GoalProvider>
 			</div>
 		</TagsProvider>
 	);

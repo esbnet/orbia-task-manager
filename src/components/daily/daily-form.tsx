@@ -1,7 +1,5 @@
-'use client';
+"use client";
 
-import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
-import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import {
 	Dialog,
 	DialogClose,
@@ -24,30 +22,41 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import { format, setDefaultOptions } from "date-fns";
+import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import type { Daily } from "@/types";
-import { DailyCard } from "./daily-card";
-import { DailySubtaskList } from "./daily-subtask-list";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
 import { useDailyContext } from "@/contexts/daily-context";
-import { useState } from "react";
 import { useTags } from "@/hooks/use-tags";
+import type { Daily } from "@/types";
+import { ptBR } from "date-fns/locale";
+import { useState } from "react";
+import { toast } from "sonner";
+import { DailyCard } from "./daily-card";
+import { DailySubtaskList } from "./daily-subtask-list";
 
 setDefaultOptions({ locale: ptBR });
 
 interface DailyFormProps {
 	daily: Daily;
-	dragHandleProps?: any; // Adjust type as needed
+	dragHandleProps?: unknown;
+	onSubmit?: (daily: Omit<Daily, "id" | "createdAt">) => Promise<void>;
+	onCancel?: () => void;
+	open?: boolean;
 }
 
-export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
+export function DailyForm({
+	daily,
+	dragHandleProps,
+	onSubmit,
+	onCancel,
+	open = false,
+}: DailyFormProps) {
 	const { updateDaily } = useDailyContext();
 	const { tagOptions } = useTags();
 
@@ -68,8 +77,11 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 	);
 	const [tags, setTags] = useState<string[]>(daily.tags || []);
 
-	const [open, setOpen] = useState(false);
+	const [internalOpen, setInternalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+
+	// Usar prop externa se fornecida, senão usar estado interno
+	const isOpen = open !== undefined ? open : internalOpen;
 
 	async function handleUpdateDaily(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -79,6 +91,23 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 
 		setIsLoading(true);
 		try {
+			if (onSubmit && !daily.id) {
+				await onSubmit({
+					title,
+					observations,
+					tasks,
+					difficulty,
+					startDate,
+					repeat: {
+						type: repeatType as DailyRepeatType,
+						frequency: repeatFrequency,
+					},
+					tags,
+				} as Omit<Daily, "id" | "createdAt">);
+				setInternalOpen(false);
+				if (onCancel) onCancel();
+				return;
+			}
 			await updateDaily({
 				...daily,
 				title,
@@ -94,7 +123,8 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 			} as Daily);
 
 			toast.success("Hábito atualizado com sucesso!");
-			setOpen(false);
+			setInternalOpen(false);
+			if (onCancel) onCancel();
 		} catch (error) {
 			toast.error(`Erro ao atualizar hábito${error}`);
 			console.error("Erro ao atualizar hábito", error);
@@ -105,12 +135,23 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 
 	return (
 		<>
-			<DailyCard
-				daily={daily}
-				dragHandleProps={dragHandleProps}
-				onEditClick={() => setOpen(true)}
-			/>
-			<Dialog open={open} onOpenChange={setOpen}>
+			{/* Só renderizar DailyCard se não estiver usando prop externa open */}
+			{open === undefined && (
+				<DailyCard
+					daily={daily}
+					dragHandleProps={dragHandleProps}
+					onEditClick={() => setInternalOpen(true)}
+				/>
+			)}
+			<Dialog
+				open={isOpen}
+				onOpenChange={(v) => {
+					if (open === undefined) {
+						setInternalOpen(v);
+					}
+					if (!v && onCancel) onCancel();
+				}}
+			>
 				<DialogContent className="flex flex-col gap-4 opacity-80 shadow-xl backdrop-blur-sm backdrop-opacity-0">
 					<DialogHeader className="flex flex-col gap-1">
 						<DialogTitle>Editar</DialogTitle>
@@ -292,7 +333,11 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 							<DialogClose asChild>
 								<Button variant="link">Cancel</Button>
 							</DialogClose>
-							<Button type="submit" className="flex-1" disabled={isLoading}>
+							<Button
+								type="submit"
+								className="flex-1"
+								disabled={isLoading}
+							>
 								<SaveIcon />
 								{isLoading ? "Salvando..." : "Salvar"}
 							</Button>

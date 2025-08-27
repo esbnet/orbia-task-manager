@@ -1,17 +1,17 @@
+import { CreateGoalUseCase } from "@/application/use-cases/goal/create-goal/create-goal-use-case";
+import { ListGoalsUseCase } from "@/application/use-cases/goal/list-goals/list-goals-use-case";
 import { auth } from "@/auth";
 import type { Goal } from "@/domain/entities/goal";
-import { PrismaGoalRepository } from "@/infra/repositories/database/prisma-goal-repository";
-import { CreateGoalUseCase } from "@/use-cases/goal/create-goal/create-goal-use-case";
-import { ListGoalsUseCase } from "@/use-cases/goal/list-goals/list-goals-use-case";
+import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const goalRepository = new PrismaGoalRepository();
 const createGoalUseCase = new CreateGoalUseCase(goalRepository);
 const listGoalsUseCase = new ListGoalsUseCase(goalRepository);
-
 export async function GET(request: NextRequest) {
 	try {
+		// Autenticação
 		const session = await auth();
 		if (!session?.user?.id) {
 			return NextResponse.json(
@@ -20,36 +20,89 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
+		// Parsing e validação de parâmetros
 		const { searchParams } = new URL(request.url);
-		const status = searchParams.get("status") as Goal["status"] | null;
-		const priority = searchParams.get("priority") as
-			| Goal["priority"]
-			| null;
-		const category = searchParams.get("category") as
-			| Goal["category"]
-			| null;
-		const tags = searchParams.get("tags")?.split(",") || [];
+
+		// Validação de status
+		const statusParam = searchParams.get("status");
+		const validStatuses: Goal["status"][] = ["IN_PROGRESS", "COMPLETED", "CANCELLED"];
+		const status = statusParam && validStatuses.includes(statusParam as Goal["status"])
+			? statusParam as Goal["status"]
+			: undefined;
+
+		// Validação de priority
+		const priorityParam = searchParams.get("priority");
+		const validPriorities: Goal["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+		const priority = priorityParam && validPriorities.includes(priorityParam as Goal["priority"])
+			? priorityParam as Goal["priority"]
+			: undefined;
+
+		// Validação de category
+		const categoryParam = searchParams.get("category");
+		const validCategories: Goal["category"][] = ["PERSONAL", "WORK", "HEALTH", "LEARNING"];
+		const category = categoryParam && validCategories.includes(categoryParam as Goal["category"])
+			? categoryParam as Goal["category"]
+			: undefined;
+
+		// Validação de tags
+		const tagsParam = searchParams.get("tags");
+		const tags = tagsParam ? tagsParam.split(",").map(tag => tag.trim()).filter(Boolean) : [];
+
+		// Validação de parâmetros boolean
 		const includeOverdue = searchParams.get("includeOverdue") === "true";
 		const includeDueSoon = searchParams.get("includeDueSoon") === "true";
-		const dueSoonDays = Number.parseInt(
-			searchParams.get("dueSoonDays") || "7",
-			10,
-		);
 
+		// Validação de dueSoonDays
+		const dueSoonDaysParam = searchParams.get("dueSoonDays");
+		const dueSoonDays = dueSoonDaysParam ?
+			Math.max(1, Math.min(365, Number.parseInt(dueSoonDaysParam, 10) || 7)) : 7;
+
+		// Log apenas em desenvolvimento
+		if (process.env.NODE_ENV === "development") {
+			console.log("🔍 API Goals - GET request:", {
+				userId: session.user.id,
+				params: { status, priority, category, tags, includeOverdue, includeDueSoon, dueSoonDays }
+			});
+		}
+
+		// Execução do use case
 		const goals = await listGoalsUseCase.execute({
 			userId: session.user.id,
-			status: status ?? undefined,
-			priority: priority ?? undefined,
-			category: category ?? undefined,
+			status,
+			priority,
+			category,
 			tags,
 			includeOverdue,
 			includeDueSoon,
 			dueSoonDays,
 		});
 
+		// Log de resultado apenas em desenvolvimento
+		if (process.env.NODE_ENV === "development") {
+			console.log("🔍 API Goals - Response:", { count: goals.length });
+		}
+
 		return NextResponse.json(goals);
 	} catch (error) {
 		console.error("Erro ao listar metas:", error);
+
+		// Tratamento específico de erros
+		if (error instanceof Error) {
+			if (error.message.includes("unauthorized") || error.message.includes("forbidden")) {
+				return NextResponse.json(
+					{ error: "Acesso negado" },
+					{ status: 403 },
+				);
+			}
+
+			if (error.message.includes("validation") || error.message.includes("invalid")) {
+				return NextResponse.json(
+					{ error: "Parâmetros inválidos" },
+					{ status: 400 },
+				);
+			}
+		}
+
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },
@@ -59,6 +112,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
+		// Autenticação
 		const session = await auth();
 		if (!session?.user?.id) {
 			return NextResponse.json(
@@ -67,30 +121,107 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const body = await request.json();
-		const { title, description, targetDate, priority, category, tags } =
-			body;
-
-		if (!title || !targetDate) {
+		// Parsing do body
+		let body;
+		try {
+			body = await request.json();
+		} catch {
 			return NextResponse.json(
-				{ error: "Título e data são obrigatórios" },
+				{ error: "JSON inválido" },
 				{ status: 400 },
 			);
 		}
 
+		const { title, description, targetDate, priority, category, tags } = body;
+
+		// Validação de campos obrigatórios
+		if (!title || typeof title !== "string" || title.trim().length === 0) {
+			return NextResponse.json(
+				{ error: "Título é obrigatório e deve ser uma string não vazia" },
+				{ status: 400 },
+			);
+		}
+
+		if (!targetDate) {
+			return NextResponse.json(
+				{ error: "Data alvo é obrigatória" },
+				{ status: 400 },
+			);
+		}
+
+		// Validação de data
+		const parsedDate = new Date(targetDate);
+		if (isNaN(parsedDate.getTime())) {
+			return NextResponse.json(
+				{ error: "Data alvo inválida" },
+				{ status: 400 },
+			);
+		}
+
+		// Validação de priority
+		const validPriorities: Goal["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+		const validatedPriority = priority && validPriorities.includes(priority)
+			? priority
+			: "MEDIUM";
+
+		// Validação de category
+		const validCategories: Goal["category"][] = ["PERSONAL", "WORK", "HEALTH", "LEARNING"];
+		const validatedCategory = category && validCategories.includes(category)
+			? category
+			: "PERSONAL";
+
+		// Validação de tags
+		const validatedTags = Array.isArray(tags)
+			? tags.filter(tag => typeof tag === "string" && tag.trim().length > 0)
+			: [];
+
+		// Log apenas em desenvolvimento
+		if (process.env.NODE_ENV === "development") {
+			console.log("🔍 API Goals - POST request:", {
+				userId: session.user.id,
+				title: title.substring(0, 50) + (title.length > 50 ? "..." : "")
+			});
+		}
+
+		// Execução do use case
 		const goal = await createGoalUseCase.execute({
-			title,
-			description: description || "",
-			targetDate: new Date(targetDate),
-			priority: priority || "MEDIUM",
-			category: category || "PERSONAL",
-			tags: tags || [],
+			title: title.trim(),
+			description: (description || "").trim(),
+			targetDate: parsedDate,
+			priority: validatedPriority,
+			category: validatedCategory,
+			tags: validatedTags,
 			userId: session.user.id,
 		});
 
 		return NextResponse.json(goal, { status: 201 });
 	} catch (error) {
 		console.error("Erro ao criar meta:", error);
+
+		// Tratamento específico de erros
+		if (error instanceof Error) {
+			if (error.message.includes("unauthorized") || error.message.includes("forbidden")) {
+				return NextResponse.json(
+					{ error: "Acesso negado" },
+					{ status: 403 },
+				);
+			}
+
+			if (error.message.includes("validation") || error.message.includes("invalid")) {
+				return NextResponse.json(
+					{ error: "Dados inválidos" },
+					{ status: 400 },
+				);
+			}
+
+			if (error.message.includes("duplicate") || error.message.includes("unique")) {
+				return NextResponse.json(
+					{ error: "Meta com este título já existe" },
+					{ status: 409 },
+				);
+			}
+		}
+
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },

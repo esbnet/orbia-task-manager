@@ -1,214 +1,257 @@
 "use client";
 
-import {
-	type ReactNode,
-	createContext,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
+import type { Daily } from "@/domain/entities/daily";
+import type { DailyFormData } from "@/services/daily-service";
+import React from "react";
+import { createEntityContext } from "./base/entity-context-factory";
 
-import type { Daily } from "@/types";
-import { shouldShowDailyToday } from "@/utils/daily-schedule";
+// Create HTTP-based service for client-side usage
+const httpDailyService = {
+	async list(): Promise<Daily[]> {
+		const response = await fetch('/api/daily');
+		if (!response.ok) {
+			throw new Error('Failed to fetch dailies');
+		}
+		const data = await response.json();
+		return data.daily || [];
+	},
 
-import { ApiDailyLogRepository } from "@/infra/repositories/backend/api-daily-log-repository";
-import { ApiDailyRepository } from "@/infra/repositories/backend/api-daily-repository";
-import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
-import { CompleteDailyWithLogUseCase } from "@/use-cases/daily/complete-daily-with-log/complete-daily-with-log-use-case";
-import { CreateDailyUseCase } from "@/use-cases/daily/create-daily/create-daily-use-case";
-import { DeleteDailyUseCase } from "@/use-cases/daily/delete-daily-use-case/delete-daily-use-case";
-import { ListDailyUseCase } from "@/use-cases/daily/list-daily-use-case/list-daily-use-case";
-import { UpdateDailyUseCase } from "@/use-cases/daily/update-daily/update-daily-use-case";
+	async create(data: DailyFormData): Promise<Daily> {
+		const response = await fetch('/api/daily', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(data),
+		});
+		if (!response.ok) {
+			throw new Error('Failed to create daily');
+		}
+		const result = await response.json();
+		return result.daily;
+	},
 
-interface DailyContextType {
-	daily: Daily[];
-	isLoading: boolean;
+	async update(id: string, data: Partial<Daily>): Promise<Daily> {
+		const response = await fetch(`/api/daily/${id}`, {
+			method: 'PATCH',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(data),
+		});
+		if (!response.ok) {
+			throw new Error('Failed to update daily');
+		}
+		const result = await response.json();
+		return result.daily;
+	},
+
+	async delete(id: string): Promise<void> {
+		const response = await fetch(`/api/daily/${id}`, {
+			method: 'DELETE',
+		});
+		if (!response.ok) {
+			throw new Error('Failed to delete daily');
+		}
+	},
+
+	// Daily-specific HTTP methods
+	async completeDaily(id: string): Promise<void> {
+		const response = await fetch(`/api/daily/${id}/complete`, {
+			method: 'PATCH',
+		});
+		if (!response.ok) {
+			throw new Error('Failed to complete daily');
+		}
+	},
+
+	async toggleComplete(id: string): Promise<void> {
+		const response = await fetch(`/api/daily/${id}/toggle`, {
+			method: 'PATCH',
+		});
+		if (!response.ok) {
+			throw new Error('Failed to toggle daily');
+		}
+	},
+
+	async reorderDailies(ids: string[]): Promise<void> {
+		const response = await fetch('/api/dailies/reorder', {
+			method: 'PATCH',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ ids }),
+		});
+		if (!response.ok) {
+			throw new Error('Failed to reorder dailies');
+		}
+	},
+
+	async addTask(dailyId: string, task: string): Promise<void> {
+		const response = await fetch(`/api/dailies/${dailyId}/tasks`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ task }),
+		});
+		if (!response.ok) {
+			throw new Error('Failed to add task');
+		}
+	},
+
+	async removeTask(dailyId: string, taskIndex: number): Promise<void> {
+		const response = await fetch(`/api/dailies/${dailyId}/tasks/${taskIndex}`, {
+			method: 'DELETE',
+		});
+		if (!response.ok) {
+			throw new Error('Failed to remove task');
+		}
+	},
+};
+
+// Create context using factory
+const {
+	Context: DailyContext,
+	Provider: BaseDailyProvider,
+	useContext: useBaseDailies,
+} = createEntityContext<Daily, DailyFormData>({
+	entityName: "Daily",
+	service: httpDailyService,
+	enableCache: true,
+	cacheTimeout: 5 * 60 * 1000, // 5 minutes
+});
+
+// Extended context type with daily-specific methods
+interface ExtendedDailyContextType {
+	dailies: Daily[];
+	loading: boolean;
 	error: string | null;
-	addDaily: (daily: Omit<Daily, "id" | "createdAt">) => Promise<void>;
-	updateDaily: (daily: Daily) => Promise<void>;
+	createDaily: (data: DailyFormData) => Promise<void>;
+	updateDaily: (id: string, data: Partial<Daily>) => Promise<void>;
 	deleteDaily: (id: string) => Promise<void>;
-	toggleComplete: (id: string) => Promise<void>;
-	getDaily: (id: string) => Daily | undefined;
-	reorderDaily: (daily: Daily[]) => Promise<void>;
-	completeDaily: (daily: Daily) => Promise<void>;
+	refreshDailies: () => Promise<void>;
+	// Daily-specific methods
+	completeDaily: (dailyId: string) => Promise<void>;
+	toggleComplete: (dailyId: string) => Promise<void>;
+	getCompletedDailies: () => Daily[];
+	getPendingDailies: () => Daily[];
+	getDailiesForToday: () => Daily[];
+	getDailiesByDifficulty: (difficulty: Daily["difficulty"]) => Daily[];
+	getDailiesByRepeatType: (repeatType: Daily["repeat"]["type"]) => Daily[];
+	reorderDailies: (dailyIds: string[]) => Promise<void>;
+	addTask: (dailyId: string, task: string) => Promise<void>;
+	removeTask: (dailyId: string, taskIndex: number) => Promise<void>;
 }
 
-const DailyContext = createContext<DailyContextType | undefined>(undefined);
-
-interface DailyProviderProps {
-	children: ReactNode;
-}
-
-export function DailyProvider({ children }: DailyProviderProps) {
-	const [daily, setDaily] = useState<Daily[]>([]);
-	const [isLoading, setIsLoading] = useState<boolean>(true);
-	const [error, setError] = useState<string | null>(null);
-
-	const dailyRepository = new ApiDailyRepository();
-	const createDailyUseCase = new CreateDailyUseCase(dailyRepository);
-	const updateDailyUseCase = new UpdateDailyUseCase(dailyRepository);
-	const deleteDailyUseCase = new DeleteDailyUseCase(dailyRepository);
-	const listDailyUseCase = new ListDailyUseCase(dailyRepository);
-
-	const fetchDaily = async () => {
-		try {
-			setIsLoading(true);
-			const result = await listDailyUseCase.execute();
-			setDaily(result.daily as Daily[]);
-			setError(null);
-		} catch (err) {
-			setError("Failed to fetch daily");
-			console.error('Daily fetch error:', err);
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		fetchDaily();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	const addDaily = async (daily: Omit<Daily, "id" | "createdAt">) => {
-		try {
-			const result = await createDailyUseCase.execute({
-				title: daily.title,
-				observations: daily.observations || "",
-				tasks: daily.tasks || [],
-				difficulty: (daily.difficulty as DailyDifficulty) || "Fácil",
-				startDate: daily.startDate || new Date(),
-				tags: daily.tags || [],
-				createdAt: new Date(),
-				repeat: {
-					type:
-						(daily.repeat?.type as DailyRepeatType) ||
-						"Diariamente",
-					frequency: 1,
-				},
-			});
-			setDaily((prevDaily) => [...prevDaily, result.daily as Daily]);
-		} catch (err) {
-			setError("Failed to add daily");
-			console.error(err);
-		}
-	};
-
-	const updateDaily = async (daily: Daily) => {
-		try {
-			const updatedDailyOutput = await updateDailyUseCase.execute(daily); // returns UpdateDailyOutput
-			const updatedDaily: Daily = {
-				...daily,
-				...updatedDailyOutput,
-			};
-			setDaily((prevDaily) =>
-				prevDaily.map((t) =>
-					t.id === updatedDaily.id ? updatedDaily : t,
-				),
-			);
-		} catch (err) {
-			setError("Failed to update daily");
-			console.error(err);
-		}
-	};
-
-	const deleteDaily = async (id: string) => {
-		try {
-			await deleteDailyUseCase.execute({ id });
-			setDaily((prevDaily) =>
-				prevDaily.filter((daily) => daily.id !== id),
-			);
-		} catch (err) {
-			setError("Failed to delete daily");
-			console.error(err);
-		}
-	};
-
-	const toggleComplete = async (id: string) => {
-		try {
-			const updatedDailyFromRepo =
-				await dailyRepository.toggleComplete(id);
-
-			const updatedDaily: Daily = {
-				...updatedDailyFromRepo,
-			} as Daily;
-
-			setDaily((prevDaily) =>
-				prevDaily.map((daily) =>
-					daily.id === id ? updatedDaily : daily,
-				),
-			);
-		} catch (err) {
-			setError("Falha ao completar tarefa");
-			console.error(err);
-		}
-	};
-
-	const getDaily = (id: string) => {
-		return daily.find((daily) => daily.id === id);
-	};
-
-	const reorderDaily = async (reorderedDaily: Daily[]) => {
-		try {
-			const dailyWithOrder = reorderedDaily.map((daily, index) => ({
-				...daily,
-				order: index,
-			}));
-
-			setDaily(dailyWithOrder);
-
-			for (const daily of dailyWithOrder) {
-				await updateDailyUseCase.execute(daily);
-			}
-		} catch (err) {
-			setError("Failed to reorder daily");
-			console.error(err);
-		}
-	};
-
-	const completeDaily = async (daily: Daily) => {
-		try {
-			const completeDailyWithLogUseCase = new CompleteDailyWithLogUseCase(
-				dailyRepository,
-				new ApiDailyLogRepository(),
-			);
-
-			const result = await completeDailyWithLogUseCase.execute({ daily });
-			setDaily((prevDaily) =>
-				prevDaily.map((d) =>
-					d.id === daily.id ? result.updatedDaily : d,
-				),
-			);
-		} catch (err) {
-			setError("Failed to complete daily");
-			console.error(err);
-		}
-	};
-
-	const value = {
-		daily: daily
-			.filter(shouldShowDailyToday)
-			.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-		isLoading,
-		error,
-		addDaily,
-		updateDaily,
-		deleteDaily,
-		toggleComplete,
-		getDaily,
-		reorderDaily,
-		completeDaily,
-	};
-
+// Enhanced provider with daily-specific functionality
+export function DailyProvider({ children }: { children: React.ReactNode }) {
 	return (
-		<DailyContext.Provider value={value}>{children}</DailyContext.Provider>
+		<BaseDailyProvider>
+			<DailyContextEnhancer>{children}</DailyContextEnhancer>
+		</BaseDailyProvider>
 	);
 }
 
-// Custom hook to use the DailyContext
-export function useDailyContext() {
-	const context = useContext(DailyContext);
+// Context enhancer component
+function DailyContextEnhancer({ children }: { children: React.ReactNode }) {
+	const baseContext = useBaseDailies();
+
+	// Daily-specific methods
+	const completeDaily = async (dailyId: string) => {
+		await httpDailyService.completeDaily(dailyId);
+		await baseContext.refresh();
+	};
+
+	const toggleComplete = async (dailyId: string) => {
+		await httpDailyService.toggleComplete(dailyId);
+		await baseContext.refresh();
+	};
+
+	const getCompletedDailies = () => {
+		return baseContext.entities.filter((daily) => daily.lastCompletedDate);
+	};
+
+	const getPendingDailies = () => {
+		return baseContext.entities.filter((daily) => !daily.lastCompletedDate);
+	};
+
+	const getDailiesForToday = () => {
+		// This would use the service's findDueToday method
+		// For now, we'll filter based on completion status and today's date
+		const today = new Date().toISOString().split("T")[0];
+		return baseContext.entities.filter((daily) => {
+			// If already completed today, don't show
+			if (daily.lastCompletedDate && daily.lastCompletedDate === today) {
+				return false;
+			}
+			// Show if not completed or completed on a different day
+			return true;
+		});
+	};
+
+	const getDailiesByDifficulty = (difficulty: Daily["difficulty"]) => {
+		return baseContext.entities.filter((daily) => daily.difficulty === difficulty);
+	};
+
+	const getDailiesByRepeatType = (repeatType: Daily["repeat"]["type"]) => {
+		return baseContext.entities.filter((daily) => daily.repeat.type === repeatType);
+	};
+
+	const reorderDailies = async (dailyIds: string[]) => {
+		await httpDailyService.reorderDailies(dailyIds);
+		await baseContext.refresh();
+	};
+
+	const addTask = async (dailyId: string, task: string) => {
+		await httpDailyService.addTask(dailyId, task);
+		await baseContext.refresh();
+	};
+
+	const removeTask = async (dailyId: string, taskIndex: number) => {
+		await httpDailyService.removeTask(dailyId, taskIndex);
+		await baseContext.refresh();
+	};
+
+	// Enhanced context value
+	const enhancedContext: ExtendedDailyContextType = {
+		dailies: baseContext.entities,
+		loading: baseContext.loading,
+		error: baseContext.error,
+		createDaily: baseContext.create,
+		updateDaily: baseContext.update,
+		deleteDaily: baseContext.delete,
+		refreshDailies: baseContext.refresh,
+		completeDaily,
+		toggleComplete,
+		getCompletedDailies,
+		getPendingDailies,
+		getDailiesForToday,
+		getDailiesByDifficulty,
+		getDailiesByRepeatType,
+		reorderDailies,
+		addTask,
+		removeTask,
+	};
+
+	return (
+		<EnhancedDailyContext.Provider value={enhancedContext}>
+			{children}
+		</EnhancedDailyContext.Provider>
+	);
+}
+
+// Enhanced context
+const EnhancedDailyContext = React.createContext<ExtendedDailyContextType | undefined>(undefined);
+
+// Hook to use enhanced daily context
+export function useDailies(): ExtendedDailyContextType {
+	const context = React.useContext(EnhancedDailyContext);
 	if (context === undefined) {
-		throw new Error("useDailyContext must be used within a DailyProvider");
+		throw new Error("useDailies deve ser usado dentro de um DailyProvider");
 	}
 	return context;
 }
+
+// Export for backward compatibility
+export { useDailies as useDailyContext };

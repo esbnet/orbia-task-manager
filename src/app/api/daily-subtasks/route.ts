@@ -1,4 +1,4 @@
-import { PrismaDailySubtaskRepository } from "@/infra/repositories/database/prisma-daily-subtask-repository";
+import { PrismaDailySubtaskRepository } from "@/infra/database/prisma/prisma-daily-subtask-repository";
 import type { NextRequest } from "next/server";
 
 const subtaskRepo = new PrismaDailySubtaskRepository();

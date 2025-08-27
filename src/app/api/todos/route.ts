@@ -1,8 +1,8 @@
-import { PrismaTodoRepository } from "@/infra/repositories/database/prisma-todo-repository";
-import { CreateTodoUseCase } from "@/use-cases/todo/create-todo/create-todo-use-case";
-import { DeleteTodoUseCase } from "@/use-cases/todo/delete-todo-use-case/delete-todo-use-case";
-import { ListTodoUseCase } from "@/use-cases/todo/list-todo-use-case/list-todo-use-case";
-import { UpdateTodoUseCase } from "@/use-cases/todo/update-todo/update-todo-use-case";
+import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
+import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo-use-case/delete-todo-use-case";
+import { ListTodoUseCase } from "@/application/use-cases/todo/list-todo-use-case/list-todo-use-case";
+import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
+import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import type { NextRequest } from "next/server";
 
 // Instância única do repositório

@@ -1,5 +1,6 @@
 export interface Goal {
 	id: string;
+	userId: string;
 	title: string;
 	description: string;
 	targetDate: Date;
@@ -7,7 +8,6 @@ export interface Goal {
 	priority: GoalPriority;
 	category: GoalCategory;
 	tags: string[];
-	userId: string;
 	createdAt: Date;
 	updatedAt: Date;
 }

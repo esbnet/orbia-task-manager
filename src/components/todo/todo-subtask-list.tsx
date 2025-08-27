@@ -21,10 +21,45 @@ export function TodoSubtaskList({
 }: TodoSubtaskListProps) {
 	const [subtasks, setSubtasks] = useState<TodoSubtask[]>(initialSubtasks);
 	const [newTaskTitle, setNewTaskTitle] = useState("");
+	const [isLoadingSubtasks, setIsLoadingSubtasks] = useState(false);
 
+	// Fetch subtasks from API when component loads or todoId changes
 	useEffect(() => {
-		setSubtasks(initialSubtasks);
-	}, [initialSubtasks]);
+		const fetchSubtasks = async () => {
+			if (!todoId) return;
+			
+			setIsLoadingSubtasks(true);
+			try {
+				const response = await fetch(`/api/todo-subtasks?todoId=${todoId}`);
+				if (response.ok) {
+					const data = await response.json();
+					setSubtasks(data.subtasks || []);
+					onSubtasksChange?.(data.subtasks || []);
+				} else {
+					// Fallback to initialSubtasks if API fails
+					setSubtasks(initialSubtasks);
+				}
+			} catch (error) {
+				console.error('Error fetching subtasks:', error);
+				// Fallback to initialSubtasks if API fails
+				setSubtasks(initialSubtasks);
+			} finally {
+				setIsLoadingSubtasks(false);
+			}
+		};
+
+		fetchSubtasks();
+	}, [todoId]); // Only depend on todoId, not initialSubtasks
+
+	// Also update from initialSubtasks when they change (as fallback)
+	useEffect(() => {
+		if (!isLoadingSubtasks) {
+			// Only use initialSubtasks if we haven't successfully loaded from API
+			if (subtasks.length === 0 && initialSubtasks.length > 0) {
+				setSubtasks(initialSubtasks);
+			}
+		}
+	}, [initialSubtasks, isLoadingSubtasks, subtasks.length]);
 
 
 

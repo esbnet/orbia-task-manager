@@ -10,13 +10,13 @@ import {
 
 import type { Todo } from "@/types";
 
-import { ApiTodoLogRepository } from "@/infra/repositories/backend/api-todo-log-repository";
-import { ApiTodoRepository } from "@/infra/repositories/backend/api-todo-repository";
-import { CompleteTodoWithLogUseCase } from "@/use-cases/todo/complete-todo-with-log/complete-todo-with-log-use-case";
-import { CreateTodoUseCase } from "@/use-cases/todo/create-todo/create-todo-use-case";
-import { DeleteTodoUseCase } from "@/use-cases/todo/delete-todo-use-case/delete-todo-use-case";
-import { ListTodoUseCase } from "@/use-cases/todo/list-todo-use-case/list-todo-use-case";
-import { UpdateTodoUseCase } from "@/use-cases/todo/update-todo/update-todo-use-case";
+import { CompleteTodoWithLogUseCase } from "@/application/use-cases/todo/complete-todo-with-log/complete-todo-with-log-use-case";
+import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
+import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo-use-case/delete-todo-use-case";
+import { ListTodoUseCase } from "@/application/use-cases/todo/list-todo-use-case/list-todo-use-case";
+import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
+import { ApiTodoLogRepository } from "@/infra/repositories/http/api-todo-log-repository";
+import { ApiTodoRepository } from "@/infra/repositories/http/api-todo-repository";
 
 interface TodoContextType {
 	todos: Todo[];

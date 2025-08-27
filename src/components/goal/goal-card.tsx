@@ -1,14 +1,15 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
 	Calendar,
 	CheckCircle,
+	Edit,
 	Tag,
 	Target,
-	XCircle,
+	XCircle
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,8 @@ import { useState } from "react";
 
 interface GoalCardProps {
 	goal: Goal;
-	onEdit?: (goal: Goal) => void;
 	onDelete?: (goalId: string) => void;
+	onEdit?: (goal: Goal) => void;
 	onStatusChange?: (goalId: string, status: Goal["status"]) => void;
 }
 
@@ -47,15 +48,14 @@ const categoryIcons = {
 export function GoalCard({
 	goal,
 	onEdit,
-	onDelete,
 	onStatusChange,
 }: GoalCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const isOverdue =
-		goal.status === "IN_PROGRESS" && goal.targetDate < new Date();
+		goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date();
 	const daysUntilTarget = Math.ceil(
-		(goal.targetDate.getTime() - new Date().getTime()) /
-			(1000 * 60 * 60 * 24),
+		(new Date(goal.targetDate).getTime() - new Date().getTime()) /
+		(1000 * 60 * 60 * 24),
 	);
 
 	const CategoryIcon = categoryIcons[goal.category];
@@ -66,9 +66,8 @@ export function GoalCard({
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${
-				isOverdue ? "border-red-300 bg-red-50" : ""
-			}`}
+			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""
+				}`}
 		>
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start">
@@ -82,13 +81,18 @@ export function GoalCard({
 								variant="outline"
 								className={priorityColors[goal.priority]}
 							>
-								{goal.priority}
+								{goal.priority === "HIGH" && "Alta"}
+								{goal.priority === "MEDIUM" && "Média"}
+								{goal.priority === "LOW" && "Baixa"}
+								{goal.priority === "URGENT" && "Urgente"}
 							</Badge>
 							<Badge
 								variant="outline"
 								className={statusColors[goal.status]}
 							>
-								{goal.status}
+								{goal.status === "IN_PROGRESS" && "Em andamento"}
+								{goal.status === "COMPLETED" && "Concluído"}
+								{goal.status === "CANCELLED" && "Cancelado"}
 							</Badge>
 						</div>
 					</div>
@@ -96,6 +100,7 @@ export function GoalCard({
 						{goal.status === "IN_PROGRESS" && (
 							<>
 								<Button
+									title="Concluído"
 									size="sm"
 									variant="outline"
 									onClick={() =>
@@ -106,6 +111,7 @@ export function GoalCard({
 									<CheckCircle className="w-4 h-4" />
 								</Button>
 								<Button
+									title="Cancelar"
 									size="sm"
 									variant="outline"
 									onClick={() =>
@@ -119,23 +125,15 @@ export function GoalCard({
 						)}
 						{onEdit && (
 							<Button
+								title="Editar"
 								size="sm"
 								variant="outline"
 								onClick={() => onEdit(goal)}
 							>
-								Editar
+								<Edit className="w-4 h-4" />
 							</Button>
 						)}
-						{onDelete && (
-							<Button
-								size="sm"
-								variant="outline"
-								onClick={() => onDelete(goal.id)}
-								className="hover:bg-red-50 border-red-200 text-red-600"
-							>
-								Excluir
-							</Button>
-						)}
+
 					</div>
 				</div>
 			</CardHeader>
@@ -151,7 +149,7 @@ export function GoalCard({
 					<Calendar className="w-4 h-4" />
 					<span>
 						Meta:{" "}
-						{format(goal.targetDate, "dd 'de' MMMM 'de' yyyy", {
+						{format(new Date(goal.targetDate), "dd 'de' MMMM 'de' yyyy", {
 							locale: ptBR,
 						})}
 					</span>

@@ -15,6 +15,5 @@ export default function HomePage() {
                 <ClientProviders />
             </div>
         </main>
-
     )
 }

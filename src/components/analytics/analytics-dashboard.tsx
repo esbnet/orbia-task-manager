@@ -54,11 +54,6 @@ export function AnalyticsDashboard() {
 		null,
 	);
 
-	useEffect(() => {
-		if (goals.length > 0) {
-			calculateAnalytics();
-		}
-	}, [goals]);
 
 	const calculateAnalytics = () => {
 		const now = new Date();
@@ -132,6 +127,12 @@ export function AnalyticsDashboard() {
 			monthlyTrends,
 		});
 	};
+
+	useEffect(() => {
+		if (goals.length > 0) {
+			calculateAnalytics();
+		}
+	}, [calculateAnalytics, goals]);
 
 	const getStartDate = (range: string) => {
 		const now = new Date();

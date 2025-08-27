@@ -1,12 +1,12 @@
 "use client";
 
+import { CreateTodoSubtaskUseCase } from "@/application/use-cases/todo-subtask/create-todo-subtask/create-todo-subtask-use-case";
+import { DeleteTodoSubtaskUseCase } from "@/application/use-cases/todo-subtask/delete-todo-subtask/delete-todo-subtask-use-case";
+import { UpdateTodoSubtaskUseCase } from "@/application/use-cases/todo-subtask/update-todo-subtask/update-todo-subtask-use-case";
 import { TaskTitle } from "@/domain/value-objects/task-title";
-import { ApiTodoSubtaskRepository } from "@/infra/repositories/backend/api-todo-subtask-repository";
+import { ApiTodoSubtaskRepository } from "@/infra/repositories/http/api-todo-subtask-repository";
 import { ErrorHandler } from "@/infra/services/error-handler";
 import type { TodoSubtask } from "@/types";
-import { CreateTodoSubtaskUseCase } from "@/use-cases/todo-subtask/create-todo-subtask/create-todo-subtask-use-case";
-import { DeleteTodoSubtaskUseCase } from "@/use-cases/todo-subtask/delete-todo-subtask/delete-todo-subtask-use-case";
-import { UpdateTodoSubtaskUseCase } from "@/use-cases/todo-subtask/update-todo-subtask/update-todo-subtask-use-case";
 import { type ReactNode, createContext, useContext } from "react";
 
 interface TodoSubtaskContextType {
@@ -24,10 +24,10 @@ const TodoSubtaskContext = createContext<TodoSubtaskContextType | undefined>(
 	undefined,
 );
 
-const repository = new ApiTodoSubtaskRepository();
-const createUseCase = new CreateTodoSubtaskUseCase(repository);
-const updateUseCase = new UpdateTodoSubtaskUseCase(repository);
-const deleteUseCase = new DeleteTodoSubtaskUseCase(repository);
+const todoSubtaskRepository = new ApiTodoSubtaskRepository();
+const createUseCase = new CreateTodoSubtaskUseCase(todoSubtaskRepository);
+const updateUseCase = new UpdateTodoSubtaskUseCase(todoSubtaskRepository);
+const deleteUseCase = new DeleteTodoSubtaskUseCase(todoSubtaskRepository);
 
 interface TodoSubtaskProviderProps {
 	children: ReactNode;

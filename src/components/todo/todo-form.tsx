@@ -1,6 +1,5 @@
-'use client';
+"use client";
 
-import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import {
 	Dialog,
 	DialogClose,
@@ -24,30 +23,38 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { format, setDefaultOptions } from "date-fns";
+import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect } from "../ui/multi-select";
-import type { Todo } from "../../types";
-import { TodoCard } from "./todo-card";
+import { useTodoContext } from "@/contexts/todo-context";
+import { useTags } from "@/hooks/use-tags";
 import type { TodoDifficulty } from "@/types/todo";
-import { TodoSubtaskList } from "./todo-subtask-list";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useState } from "react";
-import { useTags } from "@/hooks/use-tags";
-import { useTodoContext } from "@/contexts/todo-context";
+import type { Todo } from "../../types";
+import { MultiSelect } from "../ui/multi-select";
+import { TodoCard } from "./todo-card";
+import { TodoSubtaskList } from "./todo-subtask-list";
 
 setDefaultOptions({ locale: ptBR });
 
 interface TodoFormProps {
 	todo: Todo;
-	dragHandleProps?: any;
+	onSubmit?: (todo: Omit<Todo, "id" | "createdAt">) => Promise<void>;
+	onCancel?: () => void;
+	open?: boolean;
 }
 
-export function TodoForm({ todo, dragHandleProps }: TodoFormProps) {
+export function TodoForm({
+	todo,
+	onSubmit,
+	onCancel,
+	open = false,
+}: TodoFormProps) {
 	const { updateTodo } = useTodoContext();
 	const { tagOptions } = useTags();
 
@@ -59,9 +66,31 @@ export function TodoForm({ todo, dragHandleProps }: TodoFormProps) {
 	const [startDate, setStartDate] = useState(todo.startDate || new Date());
 	const [tags, setTags] = useState<string[]>(todo.tags || []);
 
-	// const [selectedTags, setSelectedTags] = useState<string[]>([]);
-	const [open, setOpen] = useState(false);
+	const [internalOpen, setInternalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+
+	// Usar prop externa se fornecida, senão usar estado interno
+	const isOpen = open !== undefined ? open : internalOpen;
+
+	// Resetar campos quando o todo prop mudar
+	useEffect(() => {
+		// Se o todo tem ID, é uma edição, senão é criação
+		if (todo.id) {
+			// Modo edição: preencher com dados do todo
+			setTitle(todo.title || "");
+			setObservations(todo.observations || "");
+			setDifficult(todo.difficulty || "Fácil");
+			setStartDate(todo.startDate || new Date());
+			setTags(todo.tags || []);
+		} else {
+			// Modo criação: limpar todos os campos
+			setTitle("");
+			setObservations("");
+			setDifficult("Fácil");
+			setStartDate(new Date());
+			setTags([]);
+		}
+	}, [todo.id, todo.title, todo.observations, todo.difficulty, todo.startDate, todo.tags]);
 
 	async function handleUpdateTodo(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -71,6 +100,19 @@ export function TodoForm({ todo, dragHandleProps }: TodoFormProps) {
 
 		setIsLoading(true);
 		try {
+			if (onSubmit && !todo.id) {
+				await onSubmit({
+					title,
+					observations,
+					tasks: todo.tasks || [],
+					difficulty,
+					startDate,
+					tags,
+				} as Omit<Todo, "id" | "createdAt">);
+				setInternalOpen(false);
+				if (onCancel) onCancel();
+				return;
+			}
 			await updateTodo({
 				...todo,
 				title,
@@ -81,7 +123,8 @@ export function TodoForm({ todo, dragHandleProps }: TodoFormProps) {
 			} as Todo);
 
 			toast.success("Tarefa atualizada com sucesso!");
-			setOpen(false);
+			setInternalOpen(false);
+			if (onCancel) onCancel();
 		} catch (error) {
 			toast.error(`Erro ao atualizar tarefa${error}`);
 			console.error("Erro ao atualizar tarefa", error);
@@ -92,12 +135,21 @@ export function TodoForm({ todo, dragHandleProps }: TodoFormProps) {
 
 	return (
 		<>
-			<TodoCard
-				todo={todo}
-				dragHandleProps={dragHandleProps}
-				onEditClick={() => setOpen(true)}
-			/>
-			<Dialog open={open} onOpenChange={setOpen}>
+			{/* Só renderizar TodoCard se não estiver usando prop externa open */}
+			{open === undefined && (
+				<TodoCard
+					todo={todo}
+				/>
+			)}
+			<Dialog
+				open={isOpen}
+				onOpenChange={(v) => {
+					if (open === undefined) {
+						setInternalOpen(v);
+					}
+					if (!v && onCancel) onCancel();
+				}}
+			>
 				<DialogContent className="flex flex-col gap-4 opacity-80 shadow-xl backdrop-blur-sm backdrop-opacity-0">
 					<DialogHeader className="flex flex-col gap-1">
 						<DialogTitle>Editar Afazer</DialogTitle>
@@ -222,7 +274,11 @@ export function TodoForm({ todo, dragHandleProps }: TodoFormProps) {
 							<DialogClose asChild>
 								<Button variant="link">Cancel</Button>
 							</DialogClose>
-							<Button type="submit" className="flex-1" disabled={isLoading}>
+							<Button
+								type="submit"
+								className="flex-1"
+								disabled={isLoading}
+							>
 								<SaveIcon />
 								{isLoading ? "Salvando..." : "Salvar"}
 							</Button>

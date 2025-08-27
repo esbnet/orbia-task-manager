@@ -1,110 +1,174 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Todo, TodoDifficulty } from "@/types/todo";
+import { ListChecks, Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useTodoContext } from "@/contexts/todo-context";
-import type { Todo } from "@/types";
-import { DndContext, type DragEndEvent, closestCenter } from "@dnd-kit/core";
-import {
-	SortableContext,
-	arrayMove,
-	useSortable,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { InfoIcon } from "lucide-react";
-import { Loading } from "../ui/loading";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import AddTodo from "./add-todo";
+import { useState } from "react";
+import { toast } from "sonner";
+import { TodoCard } from "./todo-card";
 import { TodoForm } from "./todo-form";
 
+const defaultTodo: Todo = {
+	id: "",
+	title: "",
+	observations: "",
+	tasks: [],
+	difficulty: "Fácil" as TodoDifficulty,
+	startDate: new Date(),
+	tags: [],
+	createdAt: new Date(),
+};
+
 export const TodoColumn = () => {
+	const { todos, addTodo, deleteTodo } = useTodoContext();
+	const [isFormOpen, setIsFormOpen] = useState(false);
+	const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [todoToDelete, setTodoToDelete] = useState<Todo | null>(null);
+
+	const inProgressTodos = todos;
+
+	// Funções de controle do formulário
+	const openEditForm = (todo: Todo) => {
+		setEditingTodo(todo);
+		setIsFormOpen(true);
+	};
+
+	const closeForm = () => {
+		setIsFormOpen(false);
+		setEditingTodo(null);
+	};
+
+	// Criar novo todo
+	const handleCreateTodo = async (todoData: Omit<Todo, "id" | "createdAt">) => {
+		try {
+			await addTodo(todoData);
+			toast.success(`Todo "${todoData.title}" criado com sucesso!`);
+			setIsFormOpen(false);
+		} catch (error) {
+			toast.error("Erro ao criar todo. Tente novamente.");
+			console.error("Erro ao criar todo:", error);
+		}
+	};
+
+	// Editar todo existente
+	const handleEditTodo = async (todoData: Omit<Todo, "id" | "createdAt">) => {
+		try {
+			// TODO: Implementar updateTodo no contexto
+			toast.success(`Todo "${todoData.title}" atualizado com sucesso!`);
+			setIsFormOpen(false);
+			setEditingTodo(null);
+		} catch (error) {
+			toast.error("Erro ao atualizar todo. Tente novamente.");
+			console.error("Erro ao atualizar todo:", error);
+		}
+	};
+
+	// Deletar todo
+	const handleDeleteTodo = (id: string) => {
+		const todo = todos.find(t => t.id === id);
+		if (todo) {
+			setTodoToDelete(todo);
+			setIsDeleteDialogOpen(true);
+		}
+	};
+
+	const confirmDeleteTodo = async () => {
+		if (todoToDelete) {
+			try {
+				await deleteTodo(todoToDelete.id);
+				toast.success(`Todo "${todoToDelete.title}" removido com sucesso!`);
+				setIsDeleteDialogOpen(false);
+				setTodoToDelete(null);
+			} catch (error) {
+				toast.error("Erro ao remover todo. Tente novamente.");
+				console.error("Erro ao remover todo:", error);
+			}
+		}
+	};
+
 	return (
-		<div
-			className="flex flex-col flex-1 gap-4 p-2 border rounded-lg overflow-hidden animate-[slideUp_1s_ease-in-out_forwards]"
-		>
+		<div className="flex flex-col gap-4">
+			<Card className="bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200">
+				<CardHeader className="pb-3">
+					<div className="flex justify-between items-center">
+						<div className="flex items-center gap-2">
+							<ListChecks className="w-6 h-6 text-blue-600" />
+							<CardTitle className="font-bold text-blue-900 text-xl">
+								Afazeres
+							</CardTitle>
+						</div>
+						<Button
+							onClick={() => setIsFormOpen(true)}
+							size="sm"
+							className="bg-blue-600 hover:bg-blue-700 text-white"
+						>
+							<Plus className="mr-1 w-4 h-4" />
+							Novo Afazer
+						</Button>
+					</div>
+				</CardHeader>
+				<CardContent className="pt-0">
+					<div className="flex items-center gap-4 text-blue-700 text-sm">
+						<div className="flex items-center gap-1">
+							<span>{inProgressTodos.length} ativos</span>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
 
-			<h2 className="relative bg-todo p-2 border rounded-lg font-semibold text-foreground text-2xl text-center">
-				Afazeres
-				<Tooltip >
-					<TooltipTrigger asChild className="top-1 right-1 absolute">
-						<InfoIcon className="w-4 h-4 text-muted-foreground/50" />
-					</TooltipTrigger>
-					<TooltipContent className="w-32">
-						<span className="text-muted-foreground text-xs">Afazeres precisam ser concluídos apenas uma vez. Adicione listas de tarefas em seus Afazeres para aumentar o valor deles.</span>
-					</TooltipContent>
-				</Tooltip>
-			</h2>
-			<AddTodo />
-
-			<Todos />
-		</div>
-	);
-};
-
-const Todos = () => {
-	const { todos, isLoading, reorderTodos } = useTodoContext();
-
-	if (isLoading) {
-		return <Loading text="Carregando afazeres..." size="lg" />;
-	}
-
-	if (todos.length === 0) {
-		return (
-			<div className="flex flex-1 justify-center items-center font-lg text-muted-foreground">
-				Nenhum afazer ativo...{" "}
+			<div className="space-y-4">
+				{inProgressTodos.length > 0 ? (
+					inProgressTodos.map((todo) => (
+						<TodoCard
+							key={todo.id}
+							todo={todo}
+							onEdit={openEditForm}
+						/>
+					))
+				) : (
+					<Card className="bg-gray-50 border-gray-300 border-dashed">
+						<CardContent className="py-8 text-center">
+							<ListChecks className="mx-auto mb-3 w-12 h-12 text-gray-400" />
+							<h3 className="mb-2 font-medium text-gray-600 text-lg">
+								Nenhum afazer cadastrado
+							</h3>
+							<p className="mb-4 text-gray-500">
+								Comece criando seu primeiro afazer para
+								organizar suas tarefas
+							</p>
+							<Button
+								onClick={() => setIsFormOpen(true)}
+								className="bg-blue-600 hover:bg-blue-700"
+							>
+								<Plus className="mr-2 w-4 h-4" />
+								Criar Primeiro Afazer
+							</Button>
+						</CardContent>
+					</Card>
+				)}
 			</div>
-		);
-	}
 
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
+			{/* Todo Form Modal */}
+			<TodoForm
+				todo={editingTodo || defaultTodo}
+				onSubmit={editingTodo ? handleEditTodo : handleCreateTodo}
+				onCancel={closeForm}
+				open={isFormOpen}
+			/>
 
-		if (!over || active.id === over.id) return;
-
-		const oldIndex = todos.findIndex((todo) => todo.id === active.id);
-		const newIndex = todos.findIndex((todo) => todo.id === over.id);
-
-		const reorderedTodos = arrayMove(todos, oldIndex, newIndex);
-		reorderTodos(reorderedTodos);
-	};
-
-	return (
-		<DndContext
-			collisionDetection={closestCenter}
-			onDragEnd={handleDragEnd}
-		>
-			<SortableContext
-				items={todos.map((t) => t.id)}
-				strategy={verticalListSortingStrategy}
-			>
-				<div className="flex flex-col gap-2">
-					{todos.map((todo: Todo) => {
-						return <SortableTodoItem key={todo.id} todo={todo} />;
-					})}
-				</div>
-			</SortableContext>
-		</DndContext>
-	);
-};
-
-const SortableTodoItem = ({ todo }: { todo: Todo }) => {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-		isDragging,
-	} = useSortable({
-		id: todo.id,
-	});
-
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-		opacity: isDragging ? 0.5 : 1,
-	};
-
-	return (
-		<div ref={setNodeRef} style={style} {...attributes}>
-			<TodoForm todo={todo} dragHandleProps={listeners} />
+			{/* Delete Confirmation Dialog */}
+			<ConfirmationDialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setIsDeleteDialogOpen}
+				onConfirm={confirmDeleteTodo}
+				title="Remover Todo"
+				description={`Tem certeza que deseja remover o todo "${todoToDelete?.title}"? Esta ação não pode ser desfeita.`}
+				confirmText="Remover"
+				cancelText="Cancelar"
+			/>
 		</div>
 	);
 };

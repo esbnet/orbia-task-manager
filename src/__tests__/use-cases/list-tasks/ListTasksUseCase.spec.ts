@@ -1,9 +1,9 @@
-import { InJsonFileTodoRepository } from "@/infra/repositories/frontend/json-file-todo-repository";
-import { ListTodosUseCase } from "@/use-cases/todo/list-todo/list-todo-use-case";
+import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
+import { ApiTodoRepository } from "@/infra/repositories/http/api-todo-repository";
 
 describe("Use Case: ListTodosUseCase", () => {
 	it("deve retornar uma lista de tarefas", async () => {
-		const repo = new InJsonFileTodoRepository();
+		const repo = new ApiTodoRepository();
 		const useCase = new ListTodosUseCase(repo);
 
 		const result = await useCase.execute();

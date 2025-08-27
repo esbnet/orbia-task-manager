@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import type { Goal } from "@/domain/entities/goal";
-import { PrismaGoalRepository } from "@/infra/repositories/database/prisma-goal-repository";
+import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
