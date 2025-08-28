@@ -108,7 +108,6 @@ export function DailyCard({
 										</Button>
 									)}
 								</div>
-
 							)}
 						</div>
 

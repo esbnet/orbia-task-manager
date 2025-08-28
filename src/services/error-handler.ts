@@ -1,5 +1,6 @@
 // Centralized Error Handling System
 
+
 // Error types
 export enum ErrorType {
 	VALIDATION = "VALIDATION",
@@ -18,7 +19,7 @@ export class AppError extends Error {
 		message: string,
 		public type: ErrorType,
 		public code?: string,
-		public details?: any,
+		public details?: unknown,
 		public originalError?: unknown
 	) {
 		super(message);
@@ -32,7 +33,7 @@ export interface ErrorContext {
 	entity?: string;
 	userId?: string;
 	timestamp: Date;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 // Error handler class
@@ -214,7 +215,7 @@ export class ErrorHandler {
 export const createErrorContext = (
 	operation: string,
 	entity?: string,
-	metadata?: Record<string, any>
+	metadata?: Record<string, unknown>
 ): ErrorContext => ({
 	operation,
 	entity,

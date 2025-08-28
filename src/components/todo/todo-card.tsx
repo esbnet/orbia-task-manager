@@ -49,7 +49,7 @@ export function TodoCard({
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start">
 					<div className="flex-1">
-						<div className="flex items-center justify-between mb-2">
+						<div className="flex justify-between items-center mb-2">
 							<div className="flex items-center gap-2">
 								<h3 className="font-semibold text-gray-900 line-clamp-1">
 									{todo.title}
@@ -58,23 +58,25 @@ export function TodoCard({
 									<CheckCircle className="w-5 h-5 text-green-600" />
 								)}
 							</div>
-							
+
 							{/* Botões movidos para o topo */}
 							<div className="flex items-center gap-1">
 								{!isCompleted && (
 									<Button
+										title="Marcar como concluído"
+										variant={"ghost"}
 										onClick={handleComplete}
 										size="sm"
-										className="bg-blue-600 hover:bg-blue-700 text-white"
+										className="hover:bg-blue-50 border-blue-200 text-blue-600"
+
 									>
-										<CheckCircle className="mr-1 w-4 h-4" />
-										Completar
+										<CheckCircle className="w-4 h-4" />
 									</Button>
 								)}
 								{onEdit && (
 									<Button
 										onClick={() => onEdit(todo)}
-										variant="outline"
+										variant="ghost"
 										size="sm"
 									>
 										<Edit className="w-4 h-4" />
@@ -108,10 +110,14 @@ export function TodoCard({
 				{/* Área das tags com ícone */}
 				{todo.tags && todo.tags.length > 0 && (
 					<div className="flex items-center gap-2">
-						<Tag className="w-4 h-4 text-gray-500" />
 						<div className="flex gap-1">
 							{todo.tags.slice(0, 2).map((tag) => (
-								<Badge key={tag} variant="outline" className="text-xs">
+								<Badge
+									key={tag}
+									variant="secondary"
+									className="text-xs"
+								>
+									<Tag className="mr-1 w-3 h-3" />
 									{tag}
 								</Badge>
 							))}

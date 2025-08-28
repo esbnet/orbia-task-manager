@@ -11,16 +11,16 @@ export class ApiDailyLogRepository implements DailyLogRepository {
 		this.httpClient = httpClient || new FetchHttpClient();
 	}
 	findByEntityId(entityId: string): Promise<DailyLog[]> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + entityId);
 	}
 	findByDateRange(startDate: Date, endDate: Date): Promise<DailyLog[]> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + startDate + endDate);
 	}
 	deleteOlderThan(date: Date): Promise<void> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + date);
 	}
 	findById(id: string): Promise<DailyLog | null> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 	list(): Promise<DailyLog[]> {
 		throw new Error("Method not implemented.");

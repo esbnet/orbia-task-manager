@@ -11,22 +11,22 @@ export class ApiDailySubtaskRepository implements DailySubtaskRepository {
 		this.httpClient = httpClient || new FetchHttpClient();
 	}
 	findByParentId(parentId: string): Promise<DailySubtask[]> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + parentId);
 	}
 	deleteByParentId(parentId: string): Promise<void> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + parentId);
 	}
 	reorderByParentId(parentId: string, ids: string[]): Promise<void> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + parentId + ids);
 	}
 	findById(id: string): Promise<DailySubtask | null> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 	list(): Promise<DailySubtask[]> {
 		throw new Error("Method not implemented.");
 	}
 	toggleComplete(id: string): Promise<DailySubtask> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 
 	async listByDailyId(dailyId: string): Promise<DailySubtask[]> {

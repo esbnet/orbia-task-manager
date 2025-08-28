@@ -64,7 +64,7 @@ export function TodoProvider({ children }: TodoProviderProps) {
 
 	useEffect(() => {
 		fetchTodos();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+
 	}, []);
 
 	const addTodo = async (todo: Omit<Todo, "id" | "createdAt">) => {

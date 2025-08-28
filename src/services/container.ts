@@ -19,7 +19,8 @@ type ServiceRegistry = {
 // Container class
 class ServiceContainer {
 	private services: Partial<ServiceRegistry> = {};
-	private repositories: Map<string, any> = new Map();
+	// tslint-disable-line @typescript-eslint/no-explicit-any
+	private repositories: Map<string, any> = new Map(); 
 
 	// Repository getters with lazy initialization
 	private getGoalRepository() {
@@ -88,7 +89,7 @@ class ServiceContainer {
 	}
 
 	// Method to register custom repositories
-	registerRepository(key: string, repository: any): void {
+	registerRepository(key: string, repository: unknown): void {
 		this.repositories.set(key, repository);
 	}
 

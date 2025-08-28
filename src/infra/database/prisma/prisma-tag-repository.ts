@@ -116,7 +116,7 @@ export class PrismaTagRepository implements TagRepository {
 		return this.toDomain(updated);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	
 	async toggleComplete(_id: string): Promise<Tag> {
 		throw new Error("Toggle complete not implemented for tags");
 	}

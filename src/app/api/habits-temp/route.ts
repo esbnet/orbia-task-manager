@@ -37,7 +37,7 @@ export async function GET() {
 		
 	} catch (error) {
 		console.error('⚠️  HABITS TEMP - ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
+		return Response.json({ error: error }, { status: 500 });
 	}
 }
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 			category,
 			tags,
 			reset,
-			createdAt
+			// createdAt
 		} = await request.json();
 		
 		// Para desenvolvimento, usar um userId padrão se não há usuário logado
@@ -88,6 +88,6 @@ export async function POST(request: NextRequest) {
 		
 	} catch (error) {
 		console.error('⚠️  HABITS TEMP - POST ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
+		return Response.json({ error: error}, { status: 500 });
 	}
 }

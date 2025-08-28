@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
 		
 	} catch (error) {
 		console.error('🔧 HABITS ADMIN - ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
+		return Response.json({ error: error }, { status: 500 });
 	}
 }
 
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 	const { action, targetUserId } = body;
 	
 	try {
-		const currentUserId = await getCurrentUserId();
+		// const currentUserId = await getCurrentUserId();
 		
 		switch (action) {
 			case 'assign-to-user':
@@ -169,6 +169,6 @@ export async function POST(request: NextRequest) {
 		
 	} catch (error) {
 		console.error('🔧 HABITS ADMIN - POST ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
+		return Response.json({ error: error }, { status: 500 });
 	}
 }

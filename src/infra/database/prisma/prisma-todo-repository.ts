@@ -5,31 +5,31 @@ import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaTodoRepository implements TodoRepository {
 	findByUserId(userId: string): Promise<Todo[]> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + userId);
 	}
 	deleteByUserId(userId: string): Promise<void> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + userId);
 	}
 	findById(id: string): Promise<Todo | null> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 	markComplete(id: string): Promise<Todo> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 	markIncomplete(id: string): Promise<Todo> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 	reorder(ids: string[]): Promise<void> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + ids);
 	}
 	moveToPosition(id: string, position: number): Promise<Todo> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + position + id);
 	}
 	findByTags(tags: string[]): Promise<Todo[]> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + tags);
 	}
 	findByTag(tag: string): Promise<Todo[]> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + tag );
 	}
 	async list(): Promise<Todo[]> {
 		const userId = await getCurrentUserId();

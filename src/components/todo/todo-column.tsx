@@ -12,12 +12,13 @@ import { TodoForm } from "./todo-form";
 
 const defaultTodo: Todo = {
 	id: "",
+	userId: "",
 	title: "",
 	observations: "",
 	tasks: [],
+	tags: [],
 	difficulty: "Fácil" as TodoDifficulty,
 	startDate: new Date(),
-	tags: [],
 	createdAt: new Date(),
 };
 
@@ -120,6 +121,11 @@ export const TodoColumn = () => {
 			</Card>
 
 			<div className="space-y-4">
+				<h3 className="flex items-center gap-1 mb-2 font-semibold text-blue-600 text-sm">
+					<ListChecks className="w-4 h-4 text-blue-600" />
+					Disponíveis
+				</h3>
+
 				{inProgressTodos.length > 0 ? (
 					inProgressTodos.map((todo) => (
 						<TodoCard

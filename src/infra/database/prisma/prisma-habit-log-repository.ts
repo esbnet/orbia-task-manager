@@ -23,12 +23,12 @@ export class PrismaHabitLogRepository implements HabitLogRepository {
 		return this.toDomain(log);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	
 	async update(_log: HabitLog): Promise<HabitLog> {
 		throw new Error("Update not implemented for habit logs");
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	
 	async toggleComplete(_id: string): Promise<HabitLog> {
 		throw new Error("Toggle complete not implemented for habit logs");
 	}

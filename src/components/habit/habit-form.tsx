@@ -319,7 +319,7 @@ function DialogConfirmDelete({ id }: { id: string }) {
 		setIsDeleting(true);
 		try {
 			// TODO: Implementar deleteHabit no contexto
-			toast.success("Hábito excluído com sucesso!");
+			toast.success("Hábito excluído com sucesso!" + id);
 		} finally {
 			setIsDeleting(false);
 		}

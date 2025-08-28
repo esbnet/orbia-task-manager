@@ -15,11 +15,11 @@ const defaultDaily: Daily = {
 	userId: "",
 	title: "",
 	observations: "",
-	difficulty: "Fácil" as DailyDifficulty,
-	tags: [],
-	repeat: { type: "Diariamente", frequency: 1 },
-	startDate: new Date(),
 	tasks: [],
+	difficulty: "Fácil" as DailyDifficulty,
+	startDate: new Date(),
+	repeat: { type: "Diariamente", frequency: 1 },
+	tags: [],
 	createdAt: new Date(),
 };
 
@@ -28,6 +28,7 @@ interface DailyWithStatus {
 	userId: string;
 	title: string;
 	observations: string;
+	task: string[];
 	difficulty: string;
 	repeatType: string;
 	repeatFrequency: number;
@@ -52,7 +53,7 @@ export const DailyColumn = () => {
 	// Estado com dados da API
 	const [availableDailies, setAvailableDailies] = useState<DailyWithStatus[]>([]);
 	const [completedDailies, setCompletedDailies] = useState<DailyWithStatus[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [_, setLoading] = useState(false);
 
 	// Carregar dailies disponíveis
 	const loadAvailableDailies = useCallback(async () => {
@@ -220,8 +221,6 @@ export const DailyColumn = () => {
 				</CardContent>
 			</Card>
 
-
-
 			{/* Dailies Disponíveis */}
 			{availableDailies.length > 0 && (
 				<div className="space-y-4">
@@ -234,11 +233,11 @@ export const DailyColumn = () => {
 								userId: daily.userId,
 								title: daily.title,
 								observations: daily.observations,
-								difficulty: daily.difficulty as any,
-								repeat: { type: daily.repeatType as any, frequency: daily.repeatFrequency },
+								difficulty: daily.difficulty as "Fácil",
+								repeat: { type: daily.repeatType as 'Diariamente', frequency: daily.repeatFrequency },
 								tags: daily.tags,
 								startDate: new Date(),
-								tasks: [],
+								tasks: daily.task,
 								createdAt: new Date(),
 							}}
 							onComplete={handleCompleteDaily}
@@ -261,11 +260,11 @@ export const DailyColumn = () => {
 								userId: daily.userId,
 								title: daily.title,
 								observations: daily.observations,
-								difficulty: daily.difficulty as any,
-								repeat: { type: daily.repeatType as any, frequency: daily.repeatFrequency },
+								difficulty: daily.difficulty as "Fácil",
+								repeat: { type: daily.repeatType as 'Diariamente', frequency: daily.repeatFrequency },
 								tags: daily.tags,
 								startDate: new Date(),
-								tasks: [],
+								tasks: daily.task,
 								createdAt: new Date(),
 							}}
 							onComplete={handleCompleteDaily}

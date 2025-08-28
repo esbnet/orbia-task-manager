@@ -44,7 +44,6 @@ setDefaultOptions({ locale: ptBR });
 
 interface DailyFormProps {
 	daily: Daily;
-	dragHandleProps?: unknown;
 	onSubmit?: (daily: Omit<Daily, "id" | "createdAt">) => Promise<void>;
 	onCancel?: () => void;
 	open?: boolean;
@@ -52,7 +51,6 @@ interface DailyFormProps {
 
 export function DailyForm({
 	daily,
-	dragHandleProps,
 	onSubmit,
 	onCancel,
 	open = false,
@@ -108,7 +106,7 @@ export function DailyForm({
 				if (onCancel) onCancel();
 				return;
 			}
-			await updateDaily({
+			await updateDaily(daily.id, {
 				...daily,
 				title,
 				observations,
@@ -120,6 +118,7 @@ export function DailyForm({
 					frequency: repeatFrequency,
 				},
 				tags,
+
 			} as Daily);
 
 			toast.success("Hábito atualizado com sucesso!");
@@ -139,8 +138,6 @@ export function DailyForm({
 			{open === undefined && (
 				<DailyCard
 					daily={daily}
-					dragHandleProps={dragHandleProps}
-					onEditClick={() => setInternalOpen(true)}
 				/>
 			)}
 			<Dialog

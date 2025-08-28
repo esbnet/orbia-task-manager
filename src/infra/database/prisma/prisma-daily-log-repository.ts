@@ -25,12 +25,12 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
 		return this.toDomain(log);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	
 	async update(_log: DailyLog): Promise<DailyLog> {
 		throw new Error("Update not implemented for daily logs");
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	
 	async toggleComplete(_id: string): Promise<DailyLog> {
 		throw new Error("Toggle complete not implemented for daily logs");
 	}

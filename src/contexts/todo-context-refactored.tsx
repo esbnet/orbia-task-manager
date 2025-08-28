@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoFormData } from "@/services/todo-service";
+import React from "react";
 import { createEntityContext } from "./base/entity-context-factory";
 
 // Create HTTP-based service for client-side usage
@@ -125,7 +125,7 @@ const httpTodoService = {
 
 // Create context using factory
 const {
-	Context: TodoContext,
+	// Context: TodoContext,
 	Provider: BaseTodoProvider,
 	useContext: useBaseTodos,
 } = createEntityContext<Todo, TodoFormData>({
@@ -182,17 +182,17 @@ function TodoContextEnhancer({ children }: { children: React.ReactNode }) {
 	};
 
 	const getCompletedTodos = () => {
-		return baseContext.entities.filter((todo) => todo.completed);
+		return baseContext.entities.filter((todo) => todo.lastCompletedDate);
 	};
 
 	const getPendingTodos = () => {
-		return baseContext.entities.filter((todo) => !todo.completed);
+		return baseContext.entities.filter((todo) => !todo.lastCompletedDate);
 	};
 
 	const getOverdueTodos = () => {
 		const now = new Date();
 		return baseContext.entities.filter(
-			(todo) => !todo.completed && todo.startDate && todo.startDate < now
+			(todo) => !todo.lastCompletedDate && todo.startDate && todo.startDate < now
 		);
 	};
 

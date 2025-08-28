@@ -11,23 +11,23 @@ export class ApiTodoSubtaskRepository implements TodoSubtaskRepository {
 		this.httpClient = httpClient || new FetchHttpClient();
 	}
 	findByParentId(parentId: string): Promise<TodoSubtask[]> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + parentId);
 	}
 	deleteByParentId(parentId: string): Promise<void> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + parentId);
 	}
 	reorderByParentId(parentId: string, ids: string[]): Promise<void> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + parentId + ids);
 	}
 	findById(id: string): Promise<TodoSubtask | null> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 	
 	list(): Promise<TodoSubtask[]> {
 		throw new Error("Method not implemented.");
 	}
 	toggleComplete(id: string): Promise<TodoSubtask> {
-		throw new Error("Method not implemented.");
+		throw new Error("Method not implemented." + id);
 	}
 
 	async listByTodoId(todoId: string): Promise<TodoSubtask[]> {

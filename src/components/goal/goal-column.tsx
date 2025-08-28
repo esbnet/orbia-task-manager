@@ -15,12 +15,6 @@ export function GoalColumn() {
 	const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
-
-	// Debug logs
-	console.log("GoalColumn - goals:", goals);
-	console.log("GoalColumn - loading:", loading);
-	console.log("GoalColumn - error:", error);
-
 	const inProgressGoals = goals.filter(
 		(goal) => goal.status === "IN_PROGRESS",
 	);
@@ -55,7 +49,6 @@ export function GoalColumn() {
 			setIsFormOpen(false);
 		}
 	};
-
 	const handleDeleteGoal = async (goalId: string) => {
 		await deleteGoal(goalId);
 	};
@@ -74,7 +67,6 @@ export function GoalColumn() {
 		setEditingGoal(goal);
 		setIsFormOpen(true);
 	};
-
 	const closeForm = () => {
 		setIsFormOpen(false);
 		setEditingGoal(null);

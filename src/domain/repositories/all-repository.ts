@@ -1,10 +1,10 @@
 import type {
-    CompletableRepository,
-    LogRepository,
-    OrderableRepository,
-    SubtaskRepository,
-    TaggableRepository,
-    UserOwnedRepository,
+	CompletableRepository,
+	LogRepository,
+	OrderableRepository,
+	SubtaskRepository,
+	TaggableRepository,
+	UserOwnedRepository,
 } from "./base-repository";
 
 import type { Daily } from "../entities/daily";
@@ -25,7 +25,7 @@ export interface DailyRepository
 		TaggableRepository<Daily> {}
 
 // Daily log repository
-export interface DailyLogRepository extends LogRepository<DailyLog> {}
+export interface DailyLogRepository extends LogRepository<DailyLog> {} // tsnlint-disable-line @typescript-eslint/no-unused-vars
 
 // Daily subtask repository
 export interface DailySubtaskRepository extends SubtaskRepository<DailySubtask> {
@@ -40,10 +40,10 @@ export interface HabitRepository
 		TaggableRepository<Habit> {}
 
 // Habit log repository
-export interface HabitLogRepository extends LogRepository<HabitLog> {}
+export interface HabitLogRepository extends LogRepository<HabitLog> {} // tslint-disable-line @typescript-eslint/no-unused-vars
 
 // Tag repository with user ownership
-export interface TagRepository extends UserOwnedRepository<Tag> {}
+export interface TagRepository extends UserOwnedRepository<Tag> {} // tslint-disable-line @typescript-eslint/no-unused-vars
 
 // Todo repository with user ownership, completion, ordering, and tagging
 export interface TodoRepository
@@ -53,9 +53,11 @@ export interface TodoRepository
 		TaggableRepository<Todo> {}
 
 // Todo log repository
-export interface TodoLogRepository extends LogRepository<TodoLog> {}
+export interface TodoLogRepository extends LogRepository<TodoLog> {} // tslint-disable-line @typescript-eslint/no-unused-vars
 
 // Todo subtask repository
-export interface TodoSubtaskRepository extends SubtaskRepository<TodoSubtask> {
+export interface TodoSubtaskRepository
+	extends SubtaskRepository<TodoSubtask>,
+		OrderableRepository<TodoSubtask> {
 	listByTodoId(todoId: string): Promise<TodoSubtask[]>;
 }
