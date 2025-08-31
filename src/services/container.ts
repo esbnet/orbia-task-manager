@@ -19,7 +19,6 @@ type ServiceRegistry = {
 // Container class
 class ServiceContainer {
 	private services: Partial<ServiceRegistry> = {};
-	// tslint-disable-line @typescript-eslint/no-explicit-any
 	private repositories: Map<string, any> = new Map(); 
 
 	// Repository getters with lazy initialization

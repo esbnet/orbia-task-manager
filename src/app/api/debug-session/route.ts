@@ -20,6 +20,6 @@ export async function GET() {
 		});
 	} catch (error) {
 		console.error('🔍 DEBUG SESSION - ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
+		return Response.json({ error: error }, { status: 500 });
 	}
 }

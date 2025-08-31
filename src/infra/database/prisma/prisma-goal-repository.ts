@@ -1,9 +1,52 @@
-import type { Goal } from "@/domain/entities/goal";
+import type { Goal, GoalCategory, GoalPriority, GoalStatus } from "@/domain/entities/goal";
+
 import type { GoalRepository } from "@/domain/repositories/goal-repository";
 import { getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaGoalRepository implements GoalRepository {
+	deleteByUserId(userId: string): Promise<void> {
+		throw new Error("Method not implemented." + userId);
+	}
+	findByStatus(status: GoalStatus): Promise<Goal[]> {
+		throw new Error("Method not implemented." + status);
+	}
+	updateStatus(id: string, status: GoalStatus): Promise<Goal> {
+		throw new Error("Method not implemented." + status + id);
+	}
+	findByPriority(priority: GoalPriority): Promise<Goal[]> {
+		throw new Error("Method not implemented." + priority);
+	}
+	updatePriority(id: string, priority: GoalPriority): Promise<Goal> {
+		throw new Error("Method not implemented." + priority + id);
+	}
+	findByCategory(category: GoalCategory): Promise<Goal[]> {
+		throw new Error("Method not implemented." + category);
+	}
+	updateCategory(id: string, category: GoalCategory): Promise<Goal> {
+		throw new Error("Method not implemented." + category + id);
+	}
+	findByTags(tags: string[]): Promise<Goal[]> {
+		throw new Error("Method not implemented." + tags);
+	}
+	findByTag(tag: string): Promise<Goal[]> {
+		throw new Error("Method not implemented." + tag);
+	}
+	findOverdueByUserId(userId: string): Promise<Goal[]> {
+		throw new Error("Method not implemented." + userId);
+	}
+	findDueSoonByUserId(userId: string, days: number): Promise<Goal[]> {
+		throw new Error("Method not implemented." + userId + days);
+	}
+	findByDateRange(startDate: Date, endDate: Date): Promise<Goal[]> {
+		throw new Error("Method not implemented." + startDate + endDate);
+	}
+	findOverdue(): Promise<Goal[]> {
+		throw new Error("Method not implemented.");
+	}
+	findDueSoon(days: number): Promise<Goal[]> {
+		throw new Error("Method not implemented." + days);
+	}
 	async list(): Promise<Goal[]> {
 		const userId = await getCurrentUserId();
 		if (!userId) {

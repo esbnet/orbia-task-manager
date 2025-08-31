@@ -8,8 +8,10 @@ const goalRepository = new PrismaGoalRepository();
 
 export async function GET(
 	_request: NextRequest,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> }
 ) {
+			const { id } = await params;
+
 	try {
 		const session = await auth();
 		if (!session?.user?.id) {
@@ -19,7 +21,7 @@ export async function GET(
 			);
 		}
 
-		const goal = await goalRepository.findById(params.id);
+		const goal = await goalRepository.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -46,8 +48,9 @@ export async function GET(
 
 export async function PUT(
 	request: NextRequest,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> }
 ) {
+			const { id } = await params;
 	try {
 		const session = await auth();
 		if (!session?.user?.id) {
@@ -57,7 +60,7 @@ export async function PUT(
 			);
 		}
 
-		const goal = await goalRepository.findById(params.id);
+		const goal = await goalRepository.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -95,9 +98,9 @@ export async function PUT(
 
 export async function DELETE(
 	_request: NextRequest,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	try {
+			const { id } = await params;	try {
 		const session = await auth();
 		if (!session?.user?.id) {
 			return NextResponse.json(
@@ -106,7 +109,7 @@ export async function DELETE(
 			);
 		}
 
-		const goal = await goalRepository.findById(params.id);
+		const goal = await goalRepository.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -121,7 +124,7 @@ export async function DELETE(
 			);
 		}
 
-		await goalRepository.delete(params.id);
+		await goalRepository.delete(id);
 
 		return NextResponse.json({ message: "Meta excluída com sucesso" });
 	} catch (error) {

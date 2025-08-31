@@ -1,4 +1,4 @@
-import { PrismaHabitRepository } from "@/infra/repositories/database/prisma-habit-repository";
+import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import type { NextRequest } from "next/server";
 
 const habitRepository = new PrismaHabitRepository();

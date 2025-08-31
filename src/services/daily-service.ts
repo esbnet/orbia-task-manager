@@ -1,7 +1,8 @@
+import type { DailyLogRepository, DailyRepository } from "@/domain/repositories/all-repository";
+import { BaseEntityService, handleServiceError } from "./base/entity-service";
+
 import type { Daily } from "@/domain/entities/daily";
 import type { DailyLog } from "@/domain/entities/daily-log";
-import type { DailyRepository, DailyLogRepository } from "@/domain/repositories/all-repository";
-import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 // Daily form data interface
 export interface DailyFormData {
@@ -37,7 +38,6 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 			tags: data.tags,
 			userId: "", // Will be set by repository
 			order: 0, // Will be set by repository
-			completed: false,
 			lastCompletedDate: undefined,
 		};
 	}
@@ -54,7 +54,6 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 
 			// Mark as completed
 			const completedDaily = await this.update(dailyId, { 
-				completed: true,
 				lastCompletedDate: new Date().toISOString().split("T")[0]
 			});
 
@@ -115,7 +114,7 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 	async findCompleted(): Promise<Daily[]> {
 		try {
 			const dailies = await this.repository.list();
-			return dailies.filter((daily) => daily.completed);
+			return dailies.filter((daily) => daily.lastCompletedDate);
 		} catch (error) {
 			return handleServiceError(error, "buscar dailies concluídos");
 		}
@@ -124,7 +123,7 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 	async findPending(): Promise<Daily[]> {
 		try {
 			const dailies = await this.repository.list();
-			return dailies.filter((daily) => !daily.completed);
+			return dailies.filter((daily) => !daily.lastCompletedDate);
 		} catch (error) {
 			return handleServiceError(error, "buscar dailies pendentes");
 		}
@@ -136,7 +135,7 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 			const today = new Date().toISOString().split("T")[0];
 			
 			return dailies.filter((daily) => {
-				if (daily.completed && daily.lastCompletedDate === today) {
+				if (daily.lastCompletedDate === today) {
 					return false; // Already completed today
 				}
 

@@ -4,6 +4,30 @@ import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaDailyRepository implements DailyRepository {
+	findByUserId(userId: string): Promise<Daily[]> {
+		throw new Error("Method not implemented." + " " + userId);
+	}
+	deleteByUserId(userId: string): Promise<void> {
+		throw new Error("Method not implemented." + " " + userId);
+	}
+	markComplete(id: string): Promise<Daily> {
+		throw new Error("Method not implemented." + " " + id);
+	}
+	markIncomplete(id: string): Promise<Daily> {
+		throw new Error("Method not implemented." + " " + id);
+	}
+	reorder(ids: string[]): Promise<void> {
+		throw new Error("Method not implemented." + " " + ids);
+	}
+	moveToPosition(id: string, position: number): Promise<Daily> {
+		throw new Error("Method not implemented." + " " + position + " " + id);
+	}
+	findByTags(tags: string[]): Promise<Daily[]> {
+		throw new Error("Method not implemented." + " " + tags);
+	}
+	findByTag(tag: string): Promise<Daily[]> {
+		throw new Error("Method not implemented." + " " + tag);
+	}
 	async list(): Promise<Daily[]> {
 		const userId = await getCurrentUserIdWithFallback();
 		if (!userId) {
@@ -118,6 +142,7 @@ export class PrismaDailyRepository implements DailyRepository {
 	// Converts Prisma entity to domain entity
 	private toDomain(daily: {
 		id: string;
+		userId: string;
 		title: string;
 		observations: string;
 		tasks: string[];
@@ -140,6 +165,7 @@ export class PrismaDailyRepository implements DailyRepository {
 	}): Daily {
 		return {
 			id: daily.id,
+			userId: daily.userId,
 			title: daily.title,
 			observations: daily.observations,
 			tasks: daily.tasks,
