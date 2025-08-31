@@ -9,6 +9,56 @@ import { NextResponse } from "next/server";
 const goalRepository = new PrismaGoalRepository();
 const createGoalUseCase = new CreateGoalUseCase(goalRepository);
 const listGoalsUseCase = new ListGoalsUseCase(goalRepository);
+/**
+ * @swagger
+ * /api/goals:
+ *   get:
+ *     tags: [Goals]
+ *     summary: Lista metas com filtros
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [IN_PROGRESS, COMPLETED, CANCELLED]
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [LOW, MEDIUM, HIGH, URGENT]
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [PERSONAL, WORK, HEALTH, LEARNING]
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: includeOverdue
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: includeDueSoon
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: dueSoonDays
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de metas
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado
+ *       400:
+ *         description: Parâmetros inválidos
+ *       500:
+ *         description: Erro interno
+ */
 export async function GET(request: NextRequest) {
 	try {
 		// Autenticação
@@ -110,6 +160,51 @@ export async function GET(request: NextRequest) {
 	}
 }
 
+/**
+ * @swagger
+ * /api/goals:
+ *   post:
+ *     tags: [Goals]
+ *     summary: Cria uma nova meta
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - targetDate
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               targetDate:
+ *                 type: string
+ *                 format: date-time
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, URGENT]
+ *               category:
+ *                 type: string
+ *                 enum: [PERSONAL, WORK, HEALTH, LEARNING]
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Meta criada
+ *       401:
+ *         description: Não autorizado
+ *       400:
+ *         description: Dados inválidos
+ *       409:
+ *         description: Meta com título já existe
+ *       500:
+ *         description: Erro interno
+ */
 export async function POST(request: NextRequest) {
 	try {
 		// Autenticação

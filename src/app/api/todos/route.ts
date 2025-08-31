@@ -13,6 +13,7 @@ const todoRepo = new PrismaTodoRepository();
  * @swagger
  * /api/todos:
  *   get:
+ *     tags: [Tasks]
  *     summary: Lista todas as tarefas
  *     responses:
  *       200:
@@ -28,6 +29,7 @@ export async function GET() {
  * @swagger
  * /api/todos:
  *   post:
+ *     tags: [Tasks]
  *     summary: Cria uma nova tarefa
  *     requestBody:
  *       required: true
@@ -87,6 +89,7 @@ export async function POST(request: NextRequest) {
  * @swagger
  * /api/todos:
  *   patch:
+ *     tags: [Tasks]
  *     summary: Atualiza uma tarefa
  *     requestBody:
  *       required: true
@@ -112,6 +115,7 @@ export async function PATCH(request: NextRequest) {
  * @swagger
  * /api/todos:
  *   delete:
+ *     tags: [Tasks]
  *     summary: Deleta uma tarefa
  *     parameters:
  *       - in: query

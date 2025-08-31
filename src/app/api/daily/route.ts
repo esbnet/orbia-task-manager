@@ -9,12 +9,62 @@ import type { NextRequest } from "next/server";
 // const dailyRepo = new InJsonFileDailyRepository();
 const dailyRepo = new PrismaDailyRepository();
 
+/**
+ * @swagger
+ * /api/daily:
+ *   get:
+ *     tags: [Daily Activities]
+ *     summary: Lista atividades diárias
+ *     responses:
+ *       200:
+ *         description: Lista de atividades diárias
+ */
 export async function GET() {
 	const useCase = new ListDailyUseCase(dailyRepo);
 	const result = await useCase.execute();
 	return Response.json({ daily: result.daily });
 }
 
+/**
+ * @swagger
+ * /api/daily:
+ *   post:
+ *     tags: [Daily Activities]
+ *     summary: Cria uma nova atividade diária
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               observations:
+ *                 type: string
+ *               tasks:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               difficulty:
+ *                 type: string
+ *               repeat:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                   frequency:
+ *                     type: integer
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Atividade diária criada
+ */
 export async function POST(request: NextRequest) {
 	const { userId, title, observations, tasks, difficulty, repeat, tags } =
 		await request.json();
@@ -43,6 +93,24 @@ export async function POST(request: NextRequest) {
 // 	return new Response(null, { status: 204 });
 // }
 
+/**
+ * @swagger
+ * /api/daily:
+ *   patch:
+ *     summary: Atualiza uma atividade diária
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               daily:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Atividade diária atualizada
+ */
 export async function PATCH(request: NextRequest) {
 	const { daily } = await request.json();
 	const useCase = new UpdateDailyUseCase(dailyRepo);
@@ -50,6 +118,23 @@ export async function PATCH(request: NextRequest) {
 	return Response.json({ daily: updatedDaily }, { status: 200 });
 }
 
+/**
+ * @swagger
+ * /api/daily:
+ *   delete:
+ *     summary: Deleta uma atividade diária
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Atividade diária deletada
+ *       400:
+ *         description: ID obrigatório
+ */
 export async function DELETE(request: NextRequest) {
 	const url = new URL(request.url);
 	const id = url.searchParams.get("id");

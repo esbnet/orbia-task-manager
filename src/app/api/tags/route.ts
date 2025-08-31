@@ -3,6 +3,15 @@ import type { NextRequest } from "next/server";
 
 const tagRepo = new PrismaTagRepository();
 
+/**
+ * @swagger
+ * /api/tags:
+ *   get:
+ *     summary: Lista todas as tags
+ *     responses:
+ *       200:
+ *         description: Lista de tags
+ */
 export async function GET() {
 	try {
 		const tags = await tagRepo.list();
@@ -13,6 +22,26 @@ export async function GET() {
 	}
 }
 
+/**
+ * @swagger
+ * /api/tags:
+ *   post:
+ *     summary: Cria uma nova tag
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               color:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tag criada
+ */
 export async function POST(request: NextRequest) {
 	const { name, color } = await request.json();
 	const tag = await tagRepo.create({
@@ -23,6 +52,33 @@ export async function POST(request: NextRequest) {
 	return Response.json({ tag }, { status: 201 });
 }
 
+/**
+ * @swagger
+ * /api/tags:
+ *   patch:
+ *     summary: Atualiza uma tag
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               color:
+ *                 type: string
+ *               createdAt:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Tag atualizada
+ *       400:
+ *         description: Tag não fornecida
+ */
 export async function PATCH(request: NextRequest) {
 	const { id, name: tagName, color: tagColor, createdAt: tagCreatedAt } =
 		await request.json();
@@ -43,6 +99,24 @@ export async function PATCH(request: NextRequest) {
 	return Response.json({ tag: updatedTag });
 }
 
+/**
+ * @swagger
+ * /api/tags:
+ *   delete:
+ *     summary: Deleta uma tag
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *     responses:
+ *       204:
+ *         description: Tag deletada
+ */
 export async function DELETE(request: NextRequest) {
 	const { id } = await request.json();
 	await tagRepo.delete(id);

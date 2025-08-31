@@ -1,6 +1,7 @@
-import { withSwagger } from 'next-swagger-doc';
+import { NextResponse } from 'next/server';
+import swaggerJSDoc from 'swagger-jsdoc';
 
-export const GET = withSwagger({
+const options = {
   definition: {
     openapi: '3.0.0',
     info: {
@@ -29,5 +30,14 @@ export const GET = withSwagger({
       },
     ],
   },
-  apiFolder: 'src/app/api',
-});
+  apis: [
+    './src/app/api/**/*.ts',
+    './src/app/api/**/*.js',
+  ],
+};
+
+const specs = swaggerJSDoc(options);
+
+export async function GET() {
+  return NextResponse.json(specs);
+}
