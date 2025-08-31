@@ -1,5 +1,5 @@
 import type { DailyRepository } from "@/domain/repositories/all-repository";
-import type { DailyOutput } from "./list-daily-dto";
+import type { DailyOutput } from "./toggle-complete-daily-dto";
 
 export class ToggleCompleteUseCase {
 	constructor(private readonly dailyRepository: DailyRepository) {}

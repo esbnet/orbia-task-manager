@@ -125,16 +125,35 @@ export class PrismaTagRepository implements TagRepository {
 		await prisma.tag.delete({ where: { id } });
 	}
 
+	async findById(id: string): Promise<Tag | null> {
+		const tag = await prisma.tag.findUnique({ where: { id } });
+		return tag ? this.toDomain(tag) : null;
+	}
+
+	async findByUserId(userId: string): Promise<Tag[]> {
+		const tags = await prisma.tag.findMany({
+			where: { userId },
+			orderBy: { name: "asc" },
+		});
+		return tags.map(this.toDomain);
+	}
+
+	async deleteByUserId(userId: string): Promise<void> {
+		await prisma.tag.deleteMany({ where: { userId } });
+	}
+
 	private toDomain(tag: {
 		id: string;
 		name: string;
 		color: string;
+		userId: string;
 		createdAt: Date;
 	}): Tag {
 		return {
 			id: tag.id,
 			name: tag.name,
 			color: tag.color,
+			userId: tag.userId,
 			createdAt: tag.createdAt,
 		};
 	}

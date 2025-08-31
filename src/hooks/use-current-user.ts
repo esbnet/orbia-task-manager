@@ -22,5 +22,6 @@ export const getCurrentUserIdSafe = async (): Promise<string | null> => {
 
 // Função para API Routes - agora sem fallback
 export const getCurrentUserIdWithFallback = async (): Promise<string | null> => {
-  return await getCurrentUserId();
+  const userId = await getCurrentUserId();
+  return userId ?? null;
 }

@@ -3,6 +3,18 @@ import type { HabitLogRepository } from "@/domain/repositories/all-repository";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaHabitLogRepository implements HabitLogRepository {
+	findByEntityId(entityId: string): Promise<HabitLog[]> {
+		throw new Error("Method not implemented." + entityId);
+	}
+	findByDateRange(startDate: Date, endDate: Date): Promise<HabitLog[]> {
+		throw new Error("Method not implemented." + startDate + endDate);
+	}
+	deleteOlderThan(date: Date): Promise<void> {
+		throw new Error("Method not implemented." + date);
+	}
+	findById(id: string): Promise<HabitLog | null> {
+		throw new Error("Method not implemented." + id);
+	}
 	async list(): Promise<HabitLog[]> {
 		const logs = await prisma.habitLog.findMany({
 			orderBy: { completedAt: "desc" },

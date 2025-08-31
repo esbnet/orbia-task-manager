@@ -36,6 +36,8 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 			reset: data.reset,
 			userId: "", // Will be set by repository
 			order: 0, // Will be set by repository
+			currentPeriod: null,
+			todayEntries: 0,
 		};
 	}
 

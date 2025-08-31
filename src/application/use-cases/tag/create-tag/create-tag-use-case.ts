@@ -4,6 +4,7 @@ import type { TagRepository } from "@/domain/repositories/all-repository";
 export interface CreateTagInput {
 	name: string;
 	color: string;
+	userId: string;
 }
 
 export interface CreateTagOutput {
@@ -17,6 +18,7 @@ export class CreateTagUseCase {
 		const tag = await this.tagRepository.create({
 			name: input.name,
 			color: input.color,
+			userId: input.userId,
 		});
 
 		return { tag };

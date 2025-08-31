@@ -52,7 +52,7 @@ export async function DELETE(
 	} catch (error) {
 		console.error("Error deleting daily:", error);
 		return Response.json(
-			{ error: error instanceof Error ? error.message : "Internal server error" },
+			{ error: "Internal server error" },
 			{ status: 500 }
 		);
 	}

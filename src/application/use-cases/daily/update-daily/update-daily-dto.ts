@@ -13,6 +13,7 @@ type DailyRepeat = {
 
 export interface UpdateDailyInput {
 	id: string;
+	userId: string;
 	title: string;
 	observations: string;
 	tasks: string[];
@@ -26,6 +27,7 @@ export interface UpdateDailyInput {
 export interface UpdateDailyOutput {
 	daily: {
 		id: string;
+		userId: string;
 		title: string;
 		observations: string;
 		tasks: string[];

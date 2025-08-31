@@ -58,4 +58,16 @@ export class ApiTodoSubtaskRepository implements TodoSubtaskRepository {
 	async delete(id: string): Promise<void> {
 		await this.httpClient.delete(`${this.baseUrl}?id=${id}`);
 	}
+
+	async reorder(ids: string[]): Promise<void> {
+		await this.httpClient.patch(`${this.baseUrl}/reorder`, { ids });
+	}
+
+	async moveToPosition(id: string, position: number): Promise<TodoSubtask> {
+		const json = await this.httpClient.patch<{ subtask: TodoSubtask }>(
+			`${this.baseUrl}/${id}/position`,
+			{ position },
+		);
+		return json.subtask;
+	}
 }

@@ -1,18 +1,23 @@
 import type { CreateTodoInput } from "@/application/use-cases/todo/create-todo/create-todo-dto";
 import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
-import { ApiTodoRepository } from "@/infra/repositories/http/api-todo-repository";
+import { InMemoryTodoRepository } from "@/infra/repositories/memory/in-memory-todo-repository";
 
 describe("should be able to create a todo", () => {
 	let useCase: CreateTodoUseCase;
-	let todoRepository: ApiTodoRepository;
+	let todoRepository: InMemoryTodoRepository;
 
 	beforeEach(() => {
-		todoRepository = new ApiTodoRepository();
+		todoRepository = new InMemoryTodoRepository();
 		useCase = new CreateTodoUseCase(todoRepository);
+	});
+
+	afterEach(() => {
+		todoRepository.clear();
 	});
 
 	it("deve criar uma tarefa", async () => {
 		const inputTodo: CreateTodoInput = {
+			userId: "test-user-123",
 			title: "Tarefa 1",
 			observations: "",
 			tasks: ["Tarefa 1", "Tarefa 2"],
@@ -31,6 +36,7 @@ describe("should be able to create a todo", () => {
 
 	it("deve criar uma tarefa com categoria e prioridade padrão", async () => {
 		const inputTodo: CreateTodoInput = {
+			userId: "test-user-456",
 			title: "Tarefa 2",
 			observations: "Observações",
 			tasks: ["Tarefa 1", "Tarefa 2"],

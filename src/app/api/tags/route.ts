@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 	const tag = await tagRepo.create({
 		name,
 		color: color || "#3b82f6",
+		userId: ""
 	});
 	return Response.json({ tag }, { status: 201 });
 }
@@ -32,6 +33,7 @@ export async function PATCH(request: NextRequest) {
 
 	const tagData = {
 		id,
+		userId: "",
 		name: tagName || "New Tag",
 		color: tagColor || "#3b82f6",
 		createdAt: tagCreatedAt || new Date(),

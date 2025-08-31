@@ -215,6 +215,8 @@ export class PrismaHabitRepository implements HabitRepository {
 			userId: habit.userId,
 			createdAt: habit.createdAt,
 			updatedAt: habit.updatedAt,
+			currentPeriod: null, // Campo computado, será calculado posteriormente se necessário
+			todayEntries: 0, // Inicialmente 0, será atualizado conforme necessário
 		};
 	}
 }

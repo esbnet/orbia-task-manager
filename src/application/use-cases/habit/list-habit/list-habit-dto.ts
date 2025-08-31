@@ -7,6 +7,7 @@ export type HabitCategory = "Pessoa" | "Trabalho" | "Saúde" | "Aprendizado";
 export type ListHabitsOutput = {
 	habits: {
 		id: string;
+		userId: string;
 		title: string;
 		observations: string;
 		difficulty: HabitDifficulty;
@@ -15,11 +16,12 @@ export type ListHabitsOutput = {
 		category: HabitCategory;
 		tags: string[];
 		reset: HabitReset;
-		userId: string;
 		createdAt: Date;
 		updatedAt: Date;
 		order?: number;
 		lastCompletedDate?: string;
+		currentPeriod: any;
+		todayEntries: number;
 	}[];
 };
 

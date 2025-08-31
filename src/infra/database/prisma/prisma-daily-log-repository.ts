@@ -39,7 +39,52 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
 		await prisma.dailyLog.delete({ where: { id } });
 	}
 
-	private toDomain(log: DailyLog): DailyLog {
+	async findByEntityId(entityId: string): Promise<DailyLog[]> {
+		const logs = await prisma.dailyLog.findMany({
+			where: { dailyId: entityId },
+			orderBy: { completedAt: "desc" },
+		});
+		return logs.map(this.toDomain);
+	}
+
+	async findByDateRange(startDate: Date, endDate: Date): Promise<DailyLog[]> {
+		const logs = await prisma.dailyLog.findMany({
+			where: {
+				completedAt: {
+					gte: startDate,
+					lte: endDate,
+				},
+			},
+			orderBy: { completedAt: "desc" },
+		});
+		return logs.map(this.toDomain);
+	}
+
+	async deleteOlderThan(date: Date): Promise<void> {
+		await prisma.dailyLog.deleteMany({
+			where: {
+				completedAt: {
+					lt: date,
+				},
+			},
+		});
+	}
+
+	async findById(id: string): Promise<DailyLog | null> {
+		const log = await prisma.dailyLog.findUnique({ where: { id } });
+		return log ? this.toDomain(log) : null;
+	}
+
+	private toDomain(log: {
+		id: string;
+		dailyId: string;
+		periodId?: string | null;
+		dailyTitle: string;
+		difficulty: string;
+		tags: string[];
+		completedAt: Date;
+		createdAt: Date;
+	}): DailyLog {
 		return {
 			id: log.id,
 			dailyId: log.dailyId,

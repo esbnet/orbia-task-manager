@@ -1,7 +1,7 @@
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
-import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit-use-case/delete-habit-use-case";
-import { ListHabitUseCase } from "@/application/use-cases/habit/list-habit-use-case/list-habit-use-case";
-import { ToggleCompleteUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-use-case";
+import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
+import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
+import { ToggleCompleteUseCase as ToggleCompleteHabitUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import type { NextRequest } from "next/server";
@@ -11,13 +11,14 @@ import type { NextRequest } from "next/server";
 const habitRepository = new PrismaHabitRepository();
 
 export async function GET() {
-	const useCase = new ListHabitUseCase(habitRepository);
+	const useCase = new ListHabitsUseCase(habitRepository);
 	const result = await useCase.execute();
 	return Response.json({ habits: result.habits });
 }
 
 export async function POST(request: NextRequest) {
 	const {
+		userId,
 		title,
 		observations,
 		difficulty,
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
 
 	const useCase = new CreateHabitUseCase(habitRepository);
 	const result = await useCase.execute({
+		userId,
 		title,
 		observations,
 		difficulty,
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
 	const { id } = await request.json();
-	const useCase = new ToggleCompleteUseCase(habitRepository);
+	const useCase = new ToggleCompleteHabitUseCase(habitRepository);
 	await useCase.execute(id);
 	return new Response(null, { status: 204 });
 }
@@ -65,6 +67,6 @@ export async function DELETE(request: NextRequest) {
 	}
 
 	const useCase = new DeleteHabitUseCase(habitRepository);
-	await useCase.execute({ id });
+	await useCase.execute(id);
 	return new Response(null, { status: 204 });
 }

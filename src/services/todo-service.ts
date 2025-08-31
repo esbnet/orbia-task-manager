@@ -1,7 +1,8 @@
+import type { TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
+import { BaseEntityService, handleServiceError } from "./base/entity-service";
+
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoLog } from "@/domain/entities/todo-log";
-import type { TodoRepository, TodoLogRepository } from "@/domain/repositories/all-repository";
-import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 // Todo form data interface
 export interface TodoFormData {
@@ -32,7 +33,6 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 			tags: data.tags,
 			userId: "", // Will be set by repository
 			order: 0, // Will be set by repository
-			completed: false,
 			lastCompletedDate: undefined,
 		};
 	}
@@ -48,8 +48,7 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 			}
 
 			// Mark as completed
-			const completedTodo = await this.update(todoId, { 
-				completed: true,
+			const completedTodo = await this.update(todoId, {
 				lastCompletedDate: new Date().toISOString().split("T")[0]
 			});
 
@@ -101,7 +100,7 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 	async findCompleted(): Promise<Todo[]> {
 		try {
 			const todos = await this.repository.list();
-			return todos.filter((todo) => todo.completed);
+			return todos.filter((todo) => !!todo.lastCompletedDate);
 		} catch (error) {
 			return handleServiceError(error, "buscar todos concluídos");
 		}
@@ -110,7 +109,7 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 	async findPending(): Promise<Todo[]> {
 		try {
 			const todos = await this.repository.list();
-			return todos.filter((todo) => !todo.completed);
+			return todos.filter((todo) => !todo.lastCompletedDate);
 		} catch (error) {
 			return handleServiceError(error, "buscar todos pendentes");
 		}
@@ -120,9 +119,9 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 		try {
 			const todos = await this.repository.list();
 			const now = new Date();
-			return todos.filter((todo) => 
-				!todo.completed && 
-				todo.startDate && 
+			return todos.filter((todo) =>
+				!todo.lastCompletedDate &&
+				todo.startDate &&
 				todo.startDate < now
 			);
 		} catch (error) {

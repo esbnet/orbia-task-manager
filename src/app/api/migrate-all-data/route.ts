@@ -77,6 +77,8 @@ export async function POST() {
 		
 	} catch (error) {
 		console.error('🔄 MIGRATE ALL DATA - ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
-	}
+		return Response.json(
+			{ error: error instanceof Error ? error.message : "Internal server error" },
+			{ status: 500 }
+		);	}
 }

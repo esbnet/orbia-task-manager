@@ -13,6 +13,7 @@ interface DailyRepeat {
 
 export interface CreateDailyInput {
 	id: string;
+	userId: string;
 	title: string;
 	observations: string;
 	tasks?: string[];
@@ -26,6 +27,7 @@ export interface CreateDailyInput {
 export interface CreateDailyOutput {
 	daily: {
 		id: string;
+		userId: string;
 		title: string;
 		observations: string;
 		taskList?: string[];

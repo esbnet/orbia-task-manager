@@ -3,6 +3,7 @@ export type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
 export type TodoReset = "Diária" | "Semanal" | "Mensal";
 
 export type CreateTodoInput = {
+	userId: string;
 	title: string;
 	observations: string;
 	tasks: string[];
@@ -15,6 +16,7 @@ export type CreateTodoInput = {
 export type CreateTodoOutput = {
 	todo: {
 		id: string;
+		userId: string;
 		title: string;
 		observations: string;
 		tasks: string[];

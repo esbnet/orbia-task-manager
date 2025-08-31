@@ -11,6 +11,7 @@ export class CreateTodoUseCase {
 
 	async execute(inputTodo: CreateTodoInput): Promise<CreateTodoOutput> {
 		const todo = await this.todoRepository.create({
+			userId: inputTodo.userId,
 			title: inputTodo.title,
 			observations: inputTodo.observations,
 			tasks: inputTodo.tasks,

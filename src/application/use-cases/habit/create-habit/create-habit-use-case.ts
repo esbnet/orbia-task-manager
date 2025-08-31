@@ -14,6 +14,7 @@ export class CreateHabitUseCase {
 
 	async execute(inputHabit: CreateHabitInput): Promise<CreateHabitOutput> {
 		const habit = await this.habitRepository.create({
+			userId: inputHabit.userId, // Will be set by repository
 			title: inputHabit.title,
 			observations: inputHabit.observations,
 			difficulty: (inputHabit.difficulty as HabitDifficulty) ?? "Trivial",
@@ -22,8 +23,9 @@ export class CreateHabitUseCase {
 			category: (inputHabit.category as HabitCategory) ?? "Pessoa",
 			tags: inputHabit.tags ?? [],
 			reset: (inputHabit.reset as HabitReset) ?? "Diariamente",
-			userId: "", // Will be set by repository
-			order: 0, // Will be set by repository
+			order: 0,
+			currentPeriod: undefined,
+			todayEntries: 0
 		});
 
 		return {

@@ -59,6 +59,53 @@ export class PrismaTodoSubtaskRepository implements TodoSubtaskRepository {
 		await prisma.todoSubtask.delete({ where: { id } });
 	}
 
+	async findByParentId(parentId: string): Promise<TodoSubtask[]> {
+		const subtasks = await prisma.todoSubtask.findMany({
+			where: { todoId: parentId },
+			orderBy: { order: "asc" },
+		});
+		return subtasks.map(this.toDomain);
+	}
+
+	async deleteByParentId(parentId: string): Promise<void> {
+		await prisma.todoSubtask.deleteMany({ where: { todoId: parentId } });
+	}
+
+	async reorderByParentId(parentId: string, ids: string[]): Promise<void> {
+		await Promise.all(
+			ids.map((id, index) =>
+				prisma.todoSubtask.update({
+					where: { id },
+					data: { order: index },
+				})
+			)
+		);
+	}
+
+	async findById(id: string): Promise<TodoSubtask | null> {
+		const subtask = await prisma.todoSubtask.findUnique({ where: { id } });
+		return subtask ? this.toDomain(subtask) : null;
+	}
+
+	async reorder(ids: string[]): Promise<void> {
+		await Promise.all(
+			ids.map((id, index) =>
+				prisma.todoSubtask.update({
+					where: { id },
+					data: { order: index },
+				})
+			)
+		);
+	}
+
+	async moveToPosition(id: string, position: number): Promise<TodoSubtask> {
+		const updated = await prisma.todoSubtask.update({
+			where: { id },
+			data: { order: position },
+		});
+		return this.toDomain(updated);
+	}
+
 	private toDomain(subtask: {
 		id: string;
 		title: string;

@@ -1,5 +1,5 @@
 import type { HabitRepository } from "@/domain/repositories/all-repository";
-import type { HabitOutput } from "./list-habit-dto";
+import type { HabitOutput } from "./toggle-complete-habit-dto";
 
 export class ToggleCompleteUseCase {
 	constructor(private readonly habitRepository: HabitRepository) {}

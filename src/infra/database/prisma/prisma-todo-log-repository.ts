@@ -37,6 +37,42 @@ export class PrismaTodoLogRepository implements TodoLogRepository {
 		await prisma.todoLog.delete({ where: { id } });
 	}
 
+	async findByEntityId(entityId: string): Promise<TodoLog[]> {
+		const logs = await prisma.todoLog.findMany({
+			where: { todoId: entityId },
+			orderBy: { completedAt: "desc" },
+		});
+		return logs.map(this.toDomain);
+	}
+
+	async findByDateRange(startDate: Date, endDate: Date): Promise<TodoLog[]> {
+		const logs = await prisma.todoLog.findMany({
+			where: {
+				completedAt: {
+					gte: startDate,
+					lte: endDate,
+				},
+			},
+			orderBy: { completedAt: "desc" },
+		});
+		return logs.map(this.toDomain);
+	}
+
+	async deleteOlderThan(date: Date): Promise<void> {
+		await prisma.todoLog.deleteMany({
+			where: {
+				completedAt: {
+					lt: date,
+				},
+			},
+		});
+	}
+
+	async findById(id: string): Promise<TodoLog | null> {
+		const log = await prisma.todoLog.findUnique({ where: { id } });
+		return log ? this.toDomain(log) : null;
+	}
+
 	private toDomain(log: {
 		id: string;
 		todoId: string;

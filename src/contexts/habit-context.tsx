@@ -12,8 +12,8 @@ import {
 } from "react";
 
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
-import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit-use-case/delete-habit-use-case";
-import { ListHabitUseCase } from "@/application/use-cases/habit/list-habit-use-case/list-habit-use-case";
+import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
+import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
 import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
 import { ApiHabitRepository } from "@/infra/repositories/http/api-habit-repository";
 
@@ -43,27 +43,28 @@ export function HabitProvider({ children }: HabitProviderProps) {
 	const createHabitUseCase = new CreateHabitUseCase(habitRepository);
 	const updateHabitUseCase = new UpdateHabitUseCase(habitRepository);
 	const deleteHabitUseCase = new DeleteHabitUseCase(habitRepository);
-	const listHabitUseCase = new ListHabitUseCase(habitRepository);
+	const listHabitsUseCase = new ListHabitsUseCase(habitRepository);
 
 	const fetchHabits = useCallback(async () => {
 		try {
 			setLoading(true);
 			setError(null);
 
-			const result = await listHabitUseCase.execute();
+			const result = await listHabitsUseCase.execute();
 			setHabits(result.habits);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Erro ao carregar hábitos");
 		} finally {
 			setLoading(false);
 		}
-	}, [listHabitUseCase]);
+	}, [listHabitsUseCase]);
 
 	const createHabit = async (data: HabitFormData) => {
 		try {
 			setError(null);
 
 			const result = await createHabitUseCase.execute({
+				userId: data.userId,
 				title: data.title,
 				observations: data.observations,
 				difficulty: data.difficulty,
@@ -111,7 +112,7 @@ export function HabitProvider({ children }: HabitProviderProps) {
 		try {
 			setError(null);
 
-			await deleteHabitUseCase.execute({ id });
+			await deleteHabitUseCase.execute(id);
 			setHabits((prev) => prev.filter((habit) => habit.id !== id));
 		} catch (err) {
 			setError(

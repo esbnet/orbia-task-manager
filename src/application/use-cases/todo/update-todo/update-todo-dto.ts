@@ -4,6 +4,7 @@ export type TodoReset = "Diária" | "Semanal" | "Mensal";
 
 export type UpdateTodoInput = {
 	id: string;
+	userId: string;
 	title: string;
 	observations: string;
 	tasks: string[];
@@ -15,6 +16,7 @@ export type UpdateTodoInput = {
 
 export type UpdateTodoOutput = {
 	id: string;
+	userId: string;
 	title: string;
 	observations: string;
 	tasks: string[];

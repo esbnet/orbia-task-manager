@@ -12,8 +12,8 @@ import type { Todo } from "@/types";
 
 import { CompleteTodoWithLogUseCase } from "@/application/use-cases/todo/complete-todo-with-log/complete-todo-with-log-use-case";
 import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
-import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo-use-case/delete-todo-use-case";
-import { ListTodoUseCase } from "@/application/use-cases/todo/list-todo-use-case/list-todo-use-case";
+import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo/delete-todo-use-case";
+import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
 import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
 import { ApiTodoLogRepository } from "@/infra/repositories/http/api-todo-log-repository";
 import { ApiTodoRepository } from "@/infra/repositories/http/api-todo-repository";
@@ -46,12 +46,12 @@ export function TodoProvider({ children }: TodoProviderProps) {
 	const createTodoUseCase = new CreateTodoUseCase(todoRepository);
 	const updateTodoUseCase = new UpdateTodoUseCase(todoRepository);
 	const deleteTodoUseCase = new DeleteTodoUseCase(todoRepository);
-	const listTodoUseCase = new ListTodoUseCase(todoRepository);
+	const listTodosUseCase = new ListTodosUseCase(todoRepository);
 
 	const fetchTodos = async () => {
 		try {
 			setIsLoading(true);
-			const result = await listTodoUseCase.execute();
+			const result = await listTodosUseCase.execute();
 			setTodos(result.todos as unknown as Todo[]);
 			setError(null);
 		} catch (err) {
@@ -70,6 +70,7 @@ export function TodoProvider({ children }: TodoProviderProps) {
 	const addTodo = async (todo: Omit<Todo, "id" | "createdAt">) => {
 		try {
 			const result = await createTodoUseCase.execute({
+				userId: todo.userId,
 				title: todo.title,
 				observations: todo.observations || "",
 				tasks: todo.tasks || ([] as string[]),
@@ -108,7 +109,7 @@ export function TodoProvider({ children }: TodoProviderProps) {
 
 	const deleteTodo = async (id: string) => {
 		try {
-			await deleteTodoUseCase.execute({ id });
+			await deleteTodoUseCase.execute(id);
 			setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
 		} catch (err) {
 			setError("Failed to delete todo");

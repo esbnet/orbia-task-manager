@@ -49,6 +49,6 @@ export async function POST() {
 		
 	} catch (error) {
 		console.error('🔄 MIGRATE HABITS - ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
+		return Response.json({ error: error }, { status: 500 });
 	}
 }

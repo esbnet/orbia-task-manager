@@ -5,6 +5,7 @@ export type HabitPriority = "Baixa" | "Média" | "Alta" | "Urgente";
 export type HabitCategory = "Pessoa" | "Trabalho" | "Saúde" | "Aprendizado";
 
 export type CreateHabitInput = {
+	userId: string;
 	title: string;
 	observations: string;
 	difficulty: HabitDifficulty;
@@ -18,6 +19,7 @@ export type CreateHabitInput = {
 export type CreateHabitOutput = {
 	habit: {
 		id: string;
+		userId: string;
 		title: string;
 		observations: string;
 		difficulty: HabitDifficulty;
@@ -26,9 +28,10 @@ export type CreateHabitOutput = {
 		category: HabitCategory;
 		tags: string[];
 		reset: HabitReset;
-		userId: string;
 		createdAt: Date;
 		updatedAt: Date;
 		order?: number;
+		currentPeriod: any;
+		todayEntries: number;
 	};
 };

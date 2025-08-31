@@ -10,26 +10,20 @@ export class ListGoalsUseCase {
 
 		if (dto.status) {
 			goals = await this.goalRepository.findByStatus(
-				dto.userId,
 				dto.status,
 			);
 		} else if (dto.priority) {
 			goals = await this.goalRepository.findByPriority(
-				dto.userId,
 				dto.priority,
 			);
 		} else if (dto.category) {
 			goals = await this.goalRepository.findByCategory(
-				dto.userId,
 				dto.category,
 			);
 		} else if (dto.tags && dto.tags.length > 0) {
-			goals = await this.goalRepository.findByTags(dto.userId, dto.tags);
-		} else if (dto.includeOverdue) {
-			goals = await this.goalRepository.findOverdue(dto.userId);
+			goals = await this.goalRepository.findByTags(dto.tags);
 		} else if (dto.includeDueSoon) {
 			goals = await this.goalRepository.findDueSoon(
-				dto.userId,
 				dto.dueSoonDays || 7,
 			);
 		} else {

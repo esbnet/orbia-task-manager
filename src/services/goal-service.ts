@@ -1,6 +1,7 @@
+import { BaseEntityService, handleServiceError } from "./base/entity-service";
+
 import type { Goal } from "@/domain/entities/goal";
 import type { GoalRepository } from "@/domain/repositories/goal-repository";
-import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 // Goal form data interface
 export interface GoalFormData {
@@ -35,7 +36,7 @@ export class GoalService extends BaseEntityService<Goal, GoalFormData> {
 	async findByStatus(userId: string, status: Goal["status"]): Promise<Goal[]> {
 		try {
 			const goalRepo = this.repository as GoalRepository;
-			return await goalRepo.findByStatus(userId, status);
+			return await goalRepo.findByUserIdAndStatus(userId, status);
 		} catch (error) {
 			return handleServiceError(error, "buscar goals por status");
 		}
@@ -44,7 +45,9 @@ export class GoalService extends BaseEntityService<Goal, GoalFormData> {
 	async findByPriority(userId: string, priority: Goal["priority"]): Promise<Goal[]> {
 		try {
 			const goalRepo = this.repository as GoalRepository;
-			return await goalRepo.findByPriority(userId, priority);
+			// Filter by userId first, then by priority
+			const userGoals = await goalRepo.findByUserId(userId);
+			return userGoals.filter(goal => goal.priority === priority);
 		} catch (error) {
 			return handleServiceError(error, "buscar goals por prioridade");
 		}
@@ -53,7 +56,9 @@ export class GoalService extends BaseEntityService<Goal, GoalFormData> {
 	async findByCategory(userId: string, category: Goal["category"]): Promise<Goal[]> {
 		try {
 			const goalRepo = this.repository as GoalRepository;
-			return await goalRepo.findByCategory(userId, category);
+			// Filter by userId first, then by category
+			const userGoals = await goalRepo.findByUserId(userId);
+			return userGoals.filter(goal => goal.category === category);
 		} catch (error) {
 			return handleServiceError(error, "buscar goals por categoria");
 		}
@@ -62,7 +67,7 @@ export class GoalService extends BaseEntityService<Goal, GoalFormData> {
 	async findOverdue(userId: string): Promise<Goal[]> {
 		try {
 			const goalRepo = this.repository as GoalRepository;
-			return await goalRepo.findOverdue(userId);
+			return await goalRepo.findOverdueByUserId(userId);
 		} catch (error) {
 			return handleServiceError(error, "buscar goals em atraso");
 		}
@@ -71,7 +76,7 @@ export class GoalService extends BaseEntityService<Goal, GoalFormData> {
 	async findDueSoon(userId: string, days: number = 7): Promise<Goal[]> {
 		try {
 			const goalRepo = this.repository as GoalRepository;
-			return await goalRepo.findDueSoon(userId, days);
+			return await goalRepo.findDueSoonByUserId(userId, days);
 		} catch (error) {
 			return handleServiceError(error, "buscar goals próximos do vencimento");
 		}

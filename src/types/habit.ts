@@ -26,6 +26,8 @@ export interface Habit {
 }
 
 export interface HabitFormData {
+	id?: string;
+	userId: string;
 	title: string;
 	observations: string;
 	difficulty: HabitDifficulty;

@@ -59,7 +59,42 @@ export class PrismaDailySubtaskRepository implements DailySubtaskRepository {
 		await prisma.dailySubtask.delete({ where: { id } });
 	}
 
-	private toDomain(subtask: DailySubtask): DailySubtask {
+	async findByParentId(parentId: string): Promise<DailySubtask[]> {
+		const subtasks = await prisma.dailySubtask.findMany({
+			where: { dailyId: parentId },
+			orderBy: { order: "asc" },
+		});
+		return subtasks.map(this.toDomain);
+	}
+
+	async deleteByParentId(parentId: string): Promise<void> {
+		await prisma.dailySubtask.deleteMany({ where: { dailyId: parentId } });
+	}
+
+	async reorderByParentId(parentId: string, ids: string[]): Promise<void> {
+		await Promise.all(
+			ids.map((id, index) =>
+				prisma.dailySubtask.update({
+					where: { id },
+					data: { order: index },
+				})
+			)
+		);
+	}
+
+	async findById(id: string): Promise<DailySubtask | null> {
+		const subtask = await prisma.dailySubtask.findUnique({ where: { id } });
+		return subtask ? this.toDomain(subtask) : null;
+	}
+
+	private toDomain(subtask: {
+		id: string;
+		title: string;
+		completed: boolean;
+		dailyId: string;
+		order: number;
+		createdAt: Date;
+	}): DailySubtask {
 		return {
 			id: subtask.id,
 			title: subtask.title,

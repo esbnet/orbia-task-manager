@@ -1,5 +1,5 @@
 import { CreateDailyUseCase } from "@/application/use-cases/daily/create-daily/create-daily-use-case";
-import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily-use-case/delete-daily-use-case";
+import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily/delete-daily-use-case";
 import { ListDailyUseCase } from "@/application/use-cases/daily/list-daily/list-daily-use-case";
 import { UpdateDailyUseCase } from "@/application/use-cases/daily/update-daily/update-daily-use-case";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
@@ -16,10 +16,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-	const { title, observations, tasks, difficulty, repeat, tags } =
+	const { userId, title, observations, tasks, difficulty, repeat, tags } =
 		await request.json();
 	const useCase = new CreateDailyUseCase(dailyRepo);
 	const result = await useCase.execute({
+		userId: userId, // Default value
 		title: title,
 		observations: observations || "", // Default value
 		tasks: tasks || [], // Default value
@@ -58,6 +59,6 @@ export async function DELETE(request: NextRequest) {
 	}
 
 	const useCase = new DeleteDailyUseCase(dailyRepo);
-	await useCase.execute({ id });
+	await useCase.execute(id);
 	return new Response(null, { status: 204 });
 }

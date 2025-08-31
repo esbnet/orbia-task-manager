@@ -1,4 +1,5 @@
 import { getCurrentUser, getCurrentUserId } from "@/hooks/use-current-user";
+
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export async function GET() {
@@ -35,6 +36,6 @@ export async function GET() {
 		});
 	} catch (error) {
 		console.error('🔍 USER DIAGNOSTICS - ERRO:', error);
-		return Response.json({ error: error.message }, { status: 500 });
+		return Response.json({ error: error }, { status: 500 });
 	}
 }
