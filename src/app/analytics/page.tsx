@@ -1,22 +1,6 @@
 import { auth } from "@/auth";
-import dynamic from "next/dynamic";
+import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
 import { redirect } from "next/navigation";
-
-// Lazy load do componente pesado
-const AnalyticsDashboard = dynamic(
-	() => import("@/components/analytics/analytics-dashboard").then(mod => ({ default: mod.AnalyticsDashboard })),
-	{
-		loading: () => (
-			<div className="flex justify-center items-center h-64">
-				<div className="text-center">
-					<div className="mx-auto mb-4 border-purple-600 border-b-2 rounded-full w-8 h-8 animate-spin" />
-					<p className="text-gray-600">Carregando analytics...</p>
-				</div>
-			</div>
-		),
-		ssr: false, // Desabilitar SSR para este componente
-	}
-);
 
 export default async function AnalyticsPage() {
 	const session = await auth();

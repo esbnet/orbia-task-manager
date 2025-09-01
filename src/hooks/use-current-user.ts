@@ -20,8 +20,8 @@ export const getCurrentUserIdSafe = async (): Promise<string | null> => {
   return "temp-dev-user";
 }
 
-// Função para API Routes - agora sem fallback
+// Função para API Routes - com fallback para desenvolvimento
 export const getCurrentUserIdWithFallback = async (): Promise<string | null> => {
   const userId = await getCurrentUserId();
-  return userId ?? null;
+  return userId ?? "temp-dev-user";
 }

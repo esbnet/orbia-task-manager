@@ -161,6 +161,7 @@ export const HabitCard = memo(function HabitCard({
 							</Button>
 						)}
 
+
 					</div>
 				</div>
 			</CardHeader>

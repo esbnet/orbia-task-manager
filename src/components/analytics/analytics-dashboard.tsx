@@ -11,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { eachDayOfInterval, endOfWeek, format, startOfWeek } from "date-fns";
 import { AlertTriangle, CheckCircle, Clock, Target } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
 	Bar,
 	BarChart,
@@ -55,7 +55,7 @@ export function AnalyticsDashboard() {
 	);
 
 
-	const calculateAnalytics = () => {
+	const calculateAnalytics = useCallback(() => {
 		const now = new Date();
 		const startDate = getStartDate(timeRange);
 
@@ -126,13 +126,13 @@ export function AnalyticsDashboard() {
 			weeklyProgress,
 			monthlyTrends,
 		});
-	};
+	}, [timeRange, goals]);
 
 	useEffect(() => {
 		if (goals.length > 0) {
 			calculateAnalytics();
 		}
-	}, [calculateAnalytics, goals]);
+	}, [calculateAnalytics]);
 
 	const getStartDate = (range: string) => {
 		const now = new Date();

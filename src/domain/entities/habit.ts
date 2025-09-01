@@ -5,9 +5,8 @@ export type HabitPriority = "Baixa" | "Média" | "Alta" | "Urgente";
 export type HabitCategory = "Pessoa" | "Trabalho" | "Saúde" | "Aprendizado";
 
 export interface Habit {
-	currentPeriod: any;
-	todayEntries: number;
 	id: string;
+	userId: string;
 	title: string;
 	observations: string;
 	difficulty: HabitDifficulty;
@@ -16,9 +15,10 @@ export interface Habit {
 	category: HabitCategory;
 	tags: string[];
 	reset: HabitReset;
-	userId: string;
 	createdAt: Date;
 	updatedAt: Date;
 	order?: number;
 	lastCompletedDate?: string;
+	currentPeriod: any;
+	todayEntries: number;
 }

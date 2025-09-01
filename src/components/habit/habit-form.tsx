@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitFormData } from "@/services/habit-service";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface HabitFormProps {
@@ -56,6 +57,14 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 		reset: "Diariamente",
 	});
 	const [newTag, setNewTag] = useState("");
+	const queryClient = useQueryClient();
+
+	// Função para invalidar queries após exclusão
+	const handleDeleteSuccess = () => {
+		queryClient.invalidateQueries({ queryKey: ["habits", "list"] });
+		queryClient.invalidateQueries({ queryKey: ["habits", "detail", habit?.id] });
+		onCancel();
+	};
 
 	useEffect(() => {
 		if (habit) {
@@ -303,7 +312,10 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 				{/* Botão de delete - só aparece no modo edição */}
 				{habit && habit.id && (
 					<div className="flex justify-center items-center mt-4 w-full">
-						<DialogConfirmDelete id={habit.id} />
+						<DialogConfirmDelete
+							id={habit.id}
+							onDeleteSuccess={handleDeleteSuccess}
+						/>
 					</div>
 				)}
 			</DialogContent>
@@ -311,15 +323,26 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 	);
 }
 
-function DialogConfirmDelete({ id }: { id: string }) {
+function DialogConfirmDelete({ id, onDeleteSuccess }: { id: string; onDeleteSuccess?: () => void }) {
 	const [isDeleting, setIsDeleting] = useState(false);
+	// const deleteHabitMutation = useDeleteHabit();
 
 	const onDelete = async () => {
 		if (isDeleting) return;
 		setIsDeleting(true);
 		try {
-			// TODO: Implementar deleteHabit no contexto
-			toast.success("Hábito excluído com sucesso!" + id);
+			const response = await fetch(`/api/habits?id=${id}`, {
+				method: "DELETE",
+			});
+			if (!response.ok) {
+				throw new Error("Erro ao excluir hábito");
+			}
+
+			toast.success("Hábito excluído com sucesso!");
+			onDeleteSuccess?.();
+		} catch (error) {
+			toast.error("Erro ao excluir hábito. Tente novamente.");
+			console.error("Erro ao excluir hábito:", error);
 		} finally {
 			setIsDeleting(false);
 		}

@@ -1,3 +1,4 @@
+import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import type { NextRequest } from "next/server";
 
@@ -18,6 +19,41 @@ export async function GET(
 		return Response.json({ habit });
 	} catch (error) {
 		console.error("Error fetching habit:", error);
+		return Response.json(
+			{ error: "Internal server error" },
+			{ status: 500 }
+		);
+	}
+}
+
+export async function PATCH(
+	request: NextRequest,
+	{ params }: { params: Promise<{ id: string }> }
+) {
+	try {
+		const { id } = await params;
+		const { habit: updateData } = await request.json();
+
+		// Buscar o hábito existente
+		const existingHabit = await habitRepository.findById(id);
+		if (!existingHabit) {
+			return Response.json({ error: "Habit not found" }, { status: 404 });
+		}
+
+		// Mesclar os dados existentes com as atualizações
+		const updatedHabitData = {
+			...existingHabit,
+			...updateData,
+			id,
+			updatedAt: new Date(),
+		};
+
+		const useCase = new UpdateHabitUseCase(habitRepository);
+		const result = await useCase.execute(updatedHabitData);
+
+		return Response.json({ habit: result });
+	} catch (error) {
+		console.error("Error updating habit:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

@@ -1,12 +1,12 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCreateHabit, useDeleteHabit, useHabits, useUpdateHabit } from "@/hooks/use-habits";
 import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useHabits } from "@/contexts/habit-context-refactored";
 import type { Habit } from "@/domain/entities/habit";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
@@ -14,20 +14,23 @@ import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
 
 export function HabitColumn() {
-	const { habits, createHabit, updateHabit, deleteHabit } = useHabits();
+	const { data: habits = [], isLoading } = useHabits();
+	const createHabitMutation = useCreateHabit();
+	const updateHabitMutation = useUpdateHabit();
+	const deleteHabitMutation = useDeleteHabit();
+
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
 	const [habitStats, setHabitStats] = useState<Record<string, Habit>>({});
 
-
 	const inProgressHabits = habits.filter(
-		(habit) => habit.status === "Em Andamento",
+		(habit: Habit) => habit.status === "Em Andamento",
 	);
-	const completedHabits = habits.filter((habit) => habit.status === "Completo");
+	const completedHabits = habits.filter((habit: Habit) => habit.status === "Completo");
 	const cancelledHabits = habits.filter(
-		(habit) => habit.status === "Cancelado",
+		(habit: Habit) => habit.status === "Cancelado",
 	);
 
 	// Função para carregar estatísticas de um hábito específico
@@ -46,17 +49,14 @@ export function HabitColumn() {
 		}
 	}, []);
 
-	const handleCreateHabit = async (habitData: {
-		title: string;
-		observations: string;
-		difficulty: Habit["difficulty"];
-		priority: Habit["priority"];
-		category: Habit["category"];
-		tags: string[];
-		reset: Habit["reset"];
-	}) => {
+	const handleCreateHabit = async (habitData: any) => {
 		try {
-			await createHabit(habitData);
+			// Adicionar userId se não estiver presente
+			const dataWithUserId = {
+				...habitData,
+				userId: habitData.userId || "default-user", // TODO: Get from auth context
+			};
+			await createHabitMutation.mutateAsync(dataWithUserId);
 			toast.success(`Hábito "${habitData.title}" criado com sucesso!`);
 			setIsFormOpen(false);
 		} catch (error) {
@@ -65,18 +65,13 @@ export function HabitColumn() {
 		}
 	};
 
-	const handleEditHabit = async (habitData: {
-		title: string;
-		observations: string;
-		difficulty: Habit["difficulty"];
-		priority: Habit["priority"];
-		category: Habit["category"];
-		tags: string[];
-		reset: Habit["reset"];
-	}) => {
+	const handleEditHabit = async (habitData: any) => {
 		if (editingHabit) {
 			try {
-				await updateHabit(editingHabit.id, habitData);
+				await updateHabitMutation.mutateAsync({
+					id: editingHabit.id,
+					data: habitData
+				});
 				toast.success(`Hábito "${habitData.title}" atualizado com sucesso!`);
 				setEditingHabit(null);
 				setIsFormOpen(false);
@@ -87,23 +82,25 @@ export function HabitColumn() {
 		}
 	};
 
-	// const handleDeleteHabit = (habitId: string) => {
-	// 	const habit = habits.find(h => h.id === habitId);
-	// 	if (habit) {
-	// 		setHabitToDelete(habit);
-	// 		setIsDeleteDialogOpen(true);
-	// 	}
-	// };
+	const handleDeleteHabit = (habitId: string) => {
+		const habit = habits.find(h => h.id === habitId);
+		if (habit) {
+			setHabitToDelete(habit);
+			setIsDeleteDialogOpen(true);
+		}
+	};
 
 	const confirmDeleteHabit = async () => {
 		if (habitToDelete) {
 			try {
-				await deleteHabit(habitToDelete.id);
+				await deleteHabitMutation.mutateAsync(habitToDelete.id);
 				toast.success(`Hábito "${habitToDelete.title}" excluído com sucesso!`);
 				setHabitToDelete(null);
+				setIsDeleteDialogOpen(false);
 			} catch (error) {
 				toast.error("Erro ao excluir hábito. Tente novamente.");
 				console.error("Erro ao excluir hábito:", error);
+				setIsDeleteDialogOpen(false);
 			}
 		}
 	};
@@ -115,7 +112,10 @@ export function HabitColumn() {
 		const habit = habits.find((h) => h.id === habitId);
 		if (habit) {
 			try {
-				await updateHabit(habitId, { status });
+				await updateHabitMutation.mutateAsync({
+					id: habitId,
+					data: { status }
+				});
 				const statusText = status === "Completo" ? "concluído" :
 					status === "Cancelado" ? "cancelado" : "atualizado";
 				toast.success(`Hábito "${habit.title}" ${statusText}!`);
