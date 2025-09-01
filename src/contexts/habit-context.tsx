@@ -8,7 +8,8 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
-	useState,
+	useMemo,
+	useState
 } from "react";
 
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
@@ -59,7 +60,7 @@ export function HabitProvider({ children }: HabitProviderProps) {
 		}
 	}, [listHabitsUseCase]);
 
-	const createHabit = async (data: HabitFormData) => {
+	const createHabit = useCallback(async (data: HabitFormData) => {
 		try {
 			setError(null);
 
@@ -80,7 +81,7 @@ export function HabitProvider({ children }: HabitProviderProps) {
 			setError(err instanceof Error ? err.message : "Erro ao criar hábito");
 			throw err;
 		}
-	};
+	}, [createHabitUseCase]);
 
 	const updateHabit = async (id: string, data: Partial<Habit>) => {
 		try {
@@ -153,7 +154,7 @@ export function HabitProvider({ children }: HabitProviderProps) {
 		fetchHabits();
 	}, [fetchHabits]);
 
-	const value: HabitContextType = {
+	const value: HabitContextType = useMemo(() => ({
 		habits,
 		loading,
 		error,
@@ -162,7 +163,7 @@ export function HabitProvider({ children }: HabitProviderProps) {
 		deleteHabit,
 		refreshHabits,
 		completeHabit,
-	};
+	}), [habits, loading, error, createHabit, updateHabit, deleteHabit, refreshHabits, completeHabit]);
 
 	return (
 		<HabitContext.Provider value={value}>{children}</HabitContext.Provider>

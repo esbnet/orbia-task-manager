@@ -14,6 +14,22 @@ export class PrismaHabitRepository implements HabitRepository {
 		const habits = await prisma.habit.findMany({
 			where: { userId },
 			orderBy: { order: "asc" },
+			select: {
+				id: true,
+				title: true,
+				observations: true,
+				difficulty: true,
+				status: true,
+				priority: true,
+				category: true,
+				tags: true,
+				reset: true,
+				order: true,
+				lastCompletedDate: true,
+				userId: true,
+				createdAt: true,
+				updatedAt: true,
+			},
 		});
 		return habits.map(this.toDomain);
 	}
@@ -94,6 +110,22 @@ export class PrismaHabitRepository implements HabitRepository {
 		const habits = await prisma.habit.findMany({
 			where: { userId },
 			orderBy: { order: "asc" },
+			select: {
+				id: true,
+				title: true,
+				observations: true,
+				difficulty: true,
+				status: true,
+				priority: true,
+				category: true,
+				tags: true,
+				reset: true,
+				order: true,
+				lastCompletedDate: true,
+				userId: true,
+				createdAt: true,
+				updatedAt: true,
+			},
 		});
 		return habits.map(this.toDomain);
 	}
@@ -176,6 +208,22 @@ export class PrismaHabitRepository implements HabitRepository {
 				},
 			},
 			orderBy: { order: "asc" },
+			select: {
+				id: true,
+				title: true,
+				observations: true,
+				difficulty: true,
+				status: true,
+				priority: true,
+				category: true,
+				tags: true,
+				reset: true,
+				order: true,
+				lastCompletedDate: true,
+				userId: true,
+				createdAt: true,
+				updatedAt: true,
+			},
 		});
 		return habits.map(this.toDomain);
 	}

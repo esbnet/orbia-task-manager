@@ -13,13 +13,13 @@ import {
 	TrendingUp,
 	User
 } from "lucide-react";
+import { memo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Habit } from "@/domain/entities/habit";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
 
 const categoryIcons = {
 	"Pessoa": User,
@@ -51,7 +51,7 @@ interface HabitCardProps {
 	todayCount?: number;
 }
 
-export function HabitCard({
+export const HabitCard = memo(function HabitCard({
 	habit,
 	onEdit,
 	onStatusChange,
@@ -234,4 +234,4 @@ export function HabitCard({
 			</CardContent>
 		</Card>
 	);
-}
+});

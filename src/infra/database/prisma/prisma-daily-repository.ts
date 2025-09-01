@@ -37,9 +37,31 @@ export class PrismaDailyRepository implements DailyRepository {
 		// retornar todos os dailies do user
 		const daily = await prisma.daily.findMany({
 			where: { userId },
-			include: {
+			orderBy: { order: "asc" },
+			select: {
+				id: true,
+				userId: true,
+				title: true,
+				observations: true,
+				tasks: true,
+				difficulty: true,
+				startDate: true,
+				repeatType: true,
+				repeatFrequency: true,
+				tags: true,
+				order: true,
+				lastCompletedDate: true,
+				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
+					select: {
+						id: true,
+						title: true,
+						completed: true,
+						dailyId: true,
+						order: true,
+						createdAt: true,
+					},
 				},
 			},
 		});
@@ -58,9 +80,30 @@ export class PrismaDailyRepository implements DailyRepository {
 
 		const daily = await prisma.daily.findUnique({
 			where: { id, userId },
-			include: {
+			select: {
+				id: true,
+				userId: true,
+				title: true,
+				observations: true,
+				tasks: true,
+				difficulty: true,
+				startDate: true,
+				repeatType: true,
+				repeatFrequency: true,
+				tags: true,
+				order: true,
+				lastCompletedDate: true,
+				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
+					select: {
+						id: true,
+						title: true,
+						completed: true,
+						dailyId: true,
+						order: true,
+						createdAt: true,
+					},
 				},
 			},
 		});
