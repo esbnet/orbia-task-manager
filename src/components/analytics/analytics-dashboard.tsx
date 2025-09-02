@@ -28,9 +28,11 @@ import {
 } from "recharts";
 
 import { useGoals } from "@/contexts/goal-context";
+import { useHabitsAnalytics, type HabitAnalyticsData } from "@/hooks/use-habits-analytics";
 import { ptBR } from "date-fns/locale";
 
 interface AnalyticsData {
+	// Goals data
 	totalGoals: number;
 	completedGoals: number;
 	inProgressGoals: number;
@@ -41,6 +43,9 @@ interface AnalyticsData {
 	goalsByPriority: Array<{ name: string; value: number; color: string }>;
 	weeklyProgress: Array<{ date: string; completed: number; total: number }>;
 	monthlyTrends: Array<{ month: string; goals: number; completed: number }>;
+
+	// Habits data
+	habitsData?: HabitAnalyticsData;
 }
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
@@ -50,6 +55,7 @@ export function AnalyticsDashboard() {
 	const [timeRange, setTimeRange] = useState<
 		"week" | "month" | "quarter" | "year"
 	>("month");
+	const { data: habitsAnalytics } = useHabitsAnalytics(timeRange);
 	const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
 		null,
 	);
@@ -355,6 +361,7 @@ export function AnalyticsDashboard() {
 			<Tabs defaultValue="overview" className="space-y-4">
 				<TabsList>
 					<TabsTrigger value="overview">Visão Geral</TabsTrigger>
+					<TabsTrigger value="habits">Hábitos</TabsTrigger>
 					<TabsTrigger value="progress">
 						Progresso Semanal
 					</TabsTrigger>
@@ -416,6 +423,198 @@ export function AnalyticsDashboard() {
 							</CardContent>
 						</Card>
 					</div>
+				</TabsContent>
+
+				<TabsContent value="habits" className="space-y-4">
+					{habitsAnalytics ? (
+						<>
+							{/* Key Metrics for Habits */}
+							<div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+								<Card>
+									<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+										<CardTitle className="font-medium text-sm">
+											Total de Hábitos
+										</CardTitle>
+										<Target className="w-4 h-4 text-muted-foreground" />
+									</CardHeader>
+									<CardContent>
+										<div className="font-bold text-2xl">
+											{habitsAnalytics.totalHabits}
+										</div>
+										<p className="text-muted-foreground text-xs">
+											Hábitos criados
+										</p>
+									</CardContent>
+								</Card>
+
+								<Card>
+									<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+										<CardTitle className="font-medium text-sm">
+											Ativos
+										</CardTitle>
+										<Clock className="w-4 h-4 text-muted-foreground" />
+									</CardHeader>
+									<CardContent>
+										<div className="font-bold text-2xl">
+											{habitsAnalytics.activeHabits}
+										</div>
+										<p className="text-muted-foreground text-xs">
+											Em andamento
+										</p>
+									</CardContent>
+								</Card>
+
+								<Card>
+									<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+										<CardTitle className="font-medium text-sm">
+											Total de Entradas
+										</CardTitle>
+										<CheckCircle className="w-4 h-4 text-muted-foreground" />
+									</CardHeader>
+									<CardContent>
+										<div className="font-bold text-2xl">
+											{habitsAnalytics.totalEntries}
+										</div>
+										<p className="text-muted-foreground text-xs">
+											Registros realizados
+										</p>
+									</CardContent>
+								</Card>
+
+								<Card>
+									<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+										<CardTitle className="font-medium text-sm">
+											Taxa de Conclusão
+										</CardTitle>
+										<CheckCircle className="w-4 h-4 text-muted-foreground" />
+									</CardHeader>
+									<CardContent>
+										<div className="font-bold text-2xl">
+											{habitsAnalytics.completionRate.toFixed(1)}%
+										</div>
+										<p className="text-muted-foreground text-xs">
+											Hábitos concluídos
+										</p>
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* Habits Charts */}
+							<div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
+								<Card>
+									<CardHeader>
+										<CardTitle>Progresso Diário</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<ResponsiveContainer width="100%" height={300}>
+											<LineChart data={habitsAnalytics.dailyProgress}>
+												<CartesianGrid strokeDasharray="3 3" />
+												<XAxis dataKey="date" />
+												<YAxis />
+												<Tooltip />
+												<Line
+													type="monotone"
+													dataKey="entries"
+													stroke="#8884d8"
+													name="Entradas"
+												/>
+												<Line
+													type="monotone"
+													dataKey="target"
+													stroke="#82ca9d"
+													name="Meta"
+												/>
+											</LineChart>
+										</ResponsiveContainer>
+									</CardContent>
+								</Card>
+
+								<Card>
+									<CardHeader>
+										<CardTitle>Hábitos por Categoria</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<ResponsiveContainer width="100%" height={300}>
+											<PieChart>
+												<Pie
+													data={habitsAnalytics.habitsByCategory}
+													cx="50%"
+													cy="50%"
+													labelLine={false}
+													label={({ category, percent }) =>
+														`${category} ${(percent * 100).toFixed(0)}%`
+													}
+													outerRadius={80}
+													fill="#8884d8"
+													dataKey="count"
+												>
+													{habitsAnalytics.habitsByCategory.map(
+														(entry, index) => (
+															<Cell
+																key={entry.category}
+																fill={COLORS[index % COLORS.length]}
+															/>
+														),
+													)}
+												</Pie>
+												<Tooltip />
+											</PieChart>
+										</ResponsiveContainer>
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* Streaks and Weekly Trends */}
+							<div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
+								<Card>
+									<CardHeader>
+										<CardTitle>Streaks Atuais</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<div className="space-y-2">
+											{habitsAnalytics.currentStreaks.slice(0, 5).map((streak, index) => (
+												<div key={streak.habitId} className="flex justify-between items-center">
+													<span className="text-sm">{streak.habitTitle}</span>
+													<span className="font-bold text-sm">{streak.streakDays} dias</span>
+												</div>
+											))}
+											{habitsAnalytics.currentStreaks.length === 0 && (
+												<p className="text-muted-foreground text-sm">Nenhum streak ativo</p>
+											)}
+										</div>
+									</CardContent>
+								</Card>
+
+								<Card>
+									<CardHeader>
+										<CardTitle>Tendências Semanais</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<ResponsiveContainer width="100%" height={300}>
+											<BarChart data={habitsAnalytics.weeklyTrends}>
+												<CartesianGrid strokeDasharray="3 3" />
+												<XAxis dataKey="week" />
+												<YAxis />
+												<Tooltip />
+												<Bar
+													dataKey="totalEntries"
+													fill="#8884d8"
+													name="Total de Entradas"
+												/>
+											</BarChart>
+										</ResponsiveContainer>
+									</CardContent>
+								</Card>
+							</div>
+						</>
+					) : (
+						<div className="flex justify-center items-center h-64">
+							<div className="text-center">
+								<div className="mx-auto mb-4 border-purple-600 border-b-2 rounded-full w-8 h-8 animate-spin" />
+								<p className="text-gray-600">Carregando analytics de hábitos...</p>
+							</div>
+						</div>
+					)}
 				</TabsContent>
 
 				<TabsContent value="progress" className="space-y-4">

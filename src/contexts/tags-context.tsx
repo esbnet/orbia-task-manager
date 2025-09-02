@@ -44,7 +44,6 @@ export function TagsProvider({ children }: TagsProviderProps) {
 			setTags(data.tags || []);
 			setLastFetch(now);
 		} catch (error) {
-			console.error("Error fetching tags:", error);
 			setTags([]);
 		} finally {
 			setIsLoading(false);
@@ -68,9 +67,7 @@ export function TagsProvider({ children }: TagsProviderProps) {
 			body: JSON.stringify(data),
 		});
 		const newTag = await response.json();
-		console.log('Context response =====> ', newTag);
 		setTags(prev => [...prev, newTag]);
-		console.log('Context tags =====> ', tags);
 		return newTag;
 	};
 

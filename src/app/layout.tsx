@@ -2,7 +2,6 @@ import "./globals.css";
 
 import { Kode_Mono, Lobster } from "next/font/google";
 
-import { Header } from "@/components/layout/header";
 import { QueryClientProviderWrapper } from "@/components/providers/query-client-provider";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
@@ -30,6 +29,7 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+
 	return (
 		<html lang="pt-BR" suppressHydrationWarning>
 			<body
@@ -46,7 +46,6 @@ export default function RootLayout({
 							dark: "dark",
 						}}
 					>
-						<Header />
 						<main className="flex-1">{children}</main>
 						<Toaster richColors />
 					</ThemeProvider>

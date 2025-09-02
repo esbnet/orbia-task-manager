@@ -38,7 +38,6 @@ export async function GET(
 
 		return NextResponse.json(goal);
 	} catch (error) {
-		console.error("Erro ao buscar meta:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },
@@ -88,7 +87,6 @@ export async function PUT(
 
 		return NextResponse.json(updatedGoal);
 	} catch (error) {
-		console.error("Erro ao atualizar meta:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },
@@ -128,7 +126,6 @@ export async function DELETE(
 
 		return NextResponse.json({ message: "Meta excluída com sucesso" });
 	} catch (error) {
-		console.error("Erro ao excluir meta:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },

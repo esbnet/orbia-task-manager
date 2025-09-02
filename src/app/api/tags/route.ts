@@ -17,7 +17,6 @@ export async function GET() {
 		const tags = await tagRepo.list();
 		return Response.json({ tags });
 	} catch (error) {
-		console.error("Error in tags API:", error);
 		return Response.json({ tags: [] });
 	}
 }

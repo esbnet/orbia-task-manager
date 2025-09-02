@@ -42,7 +42,6 @@ export async function DELETE(
 			where: { id },
 		});
 		
-		console.log(`🗑️ Daily "${daily.title}" (${id}) deletada com sucesso`);
 		
 		return Response.json({
 			success: true,
@@ -50,7 +49,6 @@ export async function DELETE(
 		}, { status: 200 });
 		
 	} catch (error) {
-		console.error("Error deleting daily:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

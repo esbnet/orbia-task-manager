@@ -29,7 +29,6 @@ export async function POST(
 
 		return Response.json(result, { status: 201 });
 	} catch (error) {
-		console.error("Error registering habit:", error);
 		return Response.json(
 			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }

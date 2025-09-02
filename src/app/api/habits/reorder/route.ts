@@ -17,7 +17,6 @@ export async function PATCH(request: NextRequest) {
 		await habitRepository.reorder(ids);
 		return new Response(null, { status: 204 });
 	} catch (error) {
-		console.error("Error reordering habits:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

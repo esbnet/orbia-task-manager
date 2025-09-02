@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
 		
 		return Response.json({ habits });
 	} catch (error) {
-		console.error("Error fetching habits by tags:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

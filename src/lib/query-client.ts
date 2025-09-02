@@ -21,7 +21,6 @@ export const queryClient = new QueryClient({
 			retry: 1,
 			// Mostrar erro por 5 segundos
 			onError: (error) => {
-				console.error("Mutation error:", error);
 			},
 		},
 	},

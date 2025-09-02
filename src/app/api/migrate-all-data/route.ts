@@ -2,7 +2,6 @@ import { getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export async function POST() {
-	console.log('🔄 MIGRATE ALL DATA - INICIANDO');
 	
 	try {
 		const currentUserId = await getCurrentUserId();
@@ -10,7 +9,6 @@ export async function POST() {
 			return Response.json({ error: "Usuário não autenticado" }, { status: 401 });
 		}
 		
-		console.log('🔄 MIGRATE ALL DATA - currentUserId:', currentUserId);
 		
 		// Migrar todas as entidades de outros usuários para o usuário atual
 		const results = {
@@ -30,7 +28,6 @@ export async function POST() {
 			}
 		});
 		results.habits = habitsResult.count;
-		console.log('🔄 Hábitos migrados:', habitsResult.count);
 		
 		// Migrar dailies
 		const dailiesResult = await prisma.daily.updateMany({
@@ -42,7 +39,6 @@ export async function POST() {
 			}
 		});
 		results.dailies = dailiesResult.count;
-		console.log('🔄 Dailies migrados:', dailiesResult.count);
 		
 		// Migrar todos
 		const todosResult = await prisma.todo.updateMany({
@@ -54,7 +50,6 @@ export async function POST() {
 			}
 		});
 		results.todos = todosResult.count;
-		console.log('🔄 Todos migrados:', todosResult.count);
 		
 		// Migrar goals
 		const goalsResult = await prisma.goal.updateMany({
@@ -66,7 +61,6 @@ export async function POST() {
 			}
 		});
 		results.goals = goalsResult.count;
-		console.log('🔄 Goals migrados:', goalsResult.count);
 		
 		return Response.json({
 			message: "Migração concluída com sucesso",
@@ -76,7 +70,6 @@ export async function POST() {
 		});
 		
 	} catch (error) {
-		console.error('🔄 MIGRATE ALL DATA - ERRO:', error);
 		return Response.json(
 			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }

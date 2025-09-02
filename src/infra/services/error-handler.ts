@@ -13,6 +13,5 @@ export class ErrorHandler {
 
 	static logError(error: unknown, context?: string): void {
 		const message = this.handle(error);
-		console.error(`[${context || "Unknown"}] ${message}`, error);
 	}
 }

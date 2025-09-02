@@ -5,7 +5,6 @@ import type { NextRequest } from "next/server";
 // Esta API retorna todos os hábitos sem verificar usuário logado
 
 export async function GET() {
-	console.log('⚠️  HABITS TEMP - GET - INICIANDO (SEM AUTENTICAÇÃO)');
 	
 	try {
 		// Buscar todos os hábitos (ignorando userId)
@@ -13,7 +12,6 @@ export async function GET() {
 			orderBy: { createdAt: "desc" },
 		});
 		
-		console.log('⚠️  HABITS TEMP - Hábitos encontrados:', habits.length);
 		
 		// Converter para o formato esperado pelo frontend
 		const formattedHabits = habits.map(habit => ({
@@ -36,13 +34,11 @@ export async function GET() {
 		return Response.json({ habits: formattedHabits });
 		
 	} catch (error) {
-		console.error('⚠️  HABITS TEMP - ERRO:', error);
 		return Response.json({ error: error }, { status: 500 });
 	}
 }
 
 export async function POST(request: NextRequest) {
-	console.log('⚠️  HABITS TEMP - POST - INICIANDO');
 	
 	try {
 		const {
@@ -87,7 +83,6 @@ export async function POST(request: NextRequest) {
 		return Response.json({ habit }, { status: 201 });
 		
 	} catch (error) {
-		console.error('⚠️  HABITS TEMP - POST ERRO:', error);
 		return Response.json({ error: error}, { status: 500 });
 	}
 }

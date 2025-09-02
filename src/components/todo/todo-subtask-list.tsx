@@ -40,7 +40,6 @@ export function TodoSubtaskList({
 					setSubtasks(initialSubtasks);
 				}
 			} catch (error) {
-				console.error('Error fetching subtasks:', error);
 				// Fallback to initialSubtasks if API fails
 				setSubtasks(initialSubtasks);
 			} finally {
@@ -80,7 +79,6 @@ export function TodoSubtaskList({
 			onSubtasksChange?.(updatedSubtasks);
 			setNewTaskTitle("");
 		} catch (error) {
-			console.error("Error adding subtask:", error);
 			toast.error("Erro ao criar tarefa");
 		}
 	};
@@ -96,7 +94,6 @@ export function TodoSubtaskList({
 				`Tarefa "${subtask.title}" ${updated.completed ? "concluída" : "reaberta"}!`,
 			);
 		} catch (error) {
-			console.error("Error toggling subtask:", error);
 			toast.error("Erro ao atualizar tarefa");
 		}
 	};
@@ -109,7 +106,6 @@ export function TodoSubtaskList({
 			onSubtasksChange?.(updatedSubtasks);
 			toast.success(`Tarefa "${title}" removida com sucesso!`);
 		} catch (error) {
-			console.error("Error deleting subtask:", error);
 			toast.error("Erro ao deletar tarefa");
 		}
 	};

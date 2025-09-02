@@ -3,15 +3,11 @@ import { prisma } from "@/infra/database/prisma/prisma-client";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
-	console.log('🔧 HABITS ADMIN - GET - INICIANDO');
-	
 	const { searchParams } = new URL(request.url);
 	const mode = searchParams.get('mode') || 'normal';
-	
+
 	try {
 		const currentUserId = await getCurrentUserId();
-		console.log('🔧 HABITS ADMIN - currentUserId:', currentUserId);
-		console.log('🔧 HABITS ADMIN - mode:', mode);
 		
 		let habits;
 		
@@ -21,7 +17,6 @@ export async function GET(request: NextRequest) {
 				habits = await prisma.habit.findMany({
 					orderBy: { createdAt: "desc" },
 				});
-				console.log('🔧 HABITS ADMIN - Todos os hábitos:', habits.length);
 				break;
 				
 			case 'migrate':
@@ -45,7 +40,6 @@ export async function GET(request: NextRequest) {
 							userId: currentUserId
 						}
 					});
-					console.log('🔧 HABITS ADMIN - Migrados:', orphanHabits.length);
 				}
 				
 				// Após migração, retorna hábitos do usuário atual
@@ -98,14 +92,11 @@ export async function GET(request: NextRequest) {
 		});
 		
 	} catch (error) {
-		console.error('🔧 HABITS ADMIN - ERRO:', error);
 		return Response.json({ error: error }, { status: 500 });
 	}
 }
 
 export async function POST(request: NextRequest) {
-	console.log('🔧 HABITS ADMIN - POST - INICIANDO');
-	
 	const body = await request.json();
 	const { action, targetUserId } = body;
 	
@@ -168,7 +159,6 @@ export async function POST(request: NextRequest) {
 		}
 		
 	} catch (error) {
-		console.error('🔧 HABITS ADMIN - POST ERRO:', error);
 		return Response.json({ error: error }, { status: 500 });
 	}
 }

@@ -342,7 +342,6 @@ function DialogConfirmDelete({ id, onDeleteSuccess }: { id: string; onDeleteSucc
 			onDeleteSuccess?.();
 		} catch (error) {
 			toast.error("Erro ao excluir hábito. Tente novamente.");
-			console.error("Erro ao excluir hábito:", error);
 		} finally {
 			setIsDeleting(false);
 		}

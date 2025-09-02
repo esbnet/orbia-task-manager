@@ -8,15 +8,12 @@ const prisma = new PrismaClient({
 
 async function testConnection() {
   try {
-    console.log('🔍 Testando conexão com o banco...');
 
     // Teste básico de conexão
     await prisma.$connect();
-    console.log('✅ Conectado ao banco com sucesso!');
 
     // Teste de query simples
     const result = await prisma.$queryRaw`SELECT version()`;
-    console.log('📊 Versão do PostgreSQL:', result[0].version);
 
     // Verificar se as tabelas existem
     const tables = await prisma.$queryRaw`
@@ -25,15 +22,11 @@ async function testConnection() {
       WHERE table_schema = 'public'
     `;
 
-    console.log('📋 Tabelas encontradas:', tables.length);
 
     for (const table of tables) {
-      console.log(`  - ${table.table_name}`);
     }
 
   } catch (error) {
-    console.error('❌ Erro na conexão:', error.message);
-    console.error('🔧 Detalhes completos do erro:', error);
   } finally {
     await prisma.$disconnect();
   }

@@ -12,7 +12,6 @@ export async function PATCH(
 		const habit = await habitRepository.markComplete(id);
 		return Response.json({ habit });
 	} catch (error) {
-		console.error("Error completing habit:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }
@@ -29,7 +28,6 @@ export async function DELETE(
 		const habit = await habitRepository.markIncomplete(id);
 		return Response.json({ habit });
 	} catch (error) {
-		console.error("Error marking habit as incomplete:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

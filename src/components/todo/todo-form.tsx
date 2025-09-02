@@ -127,7 +127,6 @@ export function TodoForm({
 			if (onCancel) onCancel();
 		} catch (error) {
 			toast.error(`Erro ao atualizar tarefa${error}`);
-			console.error("Erro ao atualizar tarefa", error);
 		} finally {
 			setIsLoading(false);
 		}

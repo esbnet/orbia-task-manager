@@ -47,7 +47,6 @@ export function DailySubtaskList({
 			updateSubtasks([...subtasks, newSubtask]);
 			setNewTaskTitle("");
 		} catch (error) {
-			console.error("Error adding subtask:", error);
 			toast.error("Erro ao criar tarefa");
 		}
 	};
@@ -63,7 +62,6 @@ export function DailySubtaskList({
 				`Tarefa "${updatedSubtask.title}" atualizada com sucesso!`,
 			);
 		} catch (error) {
-			console.error("Error updating subtask:", error);
 			toast.error("Erro ao atualizar tarefa");
 		}
 	}
@@ -79,7 +77,6 @@ export function DailySubtaskList({
 				`Tarefa "${subtask.title}" ${updated.completed ? "concluída" : "reaberta"}!`,
 			);
 		} catch (error) {
-			console.error("Error toggling subtask:", error);
 			toast.error("Erro ao atualizar tarefa");
 		}
 	};
@@ -90,7 +87,6 @@ export function DailySubtaskList({
 			updateSubtasks(subtasks.filter((s) => s.id !== id));
 			toast.success(`Tarefa "${title}" removida com sucesso!`);
 		} catch (error) {
-			console.error("Error deleting subtask:", error);
 			toast.error("Erro ao deletar tarefa");
 		}
 	};

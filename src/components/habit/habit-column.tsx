@@ -45,7 +45,6 @@ export function HabitColumn() {
 				}));
 			}
 		} catch (error) {
-			console.error('Erro ao carregar estatísticas:', error);
 		}
 	}, []);
 
@@ -61,7 +60,6 @@ export function HabitColumn() {
 			setIsFormOpen(false);
 		} catch (error) {
 			toast.error("Erro ao criar hábito. Tente novamente.");
-			console.error("Erro ao criar hábito:", error);
 		}
 	};
 
@@ -77,7 +75,6 @@ export function HabitColumn() {
 				setIsFormOpen(false);
 			} catch (error) {
 				toast.error("Erro ao atualizar hábito. Tente novamente.");
-				console.error("Erro ao atualizar hábito:", error);
 			}
 		}
 	};
@@ -99,7 +96,6 @@ export function HabitColumn() {
 				setIsDeleteDialogOpen(false);
 			} catch (error) {
 				toast.error("Erro ao excluir hábito. Tente novamente.");
-				console.error("Erro ao excluir hábito:", error);
 				setIsDeleteDialogOpen(false);
 			}
 		}
@@ -121,7 +117,6 @@ export function HabitColumn() {
 				toast.success(`Hábito "${habit.title}" ${statusText}!`);
 			} catch (error) {
 				toast.error("Erro ao atualizar status do hábito. Tente novamente.");
-				console.error("Erro ao atualizar status:", error);
 			}
 		}
 	};
@@ -159,7 +154,6 @@ export function HabitColumn() {
 			await loadHabitStats(habitId);
 		} catch (error) {
 			toast.error('Erro ao registrar hábito. Tente novamente.');
-			console.error('Erro ao registrar hábito:', error);
 		}
 	};
 

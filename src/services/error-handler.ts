@@ -52,7 +52,6 @@ export class ErrorHandler {
 
 		// In development, log to console
 		if (process.env.NODE_ENV === "development") {
-			console.error("Application Error:", logData);
 		}
 
 		// In production, you would send to logging service

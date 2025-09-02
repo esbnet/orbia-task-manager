@@ -3,14 +3,11 @@ import { getCurrentUser, getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export async function GET() {
-	console.log('🔍 USER DIAGNOSTICS - INICIANDO');
 	
 	try {
 		const user = await getCurrentUser();
 		const userId = await getCurrentUserId();
 		
-		console.log('🔍 USER DIAGNOSTICS - user:', user);
-		console.log('🔍 USER DIAGNOSTICS - userId:', userId);
 		
 		// Contar dados por usuário
 		const allUsers = await prisma.user.findMany({
@@ -35,7 +32,6 @@ export async function GET() {
 			timestamp: new Date().toISOString()
 		});
 	} catch (error) {
-		console.error('🔍 USER DIAGNOSTICS - ERRO:', error);
 		return Response.json({ error: error }, { status: 500 });
 	}
 }

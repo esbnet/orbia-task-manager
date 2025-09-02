@@ -75,7 +75,6 @@ export const DailyColumn = () => {
 				}
 			}
 		} catch (error) {
-			console.error('Erro ao carregar dailies da API:', error);
 			// Manter dados estáticos em caso de erro
 		} finally {
 			setLoading(false);
@@ -105,7 +104,6 @@ export const DailyColumn = () => {
 			}
 		} catch (error) {
 			toast.error('Erro ao completar daily. Tente novamente.');
-			console.error('Erro ao completar daily:', error);
 		}
 	}, [loadAvailableDailies]);
 
@@ -130,7 +128,6 @@ export const DailyColumn = () => {
 			await loadAvailableDailies();
 		} catch (error) {
 			toast.error("Erro ao criar daily. Tente novamente.");
-			console.error("Erro ao criar daily:", error);
 		}
 	};
 
@@ -145,7 +142,6 @@ export const DailyColumn = () => {
 			await loadAvailableDailies();
 		} catch (error) {
 			toast.error("Erro ao atualizar daily. Tente novamente.");
-			console.error("Erro ao atualizar daily:", error);
 		}
 	};
 
@@ -181,7 +177,6 @@ export const DailyColumn = () => {
 				await loadAvailableDailies();
 			} catch (error) {
 				toast.error("Erro ao remover daily. Tente novamente.");
-				console.error("Erro ao remover daily:", error);
 			}
 		}
 	};

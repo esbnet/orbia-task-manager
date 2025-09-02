@@ -25,9 +25,9 @@ const dailyRepo = new PrismaDailyRepository();
  */
 export async function PATCH(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = params;
+	const { id } = await params;
 
 	try {
 		const useCase = new ToggleCompleteUseCase(dailyRepo);
@@ -39,7 +39,6 @@ export async function PATCH(
 			daily: result
 		});
 	} catch (error) {
-		console.error("Error toggling daily completion:", error);
 
 		// Check if it's a "not found" error
 		if (error instanceof Error && error.message.includes("not found")) {

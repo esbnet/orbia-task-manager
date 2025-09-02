@@ -102,7 +102,6 @@ export class StructuredLogger implements Logger {
 		}
 
 		// Em produção, isso poderia ser enviado para um serviço de logging
-		console.log(logMessage);
 	}
 
 	error(message: string, context?: Record<string, any>): void {

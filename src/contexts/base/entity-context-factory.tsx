@@ -69,36 +69,26 @@ export function createEntityContext<TEntity extends BaseEntity, TFormData extend
 		const [lastFetch, setLastFetch] = useState<number>(0);
 
 		const fetchEntities = useCallback(async (force = false) => {
-			console.log(`🎯 fetchEntities ${entityName} - INICIANDO`, { force, entitiesLength: entities.length, enableCache });
-
 			// Cache logic
 			if (enableCache && !force && entities.length > 0) {
 				const now = Date.now();
 				if (now - lastFetch < cacheTimeout) {
-					console.log(`🎯 fetchEntities ${entityName} - CACHE HIT, pulando`);
 					return;
 				}
 			}
 
 			try {
-				console.log(`🎯 fetchEntities ${entityName} - setLoading(true)`);
 				setLoading(true);
 				setError(null);
 
-				console.log(`🎯 fetchEntities ${entityName} - chamando service.list()`);
 				const fetchedEntities = await service.list();
-				console.log(`🎯 fetchEntities ${entityName} - service.list() retornou:`, fetchedEntities.length, "entidades");
 
 				setEntities(fetchedEntities);
 				setLastFetch(Date.now());
-				console.log(`🎯 fetchEntities ${entityName} - setEntities executado`);
 			} catch (err) {
 				const errorMessage = err instanceof Error ? err.message : `Erro ao carregar ${entityName.toLowerCase()}s`;
-				console.log(`🎯 fetchEntities ${entityName} - ERRO:`, err);
 				setError(errorMessage);
-				console.error(`Error fetching ${entityName}:`, err);
 			} finally {
-				console.log(`🎯 fetchEntities ${entityName} - setLoading(false)`);
 				setLoading(false);
 			}
 		}, [entityName, service, enableCache, cacheTimeout]);
@@ -148,7 +138,6 @@ export function createEntityContext<TEntity extends BaseEntity, TFormData extend
 		};
 
 		useEffect(() => {
-			console.log(`🎯 useEffect ${entityName} - EXECUTANDO fetchEntities`);
 			fetchEntities();
 		}, []); // Dependências vazias para executar apenas uma vez
 

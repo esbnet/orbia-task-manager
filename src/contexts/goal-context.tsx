@@ -26,40 +26,29 @@ interface GoalContextType {
 const GoalContext = createContext<GoalContextType | undefined>(undefined);
 
 export function GoalProvider({ children }: { children: React.ReactNode }) {
-	console.log("🎯 GoalProvider - INICIALIZANDO CONTEXTO SIMPLES");
 	const [goals, setGoals] = useState<Goal[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
 	const fetchGoals = useCallback(async () => {
-		console.log("🎯 fetchGoals - INICIANDO");
 		try {
-			console.log("🎯 fetchGoals - setLoading(true)");
 			setLoading(true);
 			setError(null);
 
-			console.log("🎯 fetchGoals - fazendo fetch para /api/goals");
 			const response = await fetch("/api/goals");
-			console.log("🎯 fetchGoals - response:", response.status, response.ok);
 
 			if (!response.ok) {
 				throw new Error("Erro ao carregar metas");
 			}
 
 			const goals = await response.json();
-			console.log("🎯 fetchGoals - goals recebidas:", goals.length);
-			console.log("🎯 fetchGoals - chamando setGoals");
 			setGoals(goals);
-			console.log("🎯 fetchGoals - setGoals executado");
 		} catch (err) {
-			console.log("🎯 fetchGoals - ERRO:", err);
 			setError(
 				err instanceof Error ? err.message : "Erro ao carregar metas",
 			);
 		} finally {
-			console.log("🎯 fetchGoals - setLoading(false)");
 			setLoading(false);
-			console.log("🎯 fetchGoals - FINALIZADO");
 		}
 	}, []);
 
@@ -141,7 +130,6 @@ export function GoalProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	useEffect(() => {
-		console.log("🎯 useEffect - EXECUTANDO fetchGoals");
 		fetchGoals();
 	}, [fetchGoals]);
 

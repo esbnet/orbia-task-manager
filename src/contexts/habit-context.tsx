@@ -144,7 +144,6 @@ export function HabitProvider({ children }: HabitProviderProps) {
 			);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Erro ao completar hábito");
-			console.error("Erro ao completar hábito:", err);
 		} finally {
 			setLoading(false);
 		}

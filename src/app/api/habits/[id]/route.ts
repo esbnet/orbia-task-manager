@@ -18,7 +18,6 @@ export async function GET(
 
 		return Response.json({ habit });
 	} catch (error) {
-		console.error("Error fetching habit:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }
@@ -53,7 +52,6 @@ export async function PATCH(
 
 		return Response.json({ habit: result });
 	} catch (error) {
-		console.error("Error updating habit:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }
@@ -70,7 +68,6 @@ export async function DELETE(
 		await habitRepository.delete(id);
 		return new Response(null, { status: 204 });
 	} catch (error) {
-		console.error("Error deleting habit:", error);
 		return Response.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

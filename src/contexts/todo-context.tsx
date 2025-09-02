@@ -56,7 +56,6 @@ export function TodoProvider({ children }: TodoProviderProps) {
 			setError(null);
 		} catch (err) {
 			setError("Failed to fetch todos");
-			console.error('Todo fetch error:', err);
 		} finally {
 			setIsLoading(false);
 		}
@@ -85,7 +84,6 @@ export function TodoProvider({ children }: TodoProviderProps) {
 			]);
 		} catch (err) {
 			setError("Failed to add todo");
-			console.error(err);
 		}
 	};
 
@@ -103,7 +101,6 @@ export function TodoProvider({ children }: TodoProviderProps) {
 			);
 		} catch (err) {
 			setError("Failed to update todo");
-			console.error(err);
 		}
 	};
 
@@ -113,7 +110,6 @@ export function TodoProvider({ children }: TodoProviderProps) {
 			setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
 		} catch (err) {
 			setError("Failed to delete todo");
-			console.error(err);
 		}
 	};
 
@@ -130,7 +126,6 @@ export function TodoProvider({ children }: TodoProviderProps) {
 			);
 		} catch (err) {
 			setError("Falha ao completar tarefa");
-			console.error(err);
 		}
 	};
 
@@ -152,7 +147,6 @@ export function TodoProvider({ children }: TodoProviderProps) {
 			}
 		} catch (err) {
 			setError("Failed to reorder todos");
-			console.error(err);
 		}
 	};
 
@@ -171,7 +165,6 @@ export function TodoProvider({ children }: TodoProviderProps) {
 			);
 		} catch (err) {
 			setError("Failed to complete todo");
-			console.error(err);
 		}
 	};
 

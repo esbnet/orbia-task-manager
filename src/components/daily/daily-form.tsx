@@ -126,7 +126,6 @@ export function DailyForm({
 			if (onCancel) onCancel();
 		} catch (error) {
 			toast.error(`Erro ao atualizar hábito${error}`);
-			console.error("Erro ao atualizar hábito", error);
 		} finally {
 			setIsLoading(false);
 		}

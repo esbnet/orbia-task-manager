@@ -26,9 +26,9 @@ const dailyRepo = new PrismaDailyRepository();
  */
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = params;
+	const { id } = await params;
 
 	try {
 		// For now, we'll get all dailies and find the one with the matching ID
@@ -42,7 +42,6 @@ export async function GET(
 
 		return Response.json({ daily });
 	} catch (error) {
-		console.error("Error fetching daily:", error);
 		return Response.json({ error: "Failed to fetch daily" }, { status: 500 });
 	}
 }
@@ -90,9 +89,9 @@ export async function GET(
  */
 export async function PATCH(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = params;
+	const { id } = await params;
 
 	try {
 		const updateData = await request.json();
@@ -105,7 +104,6 @@ export async function PATCH(
 
 		return Response.json({ daily: updatedDaily });
 	} catch (error) {
-		console.error("Error updating daily:", error);
 		return Response.json({ error: "Failed to update daily" }, { status: 500 });
 	}
 }
@@ -130,9 +128,9 @@ export async function PATCH(
  */
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = params;
+	const { id } = await params;
 
 	try {
 		const useCase = new DeleteDailyUseCase(dailyRepo);
@@ -140,7 +138,6 @@ export async function DELETE(
 
 		return new Response(null, { status: 204 });
 	} catch (error) {
-		console.error("Error deleting daily:", error);
 		return Response.json({ error: "Failed to delete daily" }, { status: 500 });
 	}
 }

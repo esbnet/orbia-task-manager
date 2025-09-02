@@ -50,7 +50,6 @@ export const TodoColumn = () => {
 			setIsFormOpen(false);
 		} catch (error) {
 			toast.error("Erro ao criar todo. Tente novamente.");
-			console.error("Erro ao criar todo:", error);
 		}
 	};
 
@@ -63,7 +62,6 @@ export const TodoColumn = () => {
 			setEditingTodo(null);
 		} catch (error) {
 			toast.error("Erro ao atualizar todo. Tente novamente.");
-			console.error("Erro ao atualizar todo:", error);
 		}
 	};
 
@@ -85,7 +83,6 @@ export const TodoColumn = () => {
 				setTodoToDelete(null);
 			} catch (error) {
 				toast.error("Erro ao remover todo. Tente novamente.");
-				console.error("Erro ao remover todo:", error);
 			}
 		}
 	};

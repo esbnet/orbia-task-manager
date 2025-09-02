@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
 		// but this might not be a common use case, so returning empty for now
 		return Response.json({ subtasks: [] });
 	} catch (error) {
-		console.error("Error in GET /api/todo-subtasks:", error);
 		return Response.json(
 			{ error: "Failed to fetch subtasks", subtasks: [] },
 			{ status: 500 },
@@ -79,7 +78,6 @@ export async function POST(request: NextRequest) {
 		});
 		return Response.json({ subtask }, { status: 201 });
 	} catch (error) {
-		console.error("Error creating subtask:", error);
 		return Response.json(
 			{ error: "Failed to create subtask" },
 			{ status: 500 },
@@ -114,7 +112,6 @@ export async function PATCH(request: NextRequest) {
 		const updated = await subtaskRepo.update(subtask);
 		return Response.json({ subtask: updated });
 	} catch (error) {
-		console.error("Error updating subtask:", error);
 		return Response.json(
 			{ error: "Failed to update subtask" },
 			{ status: 500 },
@@ -167,7 +164,6 @@ export async function DELETE(request: NextRequest) {
 		await subtaskRepo.delete(id);
 		return new Response(null, { status: 204 });
 	} catch (error) {
-		console.error("Error deleting subtask:", error);
 		return Response.json(
 			{ error: "Failed to delete subtask" },
 			{ status: 500 },

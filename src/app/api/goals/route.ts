@@ -1,10 +1,10 @@
 import { CreateGoalUseCase } from "@/application/use-cases/goal/create-goal/create-goal-use-case";
-import { ListGoalsUseCase } from "@/application/use-cases/goal/list-goals/list-goals-use-case";
-import { auth } from "@/auth";
 import type { Goal } from "@/domain/entities/goal";
-import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
+import { ListGoalsUseCase } from "@/application/use-cases/goal/list-goals/list-goals-use-case";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
+import { auth } from "@/auth";
 
 const goalRepository = new PrismaGoalRepository();
 const createGoalUseCase = new CreateGoalUseCase(goalRepository);
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
 
 		// Log apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
-			console.log("🔍 API Goals - GET request:", {
+			console.log({
 				userId: session.user.id,
 				params: { status, priority, category, tags, includeOverdue, includeDueSoon, dueSoonDays }
 			});
@@ -129,12 +129,10 @@ export async function GET(request: NextRequest) {
 
 		// Log de resultado apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
-			console.log("🔍 API Goals - Response:", { count: goals.length });
 		}
 
 		return NextResponse.json(goals);
 	} catch (error) {
-		console.error("Erro ao listar metas:", error);
 
 		// Tratamento específico de erros
 		if (error instanceof Error) {
@@ -272,7 +270,7 @@ export async function POST(request: NextRequest) {
 
 		// Log apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
-			console.log("🔍 API Goals - POST request:", {
+			console.log({
 				userId: session.user.id,
 				title: title.substring(0, 50) + (title.length > 50 ? "..." : "")
 			});
@@ -291,7 +289,6 @@ export async function POST(request: NextRequest) {
 
 		return NextResponse.json(goal, { status: 201 });
 	} catch (error) {
-		console.error("Erro ao criar meta:", error);
 
 		// Tratamento específico de erros
 		if (error instanceof Error) {

@@ -20,7 +20,6 @@ export async function GET() {
 			},
 		});
 
-		console.log('📊 Dailies encontradas no banco (raw):', rawDailies.length);
 
 		if (rawDailies.length > 0) {
 			const availableDailies = [];
@@ -110,18 +109,14 @@ export async function GET() {
 				availableDailies,
 				completedToday,
 				totalDailies: rawDailies.length,
-			};
-
-			console.log('✅ Resultado com lógica de períodos:', {
-				disponíveis: availableDailies.length,
-				completadas: completedToday.length,
+				"disponíveis": availableDailies.length,
+				"completadas": completedToday.length,
 				total: rawDailies.length,
-			});
+			};
 
 			return Response.json(result);
 		} else {
 			// Fallback para dados mockados se banco estiver vazio
-			console.log('⚠️ Banco vazio, usando dados mockados');
 			const result = {
 				availableDailies: [
 					{
@@ -152,7 +147,6 @@ export async function GET() {
 			return Response.json(result);
 		}
 	} catch (error) {
-		console.error("Error getting available dailies:", error);
 		return Response.json(
 			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }

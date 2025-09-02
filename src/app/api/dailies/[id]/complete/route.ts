@@ -80,7 +80,6 @@ export async function POST(
 		// Calcular próximo período
 		const nextPeriodStart = calculateNextPeriodStart(daily.repeatType, completedPeriod.endDate!);
 
-		console.log(`✅ Daily "${daily.title}" completada no período ${completedPeriod.id}`);
 
 		return Response.json({
 			success: true,
@@ -90,7 +89,6 @@ export async function POST(
 		}, { status: 201 });
 
 	} catch (error) {
-		console.error("Error completing daily:", error);
 		return Response.json(
 			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }

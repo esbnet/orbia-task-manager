@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
 		});
 		return Response.json({ subtask }, { status: 201 });
 	} catch (error) {
-		console.error("Error creating subtask:", error);
 		return Response.json(
 			{ error: "Failed to create subtask" },
 			{ status: 500 },

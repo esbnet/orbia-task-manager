@@ -2,7 +2,6 @@ import { getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export async function POST() {
-	console.log('🔄 MIGRATE HABITS - INICIANDO');
 	
 	try {
 		const currentUserId = await getCurrentUserId();
@@ -19,7 +18,6 @@ export async function POST() {
 			}
 		});
 		
-		console.log('🔄 MIGRATE HABITS - Hábitos órfãos encontrados:', orphanHabits.length);
 		
 		if (orphanHabits.length === 0) {
 			return Response.json({ 
@@ -40,7 +38,6 @@ export async function POST() {
 			}
 		});
 		
-		console.log('🔄 MIGRATE HABITS - Hábitos migrados:', migrationResult.count);
 		
 		return Response.json({
 			message: `${migrationResult.count} hábitos migrados com sucesso para o usuário ${currentUserId}`,
@@ -48,7 +45,6 @@ export async function POST() {
 		});
 		
 	} catch (error) {
-		console.error('🔄 MIGRATE HABITS - ERRO:', error);
 		return Response.json({ error: error }, { status: 500 });
 	}
 }

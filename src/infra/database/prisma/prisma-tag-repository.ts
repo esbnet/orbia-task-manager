@@ -79,7 +79,6 @@ export class PrismaTagRepository implements TagRepository {
 
 			return tags.map(this.toDomain);
 		} catch (error) {
-			console.error("Error listing tags:", error);
 			return [];
 		}
 	}
