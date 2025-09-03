@@ -1,12 +1,12 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { useTodoSubtaskContext } from "@/contexts/todo-subtask-context";
 import type { TodoSubtask } from "@/types";
 import { toast } from "sonner";
+import { useTodoSubtaskContext } from "@/contexts/todo-subtask-context";
 
 interface TodoSubtaskListProps {
 	todoId: string;
@@ -21,13 +21,14 @@ export function TodoSubtaskList({
 }: TodoSubtaskListProps) {
 	const [subtasks, setSubtasks] = useState<TodoSubtask[]>(initialSubtasks);
 	const [newTaskTitle, setNewTaskTitle] = useState("");
+	const [editingTodoSubtask, setEditingTodoSubtask] = useState<TodoSubtask | null>(null);
 	const [isLoadingSubtasks, setIsLoadingSubtasks] = useState(false);
 
 	// Fetch subtasks from API when component loads or todoId changes
 	useEffect(() => {
 		const fetchSubtasks = async () => {
 			if (!todoId) return;
-			
+
 			setIsLoadingSubtasks(true);
 			try {
 				const response = await fetch(`/api/todo-subtasks?todoId=${todoId}`);
@@ -98,6 +99,21 @@ export function TodoSubtaskList({
 		}
 	};
 
+	const handleUpdateSubtask = async (updatedSubtask: TodoSubtask) => {
+		setEditingTodoSubtask(null);
+		try {
+			await updateSubtask(updatedSubtask);
+			const updatedSubtasks = subtasks.map((s) => (s.id === updatedSubtask.id ? updatedSubtask : s));
+			setSubtasks(updatedSubtasks);
+			onSubtasksChange?.(updatedSubtasks);
+			toast.success(
+				`Tarefa "${updatedSubtask.title}" atualizada com sucesso!`,
+			);
+		} catch (error) {
+			toast.error("Erro ao atualizar tarefa");
+		}
+	};
+
 	const handleDeleteSubtask = async (id: string, title: string) => {
 		try {
 			await deleteSubtask(id);
@@ -141,23 +157,67 @@ export function TodoSubtaskList({
 							checked={subtask.completed}
 							onCheckedChange={() => toggleSubtask(subtask)}
 						/>
-						<span
-							className={`flex-1 text-sm ${subtask.completed ? "line-through text-muted-foreground" : ""}`}
-						>
-							{subtask.title}
-						</span>
-						<Button
-							onClick={(e) => {
-								e.stopPropagation();
-								handleDeleteSubtask(subtask.id, subtask.title);
-							}}
-							size="sm"
-							variant="ghost"
-							type="button"
-							className="p-0 w-6 h-6 text-destructive"
-						>
-							<Trash2 size={12} />
-						</Button>
+						{editingTodoSubtask?.id === subtask.id && editingTodoSubtask ? (
+							<div className="flex flex-1 items-center gap-2 w-full">
+								<Input
+									value={editingTodoSubtask.title || ""}
+									onChange={(e) =>
+										setEditingTodoSubtask({
+											...editingTodoSubtask,
+											title: e.target.value,
+										})
+									}
+									className="flex-1"
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											e.preventDefault();
+											handleUpdateSubtask(editingTodoSubtask);
+										}
+									}}
+								/>
+								<Button onClick={() => handleUpdateSubtask(editingTodoSubtask)} size="sm">
+									Salvar
+								</Button>
+								<Button
+									variant="outline"
+									onClick={() => setEditingTodoSubtask(null)}
+									size="sm"
+								>
+									Cancelar
+								</Button>
+							</div>
+						) : (
+							<div className="flex flex-1 items-center gap-2 w-full">
+								<div className="flex flex-1 items-center gap-3">
+									<span
+										className={`flex-1 text-sm ${subtask.completed ? "line-through text-muted-foreground" : ""}`}
+									>
+										{subtask.title}
+									</span>
+								</div>
+								<div className="flex justify-end gap-2">
+									<Button
+										onClick={() => setEditingTodoSubtask(subtask)}
+										size="sm"
+										variant="ghost"
+									>
+										<Edit size={14} />
+									</Button>
+									<Button
+										onClick={(e) => {
+											e.stopPropagation();
+											handleDeleteSubtask(subtask.id, subtask.title);
+										}}
+										size="sm"
+										variant="ghost"
+										type="button"
+										className="p-0 w-6 h-6 text-destructive"
+									>
+										<Trash2 size={12} />
+									</Button>
+								</div>
+							</div>
+						)}
 					</div>
 				))}
 			</div>
