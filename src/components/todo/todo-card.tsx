@@ -1,16 +1,17 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
 	Edit,
 	Tag
 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useTodoContext } from "@/contexts/todo-context";
-import { toast } from "sonner";
 import type { Todo } from "../../types";
+import { toast } from "sonner";
+import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useTodoContext } from "@/contexts/todo-context";
 
 interface TodoCardProps {
 	todo: Todo;
@@ -33,15 +34,22 @@ export function TodoCard({
 	isCompleted = false
 }: TodoCardProps) {
 	const { completeTodo } = useTodoContext();
+	const completeLoading = useButtonLoading();
 	const difficulty = difficultyConfig[todo.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 
 	const handleComplete = async () => {
-		if (onComplete) {
-			await onComplete(todo.id);
-		} else {
-			await completeTodo(todo);
-			toast.success(`Afazer "${todo.title}" concluído!`);
-		}
+		await completeLoading.executeAsync(
+			async () => {
+				if (onComplete) {
+					await onComplete(todo.id);
+				} else {
+					await completeTodo(todo);
+					toast.success(`Afazer "${todo.title}" concluído!`);
+				}
+			},
+			undefined,
+			() => toast.error("Erro ao completar afazer. Tente novamente.")
+		);
 	};
 
 	return (
@@ -68,9 +76,13 @@ export function TodoCard({
 										onClick={handleComplete}
 										size="sm"
 										className="hover:bg-blue-50 border-blue-200 text-blue-600"
-
+										disabled={completeLoading.isLoading}
 									>
-										<CheckCircle className="w-4 h-4" />
+										{completeLoading.isLoading ? (
+											<div className="border-2 border-t-transparent border-blue-600 rounded-full w-4 h-4 animate-spin" />
+										) : (
+											<CheckCircle className="w-4 h-4" />
+										)}
 									</Button>
 								)}
 								{onEdit && (

@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
@@ -6,11 +5,13 @@ import {
 	Edit,
 	Tag
 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import type { Daily } from "../../types";
+import { toast } from "sonner";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 
 interface DailyCardProps {
 	daily: Daily;
@@ -41,18 +42,21 @@ export function DailyCard({
 	isCompleted = false,
 	nextAvailableAt
 }: DailyCardProps) {
+	const completeLoading = useButtonLoading();
 	const difficulty = difficultyConfig[daily.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 	const repeatConfig = repeatTypeConfig[daily.repeat?.type as keyof typeof repeatTypeConfig] || repeatTypeConfig["Diariamente"];
 	const RepeatIcon = repeatConfig.icon;
 
 	const handleComplete = async () => {
 		if (onComplete) {
-			try {
-				await onComplete(daily.id);
-				toast.success(`Daily "${daily.title}" completada!`);
-			} catch (error) {
-				toast.error("Erro ao completar daily. Tente novamente." + error);
-			}
+			await completeLoading.executeAsync(
+				async () => {
+					await onComplete(daily.id);
+					toast.success(`Daily "${daily.title}" completada!`);
+				},
+				undefined,
+				() => toast.error("Erro ao completar daily. Tente novamente.")
+			);
 		}
 	};
 
@@ -76,7 +80,7 @@ export function DailyCard({
 				<div className="flex justify-between items-start">
 					<div className="flex-1">
 						<div className="flex justify-between items-center gap-2 mb-2">
-							<h3 className="font-semibold text-gray-900 line-clamp-1">
+							<h3 className="font-semibold line-clamp-1">
 								{daily.title}
 							</h3>
 							{isCompleted ? (
@@ -90,8 +94,13 @@ export function DailyCard({
 											size="sm"
 											variant="ghost"
 											className="hover:bg-amber-200 text-amber-600"
+											disabled={completeLoading.isLoading}
 										>
-											<CheckCircle className="mr-1 w-4 h-4" />
+											{completeLoading.isLoading ? (
+												<div className="border-2 border-amber-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
+											) : (
+												<CheckCircle className="mr-1 w-4 h-4" />
+											)}
 										</Button>
 									)}
 

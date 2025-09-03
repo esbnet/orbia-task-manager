@@ -23,26 +23,6 @@ const defaultDaily: Daily = {
 	createdAt: new Date(),
 };
 
-interface DailyWithStatus {
-	id: string;
-	userId: string;
-	title: string;
-	observations: string;
-	task: string[];
-	difficulty: string;
-	repeatType: string;
-	repeatFrequency: number;
-	tags: string[];
-	isAvailable: boolean;
-	currentPeriod?: {
-		id: string;
-		startDate: Date;
-		endDate: Date | null;
-		isCompleted: boolean;
-	};
-	nextAvailableAt?: Date;
-}
-
 export const DailyColumn = () => {
 	const createDailyMutation = useCreateDaily();
 	const updateDailyMutation = useUpdateDaily();
@@ -54,15 +34,10 @@ export const DailyColumn = () => {
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [dailyToDelete, setDailyToDelete] = useState<Daily | null>(null);
 
+
 	// Usar dados do React Query
 	const availableDailies = dailiesData?.availableDailies || [];
 	const completedDailies = dailiesData?.completedToday || [];
-
-	// console.log('DailyColumn: Renderizando com dados', {
-	// 	availableCount: availableDailies.length,
-	// 	completedCount: completedDailies.length,
-	// 	hasData: !!dailiesData
-	// });
 
 	// Completar daily - usando React Query
 	const { mutateAsync: completeDailyMutation } = useCompleteDaily();
@@ -70,7 +45,6 @@ export const DailyColumn = () => {
 	const handleCompleteDaily = useCallback(async (dailyId: string) => {
 		try {
 			await completeDailyMutation(dailyId);
-			toast.success('Daily completada com sucesso!');
 		} catch (error) {
 			toast.error('Erro ao completar daily. Tente novamente.');
 		}
@@ -109,7 +83,6 @@ export const DailyColumn = () => {
 	const handleCreateDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
 		try {
 			await createDailyMutation.mutateAsync(dailyData);
-			toast.success(`Daily "${dailyData.title}" criada com sucesso!`);
 			setIsFormOpen(false);
 		} catch (error) {
 			toast.error("Erro ao criar daily. Tente novamente.");
@@ -118,41 +91,31 @@ export const DailyColumn = () => {
 
 	// Editar daily existente
 	const handleEditDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
-		// console.log('handleEditDaily: Função chamada com dados:', dailyData);
-
 		if (!editingDaily) {
 			console.log('handleEditDaily: Nenhum daily sendo editado');
 			return;
 		}
 
-		// console.log('handleEditDaily: Editando daily:', editingDaily.id, 'com dados:', dailyData);
-
 		try {
 			// Se for um daily mock, criar um novo daily real
 			if (editingDaily.id.startsWith('mock-')) {
-				// console.log('handleEditDaily: Criando novo daily a partir de mock');
 				const result = await createDailyMutation.mutateAsync(dailyData);
-				// console.log('handleEditDaily: Daily criado:', result);
 				toast.success(`Daily "${dailyData.title}" criada com sucesso!`);
 			} else {
 				// Para dailies reais, atualizar normalmente
-				// console.log('handleEditDaily: Atualizando daily existente:', editingDaily.id);
-				const result = await updateDailyMutation.mutateAsync({
+				await updateDailyMutation.mutateAsync({
 					id: editingDaily.id,
 					data: {
 						...editingDaily,
 						...dailyData,
 					}
 				});
-				// console.log('handleEditDaily: Daily atualizado:', result);
-				toast.success(`Daily "${dailyData.title}" atualizada com sucesso!`);
 			}
 
 			// console.log('handleEditDaily: Fechando formulário');
 			setIsFormOpen(false);
 			setEditingDaily(null);
 		} catch (error) {
-			// console.error('handleEditDaily: Erro ao salvar daily:', error);
 			toast.error("Erro ao salvar daily. Tente novamente.");
 		}
 	};

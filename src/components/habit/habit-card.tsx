@@ -3,6 +3,7 @@
 import {
 	AlertTriangle,
 	Calendar,
+	ChevronDown,
 	Edit,
 	PlusCircle,
 	Tag,
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import type { Habit } from "@/domain/entities/habit";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 
 const priorityColors = {
 	"Baixa": "border-gray-300 text-gray-600",
@@ -49,14 +51,14 @@ export const HabitCard = memo(function HabitCard({
 	todayCount = 0,
 }: HabitCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const registerLoading = useButtonLoading();
+	const editLoading = useButtonLoading();
 	const isOverdue =
 		habit.status === "Em Andamento" && habit.lastCompletedDate && habit.createdAt < new Date();
-
 
 	const handleStatusChange = (newStatus: Habit["status"]) => {
 		onStatusChange?.(habit.id, newStatus);
 	};
-
 
 	return (
 		<Card
@@ -112,28 +114,14 @@ export const HabitCard = memo(function HabitCard({
 									variant="ghost"
 									onClick={() => onRegister?.(habit.id)}
 									className="hover:bg-blue-50 border-blue-200 text-blue-600"
+									disabled={registerLoading.isLoading}
 								>
-									<PlusCircle className="w-4 h-4" />
+									{registerLoading.isLoading ? (
+										<div className="border-2 border-t-transparent border-blue-600 rounded-full w-4 h-4 animate-spin" />
+									) : (
+										<PlusCircle className="w-4 h-4" />
+									)}
 								</Button>
-
-								{/* <Button
-									title="Concluído"
-									size="sm"
-									variant="outline"
-									onClick={() => handleStatusChange("Completo")}
-									className="hover:bg-green-50 border-green-200 text-green-600"
-								>
-									<CheckCircle className="w-4 h-4" />
-								</Button>
-								<Button
-									title="Cancelar"
-									size="sm"
-									variant="outline"
-									onClick={() => handleStatusChange("Cancelado")}
-									className="hover:bg-gray-50 border-gray-200 text-gray-600"
-								>
-									<XCircle className="w-4 h-4" />
-								</Button> */}
 							</>
 						)}
 
@@ -143,8 +131,13 @@ export const HabitCard = memo(function HabitCard({
 								size="sm"
 								variant="ghost"
 								onClick={() => onEdit(habit)}
+								disabled={editLoading.isLoading}
 							>
-								<Edit className="w-4 h-4" />
+								{editLoading.isLoading ? (
+									<div className="border-2 border-gray-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
+								) : (
+									<Edit className="w-4 h-4" />
+								)}
 							</Button>
 						)}
 
@@ -179,7 +172,6 @@ export const HabitCard = memo(function HabitCard({
 					<span>Reset: {habit.reset}</span>
 				</div>
 
-
 				{habit.tags.length > 0 && (
 					<div className="flex flex-wrap gap-1 mt-3">
 						{habit.tags.map((tag) => (
@@ -205,7 +197,7 @@ export const HabitCard = memo(function HabitCard({
 						variant="ghost"
 						onClick={() => setIsExpanded(!isExpanded)}
 					>
-						{isExpanded ? "Ver menos" : "Ver mais"}
+						{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
 					</Button>
 				</div>
 

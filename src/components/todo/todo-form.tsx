@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import {
 	Dialog,
 	DialogClose,
@@ -23,22 +24,21 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { format, setDefaultOptions } from "date-fns";
-import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTodoContext } from "@/contexts/todo-context";
-import { useTags } from "@/hooks/use-tags";
+import { MultiSelect } from "../ui/multi-select";
+import type { Todo } from "../../types";
+import { TodoCard } from "./todo-card";
 import type { TodoDifficulty } from "@/types/todo";
+import { TodoSubtaskList } from "./todo-subtask-list";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import type { Todo } from "../../types";
-import { MultiSelect } from "../ui/multi-select";
-import { TodoCard } from "./todo-card";
-import { TodoSubtaskList } from "./todo-subtask-list";
+import { useTags } from "@/hooks/use-tags";
+import { useTodoContext } from "@/contexts/todo-context";
 
 setDefaultOptions({ locale: ptBR });
 
@@ -149,7 +149,7 @@ export function TodoForm({
 					if (!v && onCancel) onCancel();
 				}}
 			>
-				<DialogContent className="flex flex-col gap-4 opacity-80 shadow-xl backdrop-blur-sm backdrop-opacity-0">
+				<DialogContent className="flex flex-col gap-4 shadow-xl backdrop-blur-sm backdrop-opacity-0">
 					<DialogHeader className="flex flex-col gap-1">
 						<DialogTitle>Editar Afazer</DialogTitle>
 
@@ -269,13 +269,13 @@ export function TodoForm({
 							</Popover>
 						</div>
 
-						<div className="flex gap-1 mt-2">
+						<div className="flex justify-end gap-1 mt-2">
 							<DialogClose asChild>
 								<Button variant="link">Cancel</Button>
 							</DialogClose>
 							<Button
 								type="submit"
-								className="flex-1"
+								className=""
 								disabled={isLoading}
 							>
 								<SaveIcon />

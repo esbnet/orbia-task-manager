@@ -200,7 +200,7 @@ export function DailyForm({
 					if (!v && onCancel) onCancel();
 				}}
 			>
-				<DialogContent className="flex flex-col gap-4 opacity-80 shadow-xl backdrop-blur-sm backdrop-opacity-0">
+				<DialogContent className="flex flex-col gap-4 shadow-xl backdrop-blur-sm backdrop-opacity-0">
 					<DialogHeader className="flex flex-col gap-1">
 						<DialogTitle>Editar</DialogTitle>
 						<DialogDescription className="text-zinc-400 text-sm">
@@ -378,13 +378,13 @@ export function DailyForm({
 							/>
 						</div>
 
-						<div className="flex gap-1 mt-2">
+						<div className="flex justify-end gap-1 mt-2">
 							<DialogClose asChild>
 								<Button variant="link">Cancel</Button>
 							</DialogClose>
 							<Button
 								type="submit"
-								className="flex-1"
+								className=""
 								disabled={isLoading}
 							>
 								<SaveIcon />

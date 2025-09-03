@@ -76,7 +76,7 @@ export function useCompleteDaily() {
 	return useMutation({
 		mutationFn: async (id: string): Promise<Daily> => {
 			const response = await fetch(`/api/dailies/${id}/complete`, {
-				method: "PATCH",
+				method: "POST",
 			});
 
 			if (!response.ok) {
@@ -84,11 +84,24 @@ export function useCompleteDaily() {
 			}
 
 			const result = await response.json();
-			return result.daily;
+			// Buscar o daily atualizado após completar
+			const dailyResponse = await fetch(`/api/daily/${id}`);
+			if (dailyResponse.ok) {
+				const dailyData = await dailyResponse.json();
+				return dailyData.daily;
+			}
+			throw new Error("Erro ao buscar daily atualizado");
 		},
 		onSuccess: (data, id) => {
-			// Update cache
-			queryClient.setQueryData(dailyKeys.detail(id), data);
+			// Update cache do daily específico
+			if (data) {
+				queryClient.setQueryData(dailyKeys.detail(id), data);
+			}
+
+			// Invalidate especificamente a query de dailies disponíveis primeiro
+			queryClient.invalidateQueries({ queryKey: [...dailyKeys.lists(), "available"] });
+
+			// Depois invalidate todas as outras queries relacionadas a dailies
 			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
 		},
 	});

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import type { Goal } from "@/domain/entities/goal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 import { useState } from "react";
 
 interface GoalCardProps {
@@ -51,6 +52,7 @@ export function GoalCard({
 	onStatusChange,
 }: GoalCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const statusChangeLoading = useButtonLoading();
 	const isOverdue =
 		goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date();
 	const daysUntilTarget = Math.ceil(
@@ -58,10 +60,52 @@ export function GoalCard({
 		(1000 * 60 * 60 * 24),
 	);
 
+	// Calcular progresso baseado no tempo
+	const calculateTimeProgress = () => {
+		try {
+			const now = new Date();
+			const startDate = new Date(goal.createdAt);
+			const endDate = new Date(goal.targetDate);
+
+			// Verificar se as datas são válidas
+			if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+				console.warn('Datas inválidas para cálculo de progresso:', { createdAt: goal.createdAt, targetDate: goal.targetDate });
+				return { progress: 0, background: "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)" };
+			}
+
+			const totalTime = endDate.getTime() - startDate.getTime();
+			const elapsedTime = now.getTime() - startDate.getTime();
+
+			// Se o tempo total for negativo ou zero, retornar 0%
+			if (totalTime <= 0) {
+				return { progress: 0, background: "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)" };
+			}
+
+			// Calcular progresso (garantir que fique entre 0 e 100)
+			const progress = Math.min(Math.max((elapsedTime / totalTime) * 100, 0), 100);
+
+			// Gradiente dinâmico verde -> amarelo -> vermelho
+			const background = "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)";
+
+			return { progress: Math.round(progress), background };
+		} catch (error) {
+			console.error('Erro ao calcular progresso:', error);
+			return { progress: 0, background: "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)" };
+		}
+	};
+
+	const timeProgress = calculateTimeProgress();
+
 	const CategoryIcon = categoryIcons[goal.category];
 
-	const handleStatusChange = (newStatus: Goal["status"]) => {
-		onStatusChange?.(goal.id, newStatus);
+	const handleStatusChange = async (newStatus: Goal["status"]) => {
+		await statusChangeLoading.executeAsync(
+			async () => {
+				onStatusChange?.(goal.id, newStatus);
+			},
+			undefined,
+			() => console.error("Erro ao alterar status da meta.")
+		);
 	};
 
 	return (
@@ -102,24 +146,34 @@ export function GoalCard({
 								<Button
 									title="Concluído"
 									size="sm"
-									variant="outline"
+									variant="ghost"
 									onClick={() =>
 										handleStatusChange("COMPLETED")
 									}
 									className="hover:bg-green-50 border-green-200 text-green-600"
+									disabled={statusChangeLoading.isLoading}
 								>
-									<CheckCircle className="w-4 h-4" />
+									{statusChangeLoading.isLoading ? (
+										<div className="border-2 border-green-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
+									) : (
+										<CheckCircle className="w-4 h-4" />
+									)}
 								</Button>
 								<Button
 									title="Cancelar"
 									size="sm"
-									variant="outline"
+									variant="ghost"
 									onClick={() =>
 										handleStatusChange("CANCELLED")
 									}
 									className="hover:bg-gray-50 border-gray-200 text-gray-600"
+									disabled={statusChangeLoading.isLoading}
 								>
-									<XCircle className="w-4 h-4" />
+									{statusChangeLoading.isLoading ? (
+										<div className="border-2 border-gray-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
+									) : (
+										<XCircle className="w-4 h-4" />
+									)}
 								</Button>
 							</>
 						)}
@@ -127,7 +181,7 @@ export function GoalCard({
 							<Button
 								title="Editar"
 								size="sm"
-								variant="outline"
+								variant="ghost"
 								onClick={() => onEdit(goal)}
 							>
 								<Edit className="w-4 h-4" />
@@ -159,21 +213,38 @@ export function GoalCard({
 				</div>
 
 				{goal.status === "IN_PROGRESS" && (
-					<div className="text-gray-600 dark:text-gray-400 text-sm">
-						{isOverdue ? (
-							<span className="font-medium text-red-600">
-								Atrasado há {Math.abs(daysUntilTarget)} dias
-							</span>
-						) : daysUntilTarget > 0 ? (
-							<span className="text-blue-600">
-								Faltam {daysUntilTarget} dias
-							</span>
-						) : (
-							<span className="font-medium text-orange-600">
-								Vence hoje!
-							</span>
-						)}
-					</div>
+					<>
+						<div className="text-gray-600 dark:text-gray-400 text-sm">
+							{isOverdue ? (
+								<span className="font-medium text-red-600">
+									Atrasado há {Math.abs(daysUntilTarget)} dias
+								</span>
+							) : daysUntilTarget > 0 ? (
+								<span className="text-blue-600">
+									Faltam {daysUntilTarget} dias
+								</span>
+							) : (
+								<span className="font-medium text-orange-600">
+									Vence hoje!
+								</span>
+							)}
+						</div>
+						<div className="mt-4">
+							<div className="flex justify-between mb-2 text-gray-500 text-xs">
+								<span>Progresso do tempo</span>
+							</div>
+							<div className="relative bg-gradient-to-r from-green-600 via-yellow-600 to-red-600 border border-gray-300 rounded-full w-full h-3">
+								{/* Marca indicando o ponto atual */}
+								<div
+									className="top-0 bottom-0 absolute flex flex-col justify-center items-center text-center"
+									style={{ left: `${timeProgress.progress}%` }}
+								>
+									<p className="flex justify-center items-center bg-gray-400 rounded-full outline-1 outline-amber-50 w-1 h-1 font-thin text-gray-600 dark:text-gray-200 text-xs" >
+										<span className="-mt-5">{timeProgress.progress}%</span></p>
+								</div>
+							</div>
+						</div>
+					</>
 				)}
 
 				{goal.tags.length > 0 && (

@@ -233,7 +233,7 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 						</Button>
 						<Button
 							type="submit"
-							className="bg-purple-600 hover:bg-purple-700"
+							className=""
 						>
 							{goal ? "Atualizar" : "Criar"} Meta
 						</Button>

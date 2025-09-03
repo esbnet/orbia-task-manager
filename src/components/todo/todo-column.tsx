@@ -1,14 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Todo, TodoDifficulty } from "@/types/todo";
 import { ListChecks, Plus } from "lucide-react";
+import type { Todo, TodoDifficulty } from "@/types/todo";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useTodoContext } from "@/contexts/todo-context";
-import { useState } from "react";
-import { toast } from "sonner";
 import { TodoCard } from "./todo-card";
 import { TodoForm } from "./todo-form";
+import { toast } from "sonner";
+import { useState } from "react";
+import { useTodoContext } from "@/contexts/todo-context";
 
 const defaultTodo: Todo = {
 	id: "",
@@ -28,6 +28,7 @@ export const TodoColumn = () => {
 	const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [todoToDelete, setTodoToDelete] = useState<Todo | null>(null);
+
 
 	const inProgressTodos = todos;
 

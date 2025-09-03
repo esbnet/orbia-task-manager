@@ -15,6 +15,7 @@ export function GoalColumn() {
 	const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+
 	const inProgressGoals = goals.filter(
 		(goal) => goal.status === "IN_PROGRESS",
 	);

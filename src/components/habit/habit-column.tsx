@@ -1,23 +1,24 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCreateHabit, useDeleteHabit, useHabits, useUpdateHabit } from "@/hooks/use-habits";
 import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCallback, useState } from "react";
+import { useCreateHabit, useDeleteHabit, useHabits, useUpdateHabit } from "@/hooks/use-habits";
 
+import { Badge } from "../ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
-import { toast } from "sonner";
-import { Badge } from "../ui/badge";
 import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
+import { toast } from "sonner";
 
 export function HabitColumn() {
 	const { data: habits = [], isLoading } = useHabits();
 	const createHabitMutation = useCreateHabit();
 	const updateHabitMutation = useUpdateHabit();
 	const deleteHabitMutation = useDeleteHabit();
+
 
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -53,7 +54,7 @@ export function HabitColumn() {
 			// Adicionar userId se não estiver presente
 			const dataWithUserId = {
 				...habitData,
-				userId: habitData.userId || "default-user", // TODO: Get from auth context
+				userId: habitData.userId, // TODO: Get from auth context
 			};
 			await createHabitMutation.mutateAsync(dataWithUserId);
 			toast.success(`Hábito "${habitData.title}" criado com sucesso!`);
@@ -76,14 +77,6 @@ export function HabitColumn() {
 			} catch (error) {
 				toast.error("Erro ao atualizar hábito. Tente novamente.");
 			}
-		}
-	};
-
-	const handleDeleteHabit = (habitId: string) => {
-		const habit = habits.find(h => h.id === habitId);
-		if (habit) {
-			setHabitToDelete(habit);
-			setIsDeleteDialogOpen(true);
 		}
 	};
 
@@ -131,7 +124,7 @@ export function HabitColumn() {
 		setEditingHabit(null);
 	};
 
-	const handleRegisterHabit = async (habitId: string, note?: string) => {
+	const handleRegisterHabit = async (habitId: string, note?: string,) => {
 		try {
 			const response = await fetch(`/api/habits/${habitId}/register`, {
 				method: 'POST',
@@ -173,6 +166,7 @@ export function HabitColumn() {
 							onClick={() => setIsFormOpen(true)}
 							size="sm"
 							className="bg-green-600 hover:bg-green-700 text-white"
+
 						>
 							<Plus className="mr-1 w-4 h-4" />
 							Novo Hábito
