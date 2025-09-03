@@ -15,7 +15,6 @@ model Habit {
     difficulty        String
     status            String   @default("Em Andamento")
     priority          String   @default("Média")
-    category          String   @default("Pessoa")
     tags              String[]
     reset             String
     order             Int      @default(0)

@@ -1,10 +1,10 @@
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
 import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
 import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
+import type { NextRequest } from "next/server";
+import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { ToggleCompleteUseCase as ToggleCompleteHabitUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
-import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
-import type { NextRequest } from "next/server";
 
 // Instância única do repositório
 //const habitRepository = new InJsonFileHabitRepository();
@@ -71,7 +71,6 @@ export async function POST(request: NextRequest) {
 		observations,
 		difficulty,
 		priority,
-		category,
 		tags,
 		reset,
 		createdAt
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
 		observations,
 		difficulty,
 		priority,
-		category,
 		tags,
 		reset,
 		createdAt,

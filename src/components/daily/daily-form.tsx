@@ -1,5 +1,7 @@
 "use client";
 
+import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
+import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import {
 	Dialog,
 	DialogClose,
@@ -22,23 +24,21 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import { format, setDefaultOptions } from "date-fns";
-import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import type { Daily } from "@/types";
+import { DailyCard } from "./daily-card";
+import { DailySubtaskList } from "./daily-subtask-list";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { useDailyContext } from "@/contexts/daily-context";
 import { useTags } from "@/hooks/use-tags";
-import type { Daily } from "@/types";
-import { ptBR } from "date-fns/locale";
-import { useState } from "react";
-import { toast } from "sonner";
-import { DailyCard } from "./daily-card";
-import { DailySubtaskList } from "./daily-subtask-list";
 
 setDefaultOptions({ locale: ptBR });
 
@@ -78,6 +78,17 @@ export function DailyForm({
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 
+	// Sincronizar estados com o prop daily quando ele muda
+	useEffect(() => {
+		setTitle(daily.title || "");
+		setObservations(daily.observations || "");
+		setDifficulty(daily.difficulty || "Fácil");
+		setStartDate(daily.startDate || new Date());
+		setRepeatType(daily.repeat?.type || "Semanalmente");
+		setRepeatFrequency(daily.repeat?.frequency || 1);
+		setTags(daily.tags || []);
+	}, [daily]);
+
 	// Usar prop externa se fornecida, senão usar estado interno
 	const isOpen = open !== undefined ? open : internalOpen;
 
@@ -89,7 +100,43 @@ export function DailyForm({
 
 		setIsLoading(true);
 		try {
-			if (onSubmit && !daily.id) {
+			// Se for um daily mock, criar um novo daily real
+			if (daily.id.startsWith('mock-')) {
+				if (onSubmit) {
+					await onSubmit({
+						title,
+						observations,
+						tasks,
+						difficulty,
+						startDate,
+						repeat: {
+							type: repeatType as DailyRepeatType,
+							frequency: repeatFrequency,
+						},
+						tags,
+					} as Omit<Daily, "id" | "createdAt">);
+					toast.success("Diária criada com sucesso!");
+					setInternalOpen(false);
+					if (onCancel) onCancel();
+					return;
+				}
+			}
+
+			// Para todos os casos (criação e edição), usar a função onSubmit se fornecida
+			if (onSubmit) {
+				// console.log('DailyForm: Chamando onSubmit com dados:', {
+				// 	title,
+				// 	observations,
+				// 	tasks,
+				// 	difficulty,
+				// 	startDate,
+				// 	repeat: {
+				// 		type: repeatType as DailyRepeatType,
+				// 		frequency: repeatFrequency,
+				// 	},
+				// 	tags,
+				// });
+
 				await onSubmit({
 					title,
 					observations,
@@ -102,10 +149,16 @@ export function DailyForm({
 					},
 					tags,
 				} as Omit<Daily, "id" | "createdAt">);
+
+				// console.log('DailyForm: onSubmit executado com sucesso');
+				toast.success(daily.id.startsWith('mock-') || !daily.id ? "Diária criada com sucesso!" : "Diária atualizada com sucesso!");
 				setInternalOpen(false);
 				if (onCancel) onCancel();
 				return;
 			}
+
+			// Fallback: usar contexto diretamente se onSubmit não for fornecida
+			// console.log('DailyForm: Usando contexto diretamente (fallback)');
 			await updateDaily(daily.id, {
 				...daily,
 				title,
@@ -118,14 +171,13 @@ export function DailyForm({
 					frequency: repeatFrequency,
 				},
 				tags,
-
 			} as Daily);
 
 			toast.success("Hábito atualizado com sucesso!");
 			setInternalOpen(false);
 			if (onCancel) onCancel();
 		} catch (error) {
-			toast.error(`Erro ao atualizar hábito${error}`);
+			toast.error(`Erro ao salvar diária: ${error}`);
 		} finally {
 			setIsLoading(false);
 		}
@@ -315,6 +367,7 @@ export function DailyForm({
 						<div className="flex flex-col gap-1">
 							<Label>Etiquetas</Label>
 							<MultiSelect
+								key={`tags-${tagOptions.length}`}
 								id="tags"
 								options={tagOptions}
 								onValueChange={(value) => setTags(value)}

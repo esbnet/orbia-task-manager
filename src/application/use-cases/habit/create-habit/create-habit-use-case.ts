@@ -1,7 +1,6 @@
 import type {
 	CreateHabitInput,
 	CreateHabitOutput,
-	HabitCategory,
 	HabitDifficulty,
 	HabitPriority,
 	HabitReset,
@@ -20,7 +19,6 @@ export class CreateHabitUseCase {
 			difficulty: (inputHabit.difficulty as HabitDifficulty) ?? "Trivial",
 			status: "Em Andamento", // Default status for new habits
 			priority: (inputHabit.priority as HabitPriority) ?? "Média",
-			category: (inputHabit.category as HabitCategory) ?? "Pessoa",
 			tags: inputHabit.tags ?? [],
 			reset: (inputHabit.reset as HabitReset) ?? "Diariamente",
 			order: 0,

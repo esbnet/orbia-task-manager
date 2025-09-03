@@ -1,18 +1,14 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
-	BookOpen,
-	Briefcase,
 	Calendar,
 	Edit,
-	Heart,
 	PlusCircle,
 	Tag,
-	TrendingUp,
-	User
+	TrendingUp
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { memo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,13 +16,6 @@ import { Button } from "@/components/ui/button";
 import type { Habit } from "@/domain/entities/habit";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-const categoryIcons = {
-	"Pessoa": User,
-	"Trabalho": Briefcase,
-	"Saúde": Heart,
-	"Aprendizado": BookOpen,
-};
 
 const priorityColors = {
 	"Baixa": "border-gray-300 text-gray-600",
@@ -63,7 +52,6 @@ export const HabitCard = memo(function HabitCard({
 	const isOverdue =
 		habit.status === "Em Andamento" && habit.lastCompletedDate && habit.createdAt < new Date();
 
-	const CategoryIcon = categoryIcons[habit.category];
 
 	const handleStatusChange = (newStatus: Habit["status"]) => {
 		onStatusChange?.(habit.id, newStatus);
@@ -82,7 +70,6 @@ export const HabitCard = memo(function HabitCard({
 							{habit.title}
 						</CardTitle>
 						<div className="flex items-center gap-2 mt-2">
-							<CategoryIcon className="w-4 h-4 text-gray-500" />
 							<Badge
 								variant="outline"
 								className={priorityColors[habit.priority]}

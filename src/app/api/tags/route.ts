@@ -1,5 +1,5 @@
-import { PrismaTagRepository } from "@/infra/database/prisma/prisma-tag-repository";
 import type { NextRequest } from "next/server";
+import { PrismaTagRepository } from "@/infra/database/prisma/prisma-tag-repository";
 
 const tagRepo = new PrismaTagRepository();
 
@@ -45,8 +45,7 @@ export async function POST(request: NextRequest) {
 	const { name, color } = await request.json();
 	const tag = await tagRepo.create({
 		name,
-		color: color || "#3b82f6",
-		userId: ""
+		color: color || "#3b82f6"
 	});
 	return Response.json({ tag }, { status: 201 });
 }
@@ -86,12 +85,17 @@ export async function PATCH(request: NextRequest) {
 		return new Response("Tag not provided in the request", { status: 400 });
 	}
 
+	// Buscar a tag existente para obter o userId
+	const existingTag = await tagRepo.findById(id);
+	if (!existingTag) {
+		return new Response("Tag not found", { status: 404 });
+	}
+
 	const tagData = {
-		id,
-		userId: "",
-		name: tagName || "New Tag",
-		color: tagColor || "#3b82f6",
-		createdAt: tagCreatedAt || new Date(),
+		...existingTag,
+		name: tagName || existingTag.name,
+		color: tagColor || existingTag.color,
+		createdAt: tagCreatedAt || existingTag.createdAt,
 	};
 
 	const updatedTag = await tagRepo.update(tagData);
@@ -117,7 +121,11 @@ export async function PATCH(request: NextRequest) {
  *         description: Tag deletada
  */
 export async function DELETE(request: NextRequest) {
-	const { id } = await request.json();
+	const url = new URL(request.url);
+	const id = url.searchParams.get('id');
+	if (!id) {
+		return new Response("ID is required", { status: 400 });
+	}
 	await tagRepo.delete(id);
 	return new Response(null, { status: 204 });
 }

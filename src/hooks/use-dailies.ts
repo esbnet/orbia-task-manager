@@ -31,13 +31,21 @@ export function useDailies() {
 export function useAvailableDailies() {
 	return useQuery({
 		queryKey: [...dailyKeys.lists(), "available"],
-		queryFn: async (): Promise<Daily[]> => {
+		queryFn: async (): Promise<{ availableDailies: Daily[]; completedToday: Daily[] }> => {
+			// console.log('useAvailableDailies: Executando query');
 			const response = await fetch("/api/dailies/available");
 			if (!response.ok) {
 				throw new Error("Erro ao buscar dailies disponíveis");
 			}
 			const data = await response.json();
-			return data.dailies || [];
+			// console.log('useAvailableDailies: Dados retornados', {
+			// 	availableCount: data.availableDailies?.length || 0,
+			// 	completedCount: data.completedToday?.length || 0
+			// });
+			return {
+				availableDailies: data.availableDailies || [],
+				completedToday: data.completedToday || []
+			};
 		},
 		staleTime: 1 * 60 * 1000, // 1 minuto
 	});
@@ -81,6 +89,89 @@ export function useCompleteDaily() {
 		onSuccess: (data, id) => {
 			// Update cache
 			queryClient.setQueryData(dailyKeys.detail(id), data);
+			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
+		},
+	});
+}
+
+// Hook para criar daily
+export function useCreateDaily() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (data: Omit<Daily, "id" | "createdAt">): Promise<Daily> => {
+			const response = await fetch("/api/daily", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao criar daily");
+			}
+
+			const result = await response.json();
+			return result.daily;
+		},
+		onSuccess: () => {
+			// Invalidate all daily queries
+			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
+		},
+	});
+}
+
+// Hook para atualizar daily
+export function useUpdateDaily() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({ id, data }: { id: string; data: Partial<Daily> }): Promise<Daily> => {
+			// console.log('useUpdateDaily: Iniciando atualização', { id, data });
+			const response = await fetch(`/api/daily/${id}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao atualizar daily");
+			}
+
+			const result = await response.json();
+			// console.log('useUpdateDaily: Atualização bem-sucedida', result.daily);
+			return result.daily;
+		},
+		onSuccess: (data, { id }) => {
+			// console.log('useUpdateDaily: onSuccess - Invalidando cache');
+			// Update cache
+			queryClient.setQueryData(dailyKeys.detail(id), data);
+			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
+			// console.log('useUpdateDaily: Cache invalidado');
+		},
+	});
+}
+
+// Hook para deletar daily
+export function useDeleteDaily() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (id: string): Promise<void> => {
+			const response = await fetch(`/api/daily/${id}`, {
+				method: "DELETE",
+			});
+
+			if (!response.ok) {
+				throw new Error("Erro ao deletar daily");
+			}
+		},
+		onSuccess: (_, id) => {
+			// Remove from cache
+			queryClient.removeQueries({ queryKey: dailyKeys.detail(id) });
 			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
 		},
 	});

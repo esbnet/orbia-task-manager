@@ -6,28 +6,62 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTags } from "@/hooks/use-tags";
-import type { Tag } from "@/types";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Separator } from "../ui/separator";
+import type { Tag } from "@/types";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { useTags } from "@/hooks/use-tags";
 
 export function TagsSettings() {
+	const { data: session } = useSession();
 	const { tags, createTag, updateTag: updateTagContext, deleteTag: deleteTagContext } = useTags();
 	const [newTagName, setNewTagName] = useState("");
 	const [newTagColor, setNewTagColor] = useState("#3b82f6");
 	const [editingTag, setEditingTag] = useState<Tag | null>(null);
+	const [validationErrors, setValidationErrors] = useState<{ name?: string; color?: string }>({});
+
+	const validateTag = (name: string, color: string, isEditing = false) => {
+		const errors: { name?: string; color?: string } = {};
+
+		// Name validation
+		if (!name.trim()) {
+			errors.name = "Nome da tag é obrigatório";
+		} else if (name.trim().length < 2) {
+			errors.name = "Nome deve ter pelo menos 2 caracteres";
+		} else if (name.trim().length > 50) {
+			errors.name = "Nome deve ter no máximo 50 caracteres";
+		} else if (!/^[a-zA-Z0-9\s\-_À-ÿ]+$/.test(name.trim())) {
+			errors.name = "Nome contém caracteres inválidos";
+		} else if (!isEditing && tags.some(tag => tag.name.toLowerCase() === name.trim().toLowerCase())) {
+			errors.name = "Já existe uma tag com este nome";
+		}
+
+		// Color validation
+		if (!color) {
+			errors.color = "Cor é obrigatória";
+		} else if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
+			errors.color = "Formato de cor inválido";
+		}
+
+		return errors;
+	};
 
 	const addTag = async () => {
-		if (!newTagName.trim()) return;
+		const errors = validateTag(newTagName, newTagColor);
+		setValidationErrors(errors);
+
+		if (Object.keys(errors).length > 0) return;
 
 		try {
 			await createTag({
-				name: newTagName,
+				name: newTagName.trim(),
 				color: newTagColor,
+				userId: session?.user?.id || "temp-dev-user",
 			});
 			setNewTagName("");
 			setNewTagColor("#3b82f6");
+			setValidationErrors({});
 			toast.success("Tag criada com sucesso!");
 		} catch (error) {
 			toast.error("Erro ao criar tag");
@@ -37,9 +71,18 @@ export function TagsSettings() {
 	const updateTag = async () => {
 		if (!editingTag) return;
 
+		const errors = validateTag(editingTag.name, editingTag.color, true);
+		setValidationErrors(errors);
+
+		if (Object.keys(errors).length > 0) return;
+
 		try {
-			await updateTagContext(editingTag);
+			await updateTagContext({
+				...editingTag,
+				name: editingTag.name.trim(),
+			});
 			setEditingTag(null);
+			setValidationErrors({});
 			toast.success("Tag atualizada com sucesso!");
 		} catch (error) {
 			toast.error("Erro ao atualizar tag");
@@ -52,6 +95,38 @@ export function TagsSettings() {
 			toast.success(`Tag "${name}" removida com sucesso!`);
 		} catch (error) {
 			toast.error("Erro ao remover tag");
+		}
+	};
+
+	const handleNewTagNameChange = (value: string) => {
+		setNewTagName(value);
+		if (validationErrors.name) {
+			setValidationErrors(prev => ({ ...prev, name: undefined }));
+		}
+	};
+
+	const handleNewTagColorChange = (value: string) => {
+		setNewTagColor(value);
+		if (validationErrors.color) {
+			setValidationErrors(prev => ({ ...prev, color: undefined }));
+		}
+	};
+
+	const handleEditingTagNameChange = (value: string) => {
+		if (editingTag) {
+			setEditingTag({ ...editingTag, name: value });
+			if (validationErrors.name) {
+				setValidationErrors(prev => ({ ...prev, name: undefined }));
+			}
+		}
+	};
+
+	const handleEditingTagColorChange = (value: string) => {
+		if (editingTag) {
+			setEditingTag({ ...editingTag, color: value });
+			if (validationErrors.color) {
+				setValidationErrors(prev => ({ ...prev, color: undefined }));
+			}
 		}
 	};
 
@@ -72,10 +147,14 @@ export function TagsSettings() {
 					<Input
 						id="tagName"
 						value={newTagName}
-						onChange={(e) => setNewTagName(e.target.value)}
+						onChange={(e) => handleNewTagNameChange(e.target.value)}
 						placeholder="Digite o nome da tag..."
 						onKeyDown={(e) => e.key === "Enter" && addTag()}
+						className={validationErrors.name ? "border-destructive" : ""}
 					/>
+					{validationErrors.name && (
+						<p className="text-destructive text-sm">{validationErrors.name}</p>
+					)}
 				</div>
 				<div className="flex flex-col gap-2">
 					<Label htmlFor="tagColor">Cor</Label>
@@ -83,9 +162,12 @@ export function TagsSettings() {
 						id="tagColor"
 						type="color"
 						value={newTagColor}
-						onChange={(e) => setNewTagColor(e.target.value)}
-						className="w-20 h-10"
+						onChange={(e) => handleNewTagColorChange(e.target.value)}
+						className={`w-20 h-10 ${validationErrors.color ? "border-destructive" : ""}`}
 					/>
+					{validationErrors.color && (
+						<p className="text-destructive text-sm">{validationErrors.color}</p>
+					)}
 				</div>
 				<Button onClick={addTag}>
 					<Plus size={16} />
@@ -106,32 +188,35 @@ export function TagsSettings() {
 						>
 							{editingTag?.id === tag.id && editingTag ? (
 								<div className="flex flex-1 items-center gap-2">
-									<Input
-										value={editingTag.name || ""}
-										onChange={(e) =>
-											setEditingTag({
-												...editingTag,
-												name: e.target.value,
-											})
-										}
-										className="flex-1"
-									/>
-									<Input
-										type="color"
-										value={editingTag.color || "#3b82f6"}
-										onChange={(e) =>
-											setEditingTag({
-												...editingTag,
-												color: e.target.value,
-											})
-										}
-										className="w-16"
-									/>
+									<div className="flex flex-col flex-1 gap-1">
+										<Input
+											value={editingTag.name || ""}
+											onChange={(e) => handleEditingTagNameChange(e.target.value)}
+											className={`flex-1 ${validationErrors.name ? "border-destructive" : ""}`}
+										/>
+										{validationErrors.name && (
+											<p className="text-destructive text-xs">{validationErrors.name}</p>
+										)}
+									</div>
+									<div className="flex flex-col gap-1">
+										<Input
+											type="color"
+											value={editingTag.color || "#3b82f6"}
+											onChange={(e) => handleEditingTagColorChange(e.target.value)}
+											className={`w-16 ${validationErrors.color ? "border-destructive" : ""}`}
+										/>
+										{validationErrors.color && (
+											<p className="text-destructive text-xs">{validationErrors.color}</p>
+										)}
+									</div>
 									<Button onClick={updateTag} size="sm">
 										Salvar
 									</Button>
 									<Button
-										onClick={() => setEditingTag(null)}
+										onClick={() => {
+											setEditingTag(null);
+											setValidationErrors({});
+										}}
 										variant="outline"
 										size="sm"
 									>
@@ -152,7 +237,10 @@ export function TagsSettings() {
 									</div>
 									<div className="flex gap-2">
 										<Button
-											onClick={() => setEditingTag(tag)}
+											onClick={() => {
+												setEditingTag(tag);
+												setValidationErrors({});
+											}}
 											size="sm"
 											variant="ghost"
 										>

@@ -1,10 +1,10 @@
 import type { Habit, HabitCategory, HabitDifficulty, HabitPriority, HabitReset, HabitStatus } from "../entities/habit";
 
-import { ValidationError } from "../errors/domain-errors";
-import { habitValidator } from "../validation/habit-validator";
 import { Priority } from "../value-objects/priority";
 import { Tag } from "../value-objects/tag";
 import { UserId } from "../value-objects/user-id";
+import { ValidationError } from "../errors/domain-errors";
+import { habitValidator } from "../validation/habit-validator";
 
 /**
  * Dados de entrada para criação de um hábito
@@ -56,7 +56,6 @@ export class HabitFactory {
 			difficulty: data.difficulty || "Trivial",
 			status: "Em Andamento",
 			priority: (data.priority || "Média") as HabitPriority,
-			category: data.category || "Pessoa",
 			tags: tags.map(tag => tag.getValue()),
 			reset: data.reset || "Diariamente",
 			userId: userId.getValue(),
@@ -94,7 +93,6 @@ export class HabitFactory {
 			observations: "Observações de teste",
 			difficulty: "Fácil",
 			priority: "Média",
-			category: "Saúde",
 			tags: ["teste"],
 			reset: "Diariamente",
 			userId: "user-test-123",

@@ -28,7 +28,6 @@ export function GoalColumn() {
 		description: string;
 		targetDate: Date;
 		priority: Goal["priority"];
-		category: Goal["category"];
 		tags: string[];
 	}) => {
 		await createGoal(goalData);
@@ -40,7 +39,6 @@ export function GoalColumn() {
 		description: string;
 		targetDate: Date;
 		priority: Goal["priority"];
-		category: Goal["category"];
 		tags: string[];
 	}) => {
 		if (editingGoal) {

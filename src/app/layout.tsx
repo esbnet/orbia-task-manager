@@ -2,10 +2,11 @@ import "./globals.css";
 
 import { Kode_Mono, Lobster } from "next/font/google";
 
-import { QueryClientProviderWrapper } from "@/components/providers/query-client-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/components/providers/session-provider";
 import type { Metadata } from "next";
+import { QueryClientProviderWrapper } from "@/components/providers/query-client-provider";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 const lobster = Lobster({
 	subsets: ["latin"],
@@ -35,21 +36,23 @@ export default function RootLayout({
 			<body
 				className={`${lobster.className}  ${kodeMono.className} antialiased flex min-h-screen flex-col`}
 			>
-				<QueryClientProviderWrapper>
-					<ThemeProvider
-						attribute="class"
-						defaultTheme="dark"
-						enableSystem
-						disableTransitionOnChange
-						value={{
-							light: "light",
-							dark: "dark",
-						}}
-					>
-						<main className="flex-1">{children}</main>
-						<Toaster richColors />
-					</ThemeProvider>
-				</QueryClientProviderWrapper>
+				<AuthProvider>
+					<QueryClientProviderWrapper>
+						<ThemeProvider
+							attribute="class"
+							defaultTheme="dark"
+							enableSystem
+							disableTransitionOnChange
+							value={{
+								light: "light",
+								dark: "dark",
+							}}
+						>
+							<main className="flex-1">{children}</main>
+							<Toaster richColors />
+						</ThemeProvider>
+					</QueryClientProviderWrapper>
+				</AuthProvider>
 			</body>
 		</html>
 	);

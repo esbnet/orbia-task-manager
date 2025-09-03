@@ -12,7 +12,6 @@ export interface Habit {
 	difficulty: HabitDifficulty;
 	status: HabitStatus;
 	priority: HabitPriority;
-	category: HabitCategory;
 	tags: string[];
 	reset: HabitReset;
 	createdAt: Date;

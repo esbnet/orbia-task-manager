@@ -1,10 +1,10 @@
 "use client";
 
 import type { Habit } from "@/domain/entities/habit";
-import type { HabitFormData } from "@/services/habit-service";
+import type { HabitFormData } from "@/types";
 import React from "react";
-import { toast } from "sonner";
 import { createEntityContext } from "./base/entity-context-factory";
+import { toast } from "sonner";
 
 // Create HTTP-based service for client-side usage
 const httpHabitService = {
@@ -83,10 +83,8 @@ interface ExtendedHabitContextType {
 	toggleComplete: (habitId: string) => Promise<void>;
 	updateStatus: (id: string, status: Habit["status"]) => Promise<void>;
 	updatePriority: (id: string, priority: Habit["priority"]) => Promise<void>;
-	updateCategory: (id: string, category: Habit["category"]) => Promise<void>;
 	getHabitsByStatus: (status: Habit["status"]) => Habit[];
 	getHabitsByPriority: (priority: Habit["priority"]) => Habit[];
-	getHabitsByCategory: (category: Habit["category"]) => Habit[];
 	reorderHabits: (habitIds: string[]) => Promise<void>;
 }
 
@@ -155,10 +153,6 @@ function HabitContextEnhancer({ children }: { children: React.ReactNode }) {
 		await baseContext.refresh();
 	};
 
-	const updateCategory = async (id: string, category: Habit["category"]) => {
-		await httpHabitService.update(id, { category });
-		await baseContext.refresh();
-	};
 
 	const getHabitsByStatus = (status: Habit["status"]) => {
 		return baseContext.entities.filter((habit) => habit.status === status);
@@ -166,10 +160,6 @@ function HabitContextEnhancer({ children }: { children: React.ReactNode }) {
 
 	const getHabitsByPriority = (priority: Habit["priority"]) => {
 		return baseContext.entities.filter((habit) => habit.priority === priority);
-	};
-
-	const getHabitsByCategory = (category: Habit["category"]) => {
-		return baseContext.entities.filter((habit) => habit.category === category);
 	};
 
 	const reorderHabits = async (habitIds: string[]) => {
@@ -205,10 +195,8 @@ function HabitContextEnhancer({ children }: { children: React.ReactNode }) {
 		toggleComplete,
 		updateStatus,
 		updatePriority,
-		updateCategory,
 		getHabitsByStatus,
 		getHabitsByPriority,
-		getHabitsByCategory,
 		reorderHabits,
 	};
 

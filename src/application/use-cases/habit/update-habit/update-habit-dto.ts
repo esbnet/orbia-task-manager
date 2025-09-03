@@ -2,7 +2,6 @@ export type HabitDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
 export type HabitReset = "Diariamente" | "Semanalmente" | "Mensalmente";
 export type HabitStatus = "Em Andamento" | "Completo" | "Cancelado";
 export type HabitPriority = "Baixa" | "Média" | "Alta" | "Urgente";
-export type HabitCategory = "Pessoa" | "Trabalho" | "Saúde" | "Aprendizado";
 
 export type UpdateHabitInput = {
 	id: string;
@@ -12,7 +11,6 @@ export type UpdateHabitInput = {
 	difficulty: HabitDifficulty;
 	status: HabitStatus;
 	priority: HabitPriority;
-	category: HabitCategory;
 	tags: string[];
 	reset: HabitReset;
 	createdAt: Date;
@@ -29,7 +27,6 @@ export type UpdateHabitOutput = {
 	difficulty: HabitDifficulty;
 	status: HabitStatus;
 	priority: HabitPriority;
-	category: HabitCategory;
 	tags: string[];
 	reset: HabitReset;
 	createdAt: Date;

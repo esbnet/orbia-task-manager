@@ -1,6 +1,6 @@
+import type { NextRequest } from "next/server";
 import { getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
-import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
 	const { searchParams } = new URL(request.url);
@@ -74,7 +74,6 @@ export async function GET(request: NextRequest) {
 				difficulty: habit.difficulty,
 				status: habit.status,
 				priority: habit.priority,
-				category: habit.category,
 				tags: habit.tags,
 				reset: habit.reset,
 				order: habit.order,

@@ -1,14 +1,14 @@
+import { CalendarCheck, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Daily, DailyDifficulty } from "@/types/daily";
-import { CalendarCheck, Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
+import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useDailyContext } from "@/contexts/daily-context";
-import { toast } from "sonner";
 import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
+import { toast } from "sonner";
 
 const defaultDaily: Daily = {
 	id: "",
@@ -44,73 +44,60 @@ interface DailyWithStatus {
 }
 
 export const DailyColumn = () => {
-	const { createDaily, deleteDaily } = useDailyContext();
+	const createDailyMutation = useCreateDaily();
+	const updateDailyMutation = useUpdateDaily();
+	const deleteDailyMutation = useDeleteDaily();
+	const { data: dailiesData, isLoading } = useAvailableDailies();
+
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingDaily, setEditingDaily] = useState<Daily | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [dailyToDelete, setDailyToDelete] = useState<Daily | null>(null);
 
-	// Estado com dados da API
-	const [availableDailies, setAvailableDailies] = useState<DailyWithStatus[]>([]);
-	const [completedDailies, setCompletedDailies] = useState<DailyWithStatus[]>([]);
-	const [_, setLoading] = useState(false);
+	// Usar dados do React Query
+	const availableDailies = dailiesData?.availableDailies || [];
+	const completedDailies = dailiesData?.completedToday || [];
 
-	// Carregar dailies disponíveis
-	const loadAvailableDailies = useCallback(async () => {
-		setLoading(true);
-		try {
-			const response = await fetch('/api/dailies/available');
+	// console.log('DailyColumn: Renderizando com dados', {
+	// 	availableCount: availableDailies.length,
+	// 	completedCount: completedDailies.length,
+	// 	hasData: !!dailiesData
+	// });
 
-			if (response.ok) {
-				const data = await response.json();
+	// Completar daily - usando React Query
+	const { mutateAsync: completeDailyMutation } = useCompleteDaily();
 
-				// Garantir que os dados existem
-				const availableDailies = Array.isArray(data.availableDailies) ? data.availableDailies : [];
-				const completedToday = Array.isArray(data.completedToday) ? data.completedToday : [];
-
-				// Só atualizar se recebeu dados válidos da API
-				if (availableDailies.length > 0 || completedToday.length > 0) {
-					setAvailableDailies(availableDailies);
-					setCompletedDailies(completedToday);
-				}
-			}
-		} catch (error) {
-			// Manter dados estáticos em caso de erro
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-
-	// Carregar ao montar o componente
-	useEffect(() => {
-		loadAvailableDailies();
-	}, [loadAvailableDailies]);
-
-	// Completar daily
 	const handleCompleteDaily = useCallback(async (dailyId: string) => {
 		try {
-			const response = await fetch(`/api/dailies/${dailyId}/complete`, {
-				method: 'POST',
-			});
-
-			if (response.ok) {
-				const result = await response.json();
-				toast.success(result.message);
-				// Recarregar lista
-				await loadAvailableDailies();
-			} else {
-				const error = await response.json();
-				toast.error(error.error || 'Erro ao completar daily');
-			}
+			await completeDailyMutation(dailyId);
+			toast.success('Daily completada com sucesso!');
 		} catch (error) {
 			toast.error('Erro ao completar daily. Tente novamente.');
 		}
-	}, [loadAvailableDailies]);
+	}, [completeDailyMutation]);
 
 	// Funções de controle do formulário
-	const openEditForm = (daily: Daily) => {
-		setEditingDaily(daily);
-		setIsFormOpen(true);
+	const openEditForm = async (daily: Daily) => {
+		// Se for um daily mock, usar os dados diretamente
+		if (daily.id.startsWith('mock-')) {
+			setEditingDaily(daily);
+			setIsFormOpen(true);
+			return;
+		}
+
+		try {
+			// Buscar dados completos da daily para edição
+			const response = await fetch(`/api/daily/${daily.id}`);
+			if (response.ok) {
+				const data = await response.json();
+				setEditingDaily(data.daily);
+				setIsFormOpen(true);
+			} else {
+				toast.error('Erro ao carregar dados da diária. Tente novamente.');
+			}
+		} catch (error) {
+			toast.error('Erro ao carregar dados da diária. Tente novamente.');
+		}
 	};
 
 	const closeForm = () => {
@@ -121,11 +108,9 @@ export const DailyColumn = () => {
 	// Criar nova daily
 	const handleCreateDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
 		try {
-			await createDaily(dailyData);
+			await createDailyMutation.mutateAsync(dailyData);
 			toast.success(`Daily "${dailyData.title}" criada com sucesso!`);
 			setIsFormOpen(false);
-			// Recarregar lista
-			await loadAvailableDailies();
 		} catch (error) {
 			toast.error("Erro ao criar daily. Tente novamente.");
 		}
@@ -133,15 +118,42 @@ export const DailyColumn = () => {
 
 	// Editar daily existente
 	const handleEditDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
+		// console.log('handleEditDaily: Função chamada com dados:', dailyData);
+
+		if (!editingDaily) {
+			console.log('handleEditDaily: Nenhum daily sendo editado');
+			return;
+		}
+
+		// console.log('handleEditDaily: Editando daily:', editingDaily.id, 'com dados:', dailyData);
+
 		try {
-			// TODO: Implementar updateDaily no contexto
-			toast.success(`Daily "${dailyData.title}" atualizada com sucesso!`);
+			// Se for um daily mock, criar um novo daily real
+			if (editingDaily.id.startsWith('mock-')) {
+				// console.log('handleEditDaily: Criando novo daily a partir de mock');
+				const result = await createDailyMutation.mutateAsync(dailyData);
+				// console.log('handleEditDaily: Daily criado:', result);
+				toast.success(`Daily "${dailyData.title}" criada com sucesso!`);
+			} else {
+				// Para dailies reais, atualizar normalmente
+				// console.log('handleEditDaily: Atualizando daily existente:', editingDaily.id);
+				const result = await updateDailyMutation.mutateAsync({
+					id: editingDaily.id,
+					data: {
+						...editingDaily,
+						...dailyData,
+					}
+				});
+				// console.log('handleEditDaily: Daily atualizado:', result);
+				toast.success(`Daily "${dailyData.title}" atualizada com sucesso!`);
+			}
+
+			// console.log('handleEditDaily: Fechando formulário');
 			setIsFormOpen(false);
 			setEditingDaily(null);
-			// Recarregar lista
-			await loadAvailableDailies();
 		} catch (error) {
-			toast.error("Erro ao atualizar daily. Tente novamente.");
+			// console.error('handleEditDaily: Erro ao salvar daily:', error);
+			toast.error("Erro ao salvar daily. Tente novamente.");
 		}
 	};
 
@@ -168,13 +180,12 @@ export const DailyColumn = () => {
 	const confirmDeleteDaily = async () => {
 		if (dailyToDelete) {
 			try {
-				// Chamar deleteDaily do contexto
-				await deleteDaily(dailyToDelete.id);
+				// Chamar deleteDaily do React Query
+				await deleteDailyMutation.mutateAsync(dailyToDelete.id);
 				toast.success(`Daily "${dailyToDelete.title}" removida com sucesso!`);
 				setIsDeleteDialogOpen(false);
 				setDailyToDelete(null);
-				// Recarregar lista
-				await loadAvailableDailies();
+				// A lista será automaticamente atualizada pelo React Query
 			} catch (error) {
 				toast.error("Erro ao remover daily. Tente novamente.");
 			}
@@ -220,7 +231,7 @@ export const DailyColumn = () => {
 			{availableDailies.length > 0 && (
 				<div className="space-y-4">
 					<h3 className="font-semibold text-amber-800">Disponíveis</h3>
-					{availableDailies.map((daily) => (
+					{availableDailies.map((daily: Daily) => (
 						<DailyCard
 							key={daily.id}
 							daily={{
@@ -229,10 +240,13 @@ export const DailyColumn = () => {
 								title: daily.title,
 								observations: daily.observations,
 								difficulty: daily.difficulty as "Fácil",
-								repeat: { type: daily.repeatType as 'Diariamente', frequency: daily.repeatFrequency },
+								repeat: {
+									type: (daily as any).repeatType as 'Diariamente',
+									frequency: (daily as any).repeatFrequency
+								},
 								tags: daily.tags,
 								startDate: new Date(),
-								tasks: daily.task,
+								tasks: daily.tasks || [],
 								createdAt: new Date(),
 							}}
 							onComplete={handleCompleteDaily}
@@ -247,7 +261,7 @@ export const DailyColumn = () => {
 			{completedDailies.length > 0 && (
 				<div className="space-y-4">
 					<h3 className="font-semibold text-green-800">Completadas Hoje</h3>
-					{completedDailies.map((daily) => (
+					{completedDailies.map((daily: Daily) => (
 						<DailyCard
 							key={daily.id}
 							daily={{
@@ -256,15 +270,18 @@ export const DailyColumn = () => {
 								title: daily.title,
 								observations: daily.observations,
 								difficulty: daily.difficulty as "Fácil",
-								repeat: { type: daily.repeatType as 'Diariamente', frequency: daily.repeatFrequency },
+								repeat: {
+									type: (daily as any).repeatType as 'Diariamente',
+									frequency: (daily as any).repeatFrequency
+								},
 								tags: daily.tags,
 								startDate: new Date(),
-								tasks: daily.task,
+								tasks: daily.tasks || [],
 								createdAt: new Date(),
 							}}
 							onComplete={handleCompleteDaily}
 							isCompleted={true}
-							nextAvailableAt={daily.nextAvailableAt}
+							nextAvailableAt={undefined}
 						/>
 					))}
 				</div>

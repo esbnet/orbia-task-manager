@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarIcon, Trash2 } from "lucide-react";
 import {
 	Dialog,
 	DialogClose,
@@ -22,26 +23,26 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import type { Goal } from "@/domain/entities/goal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "../ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
-import { useGoals } from "@/contexts/goal-context";
-import type { Goal } from "@/domain/entities/goal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useGoals } from "@/contexts/goal-context";
+import { useTags } from "@/hooks/use-tags";
 
 interface GoalFormData {
 	title: string;
 	description: string;
 	targetDate: Date;
 	priority: Goal["priority"];
-	category: Goal["category"];
 	tags: string[];
 }
 
@@ -53,23 +54,16 @@ interface GoalFormProps {
 }
 
 const priorities: Goal["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
-const categories: Goal["category"][] = [
-	"PERSONAL",
-	"WORK",
-	"HEALTH",
-	"LEARNING",
-];
 
 export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProps) {
+	const { tagOptions } = useTags();
 	const [formData, setFormData] = useState<GoalFormData>({
 		title: "",
 		description: "",
 		targetDate: new Date(),
 		priority: "MEDIUM",
-		category: "PERSONAL",
 		tags: [],
 	});
-	const [newTag, setNewTag] = useState("");
 
 	useEffect(() => {
 		// Se a goal tem ID, é uma edição, senão é criação
@@ -80,7 +74,6 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 				description: goal.description,
 				targetDate: goal.targetDate,
 				priority: goal.priority,
-				category: goal.category,
 				tags: goal.tags,
 			});
 		} else {
@@ -90,11 +83,10 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 				description: "",
 				targetDate: new Date(),
 				priority: "MEDIUM",
-				category: "PERSONAL",
 				tags: [],
 			});
 		}
-	}, [goal?.id, goal?.title, goal?.description, goal?.targetDate, goal?.priority, goal?.category, goal?.tags, goal]);
+	}, [goal?.id, goal?.title, goal?.description, goal?.targetDate, goal?.priority, goal?.tags, goal]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -105,30 +97,6 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 
 	const handleCancel = () => {
 		onCancel();
-	};
-
-	const addTag = () => {
-		if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-			setFormData((prev) => ({
-				...prev,
-				tags: [...prev.tags, newTag.trim()],
-			}));
-			setNewTag("");
-		}
-	};
-
-	const removeTag = (tagToRemove: string) => {
-		setFormData((prev) => ({
-			...prev,
-			tags: prev.tags.filter((tag) => tag !== tagToRemove),
-		}));
-	};
-
-	const handleKeyPress = (e: React.KeyboardEvent) => {
-		if (e.key === "Enter") {
-			e.preventDefault();
-			addTag();
-		}
 	};
 
 	return (
@@ -173,68 +141,34 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 						/>
 					</div>
 
-					<div className="gap-4 grid grid-cols-2">
-						<div className="space-y-2">
-							<Label>Prioridade</Label>
-							<Select
-								value={formData.priority}
-								onValueChange={(value: Goal["priority"]) =>
-									setFormData((prev) => ({
-										...prev,
-										priority: value,
-									}))
-								}
-							>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{priorities.map((priority) => (
-										<SelectItem
-											key={priority}
-											value={priority}
-										>
-											{priority === "LOW" && "Baixa"}
-											{priority === "MEDIUM" && "Média"}
-											{priority === "HIGH" && "Alta"}
-											{priority === "URGENT" && "Urgente"}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div className="space-y-2">
-							<Label>Categoria</Label>
-							<Select
-								value={formData.category}
-								onValueChange={(value: Goal["category"]) =>
-									setFormData((prev) => ({
-										...prev,
-										category: value,
-									}))
-								}
-							>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{categories.map((category) => (
-										<SelectItem
-											key={category}
-											value={category}
-										>
-											{category === "PERSONAL" &&
-												"Pessoal"}
-											{category === "WORK" && "Trabalho"}
-											{category === "HEALTH" && "Saúde"}
-											{category === "LEARNING" &&
-												"Aprendizado"}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+					<div className="space-y-2">
+						<Label>Prioridade</Label>
+						<Select
+							value={formData.priority}
+							onValueChange={(value: Goal["priority"]) =>
+								setFormData((prev) => ({
+									...prev,
+									priority: value,
+								}))
+							}
+						>
+							<SelectTrigger>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{priorities.map((priority) => (
+									<SelectItem
+										key={priority}
+										value={priority}
+									>
+										{priority === "LOW" && "Baixa"}
+										{priority === "MEDIUM" && "Média"}
+										{priority === "HIGH" && "Alta"}
+										{priority === "URGENT" && "Urgente"}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 
 					<div className="space-y-2">
@@ -276,42 +210,17 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 					</div>
 
 					<div className="space-y-2">
-						<Label>Tags</Label>
-						<div className="flex gap-2">
-							<Input
-								value={newTag}
-								onChange={(e) => setNewTag(e.target.value)}
-								onKeyPress={handleKeyPress}
-								placeholder="Digite uma tag e pressione Enter"
-								className="flex-1"
-							/>
-							<Button
-								type="button"
-								onClick={addTag}
-								variant="outline"
-							>
-								Adicionar
-							</Button>
-						</div>
-						{formData.tags.length > 0 && (
-							<div className="flex flex-wrap gap-2 mt-2">
-								{formData.tags.map((tag) => (
-									<div
-										key={tag}
-										className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-full text-blue-800 text-sm"
-									>
-										<span>{tag}</span>
-										<button
-											type="button"
-											onClick={() => removeTag(tag)}
-											className="text-blue-600 hover:text-blue-800"
-										>
-											<X className="w-3 h-3" />
-										</button>
-									</div>
-								))}
-							</div>
-						)}
+						<Label>Etiquetas</Label>
+						<MultiSelect
+							key={`tags-${tagOptions.length}`}
+							id="tags"
+							options={tagOptions}
+							onValueChange={(value: string[]) => setFormData((prev) => ({ ...prev, tags: value }))}
+							defaultValue={formData.tags || []}
+							placeholder="Adicionar etiquetas"
+							variant="inverted"
+							maxCount={3}
+						/>
 					</div>
 
 					<div className="flex justify-end gap-2 pt-4">

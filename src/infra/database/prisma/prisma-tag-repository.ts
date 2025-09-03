@@ -83,7 +83,7 @@ export class PrismaTagRepository implements TagRepository {
 		}
 	}
 
-	async create(data: Omit<Tag, "id" | "createdAt">): Promise<Tag> {
+	async create(data: Pick<Tag, "name" | "color">): Promise<Tag> {
 		const userId = await getCurrentUserId();
 		if (!userId) throw new Error("User not authenticated");
 

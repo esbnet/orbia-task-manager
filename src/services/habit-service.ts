@@ -1,19 +1,9 @@
-import type { HabitLogRepository, HabitRepository } from "@/domain/repositories/all-repository";
 import { BaseEntityService, handleServiceError } from "./base/entity-service";
+import type { HabitLogRepository, HabitRepository } from "@/domain/repositories/all-repository";
 
 import type { Habit } from "@/domain/entities/habit";
+import type { HabitFormData } from "@/types/habit";
 import type { HabitLog } from "@/domain/entities/habit-log";
-
-// Habit form data interface
-export interface HabitFormData {
-	title: string;
-	observations: string;
-	difficulty: Habit["difficulty"];
-	priority: Habit["priority"];
-	category: Habit["category"];
-	tags: string[];
-	reset: Habit["reset"];
-}
 
 // Habit service implementation
 export class HabitService extends BaseEntityService<Habit, HabitFormData> {
@@ -31,7 +21,6 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 			difficulty: data.difficulty,
 			status: "Em Andamento", // Default status for new habits
 			priority: data.priority,
-			category: data.category,
 			tags: data.tags,
 			reset: data.reset,
 			userId: "", // Will be set by repository
@@ -102,14 +91,6 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 		}
 	}
 
-	async findByCategory(category: Habit["category"]): Promise<Habit[]> {
-		try {
-			const habits = await this.repository.list();
-			return habits.filter((habit) => habit.category === category);
-		} catch (error) {
-			return handleServiceError(error, "buscar hábitos por categoria");
-		}
-	}
 
 	async findByTags(tags: string[]): Promise<Habit[]> {
 		try {
@@ -145,11 +126,4 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 		}
 	}
 
-	async updateCategory(id: string, category: Habit["category"]): Promise<Habit> {
-		try {
-			return await this.update(id, { category });
-		} catch (error) {
-			return handleServiceError(error, "atualizar categoria do hábito");
-		}
-	}
 }

@@ -1,4 +1,4 @@
-import type { Habit, HabitCategory, HabitDifficulty, HabitPriority, HabitReset, HabitStatus } from "../entities/habit";
+import type { Habit, HabitDifficulty, HabitPriority, HabitReset, HabitStatus } from "../entities/habit";
 
 import { BaseDomainValidator } from "./domain-validator";
 
@@ -38,13 +38,6 @@ export class HabitValidator extends BaseDomainValidator<Habit> {
 			"Alta": "Alta",
 			"Urgente": "Urgente"
 		} as Record<string, HabitPriority>, "Prioridade");
-
-		this.isValidEnum(entity.category, {
-			"Pessoa": "Pessoa",
-			"Trabalho": "Trabalho",
-			"Saúde": "Saúde",
-			"Aprendizado": "Aprendizado"
-		} as Record<string, HabitCategory>, "Categoria");
 
 		this.isValidEnum(entity.reset, {
 			"Diariamente": "Diariamente",

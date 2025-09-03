@@ -70,7 +70,6 @@ export function HabitProvider({ children }: HabitProviderProps) {
 				observations: data.observations,
 				difficulty: data.difficulty,
 				priority: data.priority,
-				category: data.category,
 				tags: data.tags,
 				reset: data.reset,
 				createdAt: new Date(),

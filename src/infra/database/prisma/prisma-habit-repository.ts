@@ -1,6 +1,6 @@
+import type { CreateEntityData } from "@/domain/repositories/base-repository";
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitRepository } from "@/domain/repositories/all-repository";
-import type { CreateEntityData } from "@/domain/repositories/base-repository";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
@@ -21,7 +21,6 @@ export class PrismaHabitRepository implements HabitRepository {
 				difficulty: true,
 				status: true,
 				priority: true,
-				category: true,
 				tags: true,
 				reset: true,
 				order: true,
@@ -52,7 +51,6 @@ export class PrismaHabitRepository implements HabitRepository {
 				difficulty: data.difficulty,
 				status: data.status || "Em Andamento",
 				priority: data.priority || "Média",
-				category: data.category || "Pessoa",
 				tags: data.tags,
 				reset: data.reset,
 				order: data.order ?? 0,
@@ -74,7 +72,6 @@ export class PrismaHabitRepository implements HabitRepository {
 				difficulty: habit.difficulty,
 				status: habit.status,
 				priority: habit.priority,
-				category: habit.category,
 				tags: habit.tags,
 				reset: habit.reset,
 				order: habit.order,
@@ -117,7 +114,6 @@ export class PrismaHabitRepository implements HabitRepository {
 				difficulty: true,
 				status: true,
 				priority: true,
-				category: true,
 				tags: true,
 				reset: true,
 				order: true,
@@ -215,7 +211,6 @@ export class PrismaHabitRepository implements HabitRepository {
 				difficulty: true,
 				status: true,
 				priority: true,
-				category: true,
 				tags: true,
 				reset: true,
 				order: true,
@@ -239,7 +234,6 @@ export class PrismaHabitRepository implements HabitRepository {
 		difficulty: string;
 		status: string;
 		priority: string;
-		category: string;
 		tags: string[];
 		reset: string;
 		order: number;
@@ -255,7 +249,6 @@ export class PrismaHabitRepository implements HabitRepository {
 			difficulty: habit.difficulty as Habit["difficulty"],
 			status: habit.status as Habit["status"],
 			priority: habit.priority as Habit["priority"],
-			category: habit.category as Habit["category"],
 			tags: habit.tags,
 			reset: habit.reset as Habit["reset"],
 			order: habit.order,

@@ -9,7 +9,6 @@ interface GoalFormData {
 	description: string;
 	targetDate: Date;
 	priority: Goal["priority"];
-	category: Goal["category"];
 	tags: string[];
 }
 

@@ -87,13 +87,6 @@ export async function GET(request: NextRequest) {
 			? priorityParam as Goal["priority"]
 			: undefined;
 
-		// Validação de category
-		const categoryParam = searchParams.get("category");
-		const validCategories: Goal["category"][] = ["PERSONAL", "WORK", "HEALTH", "LEARNING"];
-		const category = categoryParam && validCategories.includes(categoryParam as Goal["category"])
-			? categoryParam as Goal["category"]
-			: undefined;
-
 		// Validação de tags
 		const tagsParam = searchParams.get("tags");
 		const tags = tagsParam ? tagsParam.split(",").map(tag => tag.trim()).filter(Boolean) : [];
@@ -111,7 +104,7 @@ export async function GET(request: NextRequest) {
 		if (process.env.NODE_ENV === "development") {
 			console.log({
 				userId: session.user.id,
-				params: { status, priority, category, tags, includeOverdue, includeDueSoon, dueSoonDays }
+				params: { status, priority, tags, includeOverdue, includeDueSoon, dueSoonDays }
 			});
 		}
 
@@ -120,7 +113,6 @@ export async function GET(request: NextRequest) {
 			userId: session.user.id,
 			status,
 			priority,
-			category,
 			tags,
 			includeOverdue,
 			includeDueSoon,
@@ -282,7 +274,6 @@ export async function POST(request: NextRequest) {
 			description: (description || "").trim(),
 			targetDate: parsedDate,
 			priority: validatedPriority,
-			category: validatedCategory,
 			tags: validatedTags,
 			userId: session.user.id,
 		});

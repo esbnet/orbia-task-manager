@@ -1,9 +1,9 @@
 import { ConflictError, NotFoundError } from "../errors/domain-errors";
 
-import { logger } from "../../infra/logging/logger";
 import type { Habit } from "../entities/habit";
 import { HabitFactory } from "../factories/habit-factory";
 import type { HabitRepository } from "../repositories/all-repository";
+import { logger } from "../../infra/logging/logger";
 
 /**
  * Serviço de domínio para operações complexas de hábitos
@@ -130,7 +130,6 @@ export class HabitDomainService {
 
 		// Estatísticas por categoria
 		habits.forEach(habit => {
-			stats.byCategory[habit.category] = (stats.byCategory[habit.category] || 0) + 1;
 			stats.byPriority[habit.priority] = (stats.byPriority[habit.priority] || 0) + 1;
 		});
 

@@ -1,5 +1,5 @@
-import { prisma } from "@/infra/database/prisma/prisma-client";
 import type { NextRequest } from "next/server";
+import { prisma } from "@/infra/database/prisma/prisma-client";
 
 // 🚨 VERSÃO TEMPORÁRIA SEM AUTENTICAÇÃO - APENAS PARA DESENVOLVIMENTO
 // Esta API retorna todos os hábitos sem verificar usuário logado
@@ -21,7 +21,6 @@ export async function GET() {
 			difficulty: habit.difficulty,
 			status: habit.status,
 			priority: habit.priority,
-			category: habit.category,
 			tags: habit.tags,
 			reset: habit.reset,
 			order: habit.order,
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
 			observations,
 			difficulty,
 			priority,
-			category,
 			tags,
 			reset,
 			// createdAt
@@ -72,7 +70,6 @@ export async function POST(request: NextRequest) {
 				difficulty,
 				status: "Em Andamento",
 				priority: priority || "Média",
-				category: category || "Pessoa",
 				tags: tags || [],
 				reset,
 				order: 0,

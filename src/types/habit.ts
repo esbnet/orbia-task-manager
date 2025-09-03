@@ -16,7 +16,6 @@ export interface Habit {
 	difficulty: HabitDifficulty;
 	status: HabitStatus;
 	priority: HabitPriority;
-	category: HabitCategory;
 	tags: string[];
 	reset: HabitReset;
 	createdAt: Date;
@@ -32,7 +31,6 @@ export interface HabitFormData {
 	observations: string;
 	difficulty: HabitDifficulty;
 	priority: HabitPriority;
-	category: HabitCategory;
 	tags: string[];
 	reset: HabitReset;
 }

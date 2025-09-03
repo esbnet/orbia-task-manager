@@ -8,8 +8,20 @@ export async function GET() {
 	try {
 		// Buscar dados diretamente do banco com lógica de períodos
 		const { prisma } = await import("@/infra/database/prisma/prisma-client");
+		const { getCurrentUserIdWithFallback } = await import("@/hooks/use-current-user");
+
+		const userId = await getCurrentUserIdWithFallback();
+
+		if (!userId) {
+			return Response.json({
+				availableDailies: [],
+				completedToday: [],
+				totalDailies: 0,
+			});
+		}
 
 		const rawDailies = await prisma.daily.findMany({
+			where: { userId },
 			include: {
 				subtasks: {
 					orderBy: { order: "asc" },

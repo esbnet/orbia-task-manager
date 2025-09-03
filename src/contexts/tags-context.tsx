@@ -66,8 +66,10 @@ export function TagsProvider({ children }: TagsProviderProps) {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
 		});
-		const newTag = await response.json();
+		const { tag: newTag } = await response.json();
 		setTags(prev => [...prev, newTag]);
+		// Invalidar cache para forçar atualização
+		setLastFetch(0);
 		return newTag;
 	};
 
@@ -86,12 +88,16 @@ export function TagsProvider({ children }: TagsProviderProps) {
 				return tag;
 			}),
 		);
+		// Invalidar cache para forçar atualização
+		setLastFetch(0);
 		return updatedTag;
 	};
 
 	const deleteTag = async (id: string) => {
 		await fetch(`/api/tags?id=${id}`, { method: "DELETE" });
 		setTags(prev => prev.filter(t => t.id !== id));
+		// Invalidar cache para forçar atualização
+		setLastFetch(0);
 	};
 
 	const value = {
