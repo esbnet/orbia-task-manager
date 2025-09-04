@@ -1,9 +1,8 @@
 import type {
-	CategoryRepository,
 	PriorityRepository,
 	TaggableRepository,
 	UserOwnedDateQueryRepository,
-	UserOwnedStatusRepository,
+	UserOwnedStatusRepository
 } from "./base-repository";
 
 import type { Goal } from "../entities/goal";
@@ -12,7 +11,6 @@ import type { Goal } from "../entities/goal";
 export interface GoalRepository
 	extends UserOwnedStatusRepository<Goal, Goal["status"]>,
 		PriorityRepository<Goal, Goal["priority"]>,
-		CategoryRepository<Goal, Goal["category"]>,
 		TaggableRepository<Goal>,
 		UserOwnedDateQueryRepository<Goal> {
 	// Goal-specific methods can be added here if needed

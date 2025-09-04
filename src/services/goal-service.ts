@@ -9,7 +9,6 @@ export interface GoalFormData {
 	description: string;
 	targetDate: Date;
 	priority: Goal["priority"];
-	category: Goal["category"];
 	tags: string[];
 }
 
@@ -26,7 +25,6 @@ export class GoalService extends BaseEntityService<Goal, GoalFormData> {
 			targetDate: data.targetDate,
 			status: "IN_PROGRESS", // Default status
 			priority: data.priority,
-			category: data.category,
 			tags: data.tags,
 			userId: "", // Will be set by repository
 		};
@@ -52,18 +50,7 @@ export class GoalService extends BaseEntityService<Goal, GoalFormData> {
 			return handleServiceError(error, "buscar goals por prioridade");
 		}
 	}
-
-	async findByCategory(userId: string, category: Goal["category"]): Promise<Goal[]> {
-		try {
-			const goalRepo = this.repository as GoalRepository;
-			// Filter by userId first, then by category
-			const userGoals = await goalRepo.findByUserId(userId);
-			return userGoals.filter(goal => goal.category === category);
-		} catch (error) {
-			return handleServiceError(error, "buscar goals por categoria");
-		}
-	}
-
+	
 	async findOverdue(userId: string): Promise<Goal[]> {
 		try {
 			const goalRepo = this.repository as GoalRepository;

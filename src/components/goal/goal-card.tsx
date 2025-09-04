@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
 	Calendar,
@@ -9,14 +10,13 @@ import {
 	Target,
 	XCircle
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Goal } from "@/domain/entities/goal";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 import { useState } from "react";
 
 interface GoalCardProps {
@@ -96,8 +96,6 @@ export function GoalCard({
 
 	const timeProgress = calculateTimeProgress();
 
-	const CategoryIcon = categoryIcons[goal.category];
-
 	const handleStatusChange = async (newStatus: Goal["status"]) => {
 		await statusChangeLoading.executeAsync(
 			async () => {
@@ -120,7 +118,6 @@ export function GoalCard({
 							{goal.title}
 						</CardTitle>
 						<div className="flex items-center gap-2 mt-2">
-							<CategoryIcon className="w-4 h-4 text-gray-500" />
 							<Badge
 								variant="outline"
 								className={priorityColors[goal.priority]}

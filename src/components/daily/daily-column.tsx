@@ -1,14 +1,14 @@
-import { CalendarCheck, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Daily, DailyDifficulty } from "@/types/daily";
 import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
+import type { Daily, DailyDifficulty } from "@/types/daily";
+import { CalendarCheck, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { toast } from "sonner";
 import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
-import { toast } from "sonner";
 
 const defaultDaily: Daily = {
 	id: "",
@@ -27,7 +27,7 @@ export const DailyColumn = () => {
 	const createDailyMutation = useCreateDaily();
 	const updateDailyMutation = useUpdateDaily();
 	const deleteDailyMutation = useDeleteDaily();
-	const { data: dailiesData, isLoading } = useAvailableDailies();
+	const { data: dailiesData, isLoading, } = useAvailableDailies();
 
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingDaily, setEditingDaily] = useState<Daily | null>(null);
@@ -190,8 +190,18 @@ export const DailyColumn = () => {
 				</CardContent>
 			</Card>
 
+			{/* Loading State */}
+			{isLoading && (
+				<Card className="bg-blue-50 border-blue-200">
+					<CardContent className="py-8 text-center">
+						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<p className="text-blue-600">Carregando diárias...</p>
+					</CardContent>
+				</Card>
+			)}
+
 			{/* Dailies Disponíveis */}
-			{availableDailies.length > 0 && (
+			{!isLoading && availableDailies.length > 0 && (
 				<div className="space-y-4">
 					<h3 className="font-semibold text-amber-800">Disponíveis</h3>
 					{availableDailies.map((daily: Daily) => (
@@ -219,6 +229,7 @@ export const DailyColumn = () => {
 					))}
 				</div>
 			)}
+
 
 			{/* Dailies Completadas Hoje */}
 			{completedDailies.length > 0 && (

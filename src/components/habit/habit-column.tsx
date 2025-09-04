@@ -1,24 +1,23 @@
 "use client";
 
-import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCallback, useState } from "react";
 import { useCreateHabit, useDeleteHabit, useHabits, useUpdateHabit } from "@/hooks/use-habits";
+import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
+import { useCallback, useState } from "react";
 
-import { Badge } from "../ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
+import { toast } from "sonner";
+import { Badge } from "../ui/badge";
 import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
-import { toast } from "sonner";
 
 export function HabitColumn() {
 	const { data: habits = [], isLoading } = useHabits();
 	const createHabitMutation = useCreateHabit();
 	const updateHabitMutation = useUpdateHabit();
 	const deleteHabitMutation = useDeleteHabit();
-
 
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -187,9 +186,19 @@ export function HabitColumn() {
 				</CardContent>
 			</Card>
 
+			{/* Loading State */}
+			{isLoading && (
+				<Card className="bg-blue-50 border-blue-200">
+					<CardContent className="py-8 text-center">
+						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<p className="text-blue-600">Carregando hábitos...</p>
+					</CardContent>
+				</Card>
+			)}
+
 			{/* Habits List */}
 			<div className="space-y-4">
-				{inProgressHabits.length > 0 && (
+				{!isLoading && inProgressHabits.length > 0 && (
 					<div>
 						<h3 className="flex items-center gap-1 mb-2 font-semibold text-green-600 text-sm">
 							<Dumbbell className="w-4 h-4" />

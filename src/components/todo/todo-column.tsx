@@ -1,14 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListChecks, Plus } from "lucide-react";
 import type { Todo, TodoDifficulty } from "@/types/todo";
+import { ListChecks, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useTodoContext } from "@/contexts/todo-context";
+import { useState } from "react";
+import { toast } from "sonner";
 import { TodoCard } from "./todo-card";
 import { TodoForm } from "./todo-form";
-import { toast } from "sonner";
-import { useState } from "react";
-import { useTodoContext } from "@/contexts/todo-context";
 
 const defaultTodo: Todo = {
 	id: "",
@@ -23,7 +23,7 @@ const defaultTodo: Todo = {
 };
 
 export const TodoColumn = () => {
-	const { todos, addTodo, deleteTodo } = useTodoContext();
+	const { todos, addTodo, deleteTodo, isLoading } = useTodoContext();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -118,13 +118,23 @@ export const TodoColumn = () => {
 				</CardContent>
 			</Card>
 
+			{/* Loading State */}
+			{isLoading && (
+				<Card className="bg-blue-50 border-blue-200">
+					<CardContent className="py-8 text-center">
+						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<p className="text-blue-600">Carregando afazeres...</p>
+					</CardContent>
+				</Card>
+			)}
+
 			<div className="space-y-4">
 				<h3 className="flex items-center gap-1 mb-2 font-semibold text-blue-600 text-sm">
 					<ListChecks className="w-4 h-4 text-blue-600" />
 					Disponíveis
 				</h3>
 
-				{inProgressTodos.length > 0 ? (
+				{!isLoading && inProgressTodos.length > 0 ? (
 					inProgressTodos.map((todo) => (
 						<TodoCard
 							key={todo.id}

@@ -1,6 +1,6 @@
-import type { CreateGoalDto } from "./create-goal-dto";
 import type { Goal } from "@/domain/entities/goal";
 import type { GoalRepository } from "@/domain/repositories/goal-repository";
+import type { CreateGoalDto } from "./create-goal-dto";
 
 export class CreateGoalUseCase {
 	constructor(private goalRepository: GoalRepository) {}
@@ -12,7 +12,6 @@ export class CreateGoalUseCase {
 			targetDate: dto.targetDate,
 			status: "IN_PROGRESS",
 			priority: dto.priority || "MEDIUM",
-			category: dto.category || "PERSONAL",
 			tags: dto.tags || [],
 			userId: dto.userId,
 		};

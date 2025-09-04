@@ -81,7 +81,6 @@ export class PrismaGoalRepository implements GoalRepository {
 				targetDate: data.targetDate,
 				status: data.status,
 				priority: data.priority,
-				category: data.category,
 				tags: data.tags,
 				userId,
 			},
@@ -102,7 +101,6 @@ export class PrismaGoalRepository implements GoalRepository {
 				targetDate: goal.targetDate,
 				status: goal.status,
 				priority: goal.priority,
-				category: goal.category,
 				tags: goal.tags,
 			},
 		});
@@ -181,18 +179,6 @@ export class PrismaGoalRepository implements GoalRepository {
 		return goals.map(this.toDomain);
 	}
 
-	async findByUserIdAndCategory(
-		userId: string,
-		category: Goal["category"],
-	): Promise<Goal[]> {
-		const goals = await prisma.goal.findMany({
-			where: { userId, category },
-			orderBy: { createdAt: "desc" },
-		});
-
-		return goals.map(this.toDomain);
-	}
-
 	async findByUserIdAndTags(userId: string, tags: string[]): Promise<Goal[]> {
 		const goals = await prisma.goal.findMany({
 			where: {
@@ -249,7 +235,6 @@ export class PrismaGoalRepository implements GoalRepository {
 		targetDate: Date;
 		status: string;
 		priority: string;
-		category: string;
 		tags: string[];
 		userId: string;
 		createdAt: Date;
@@ -262,7 +247,6 @@ export class PrismaGoalRepository implements GoalRepository {
 			targetDate: goal.targetDate,
 			status: goal.status as Goal["status"],
 			priority: goal.priority as Goal["priority"],
-			category: goal.category as Goal["category"],
 			tags: goal.tags,
 			userId: goal.userId,
 			createdAt: goal.createdAt,

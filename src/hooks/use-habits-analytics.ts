@@ -29,6 +29,7 @@ export interface HabitAnalyticsData {
 		count: number;
 		completionRate: number;
 	}>;
+	
 	habitsByDifficulty: Array<{
 		difficulty: string;
 		count: number;

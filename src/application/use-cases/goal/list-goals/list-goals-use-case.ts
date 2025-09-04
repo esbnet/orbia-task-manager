@@ -16,10 +16,6 @@ export class ListGoalsUseCase {
 			goals = await this.goalRepository.findByPriority(
 				dto.priority,
 			);
-		} else if (dto.category) {
-			goals = await this.goalRepository.findByCategory(
-				dto.category,
-			);
 		} else if (dto.tags && dto.tags.length > 0) {
 			goals = await this.goalRepository.findByTags(dto.tags);
 		} else if (dto.includeDueSoon) {

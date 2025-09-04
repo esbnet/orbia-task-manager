@@ -28,7 +28,9 @@ import {
 } from "recharts";
 
 import { useGoals } from "@/contexts/goal-context";
+import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useHabitsAnalytics, type HabitAnalyticsData } from "@/hooks/use-habits-analytics";
+import { useTodos } from "@/hooks/use-todos";
 import { ptBR } from "date-fns/locale";
 
 interface AnalyticsData {
@@ -39,19 +41,37 @@ interface AnalyticsData {
 	overdueGoals: number;
 	completionRate: number;
 	averageCompletionTime: number;
-	goalsByCategory: Array<{ name: string; value: number; color: string }>;
 	goalsByPriority: Array<{ name: string; value: number; color: string }>;
 	weeklyProgress: Array<{ date: string; completed: number; total: number }>;
 	monthlyTrends: Array<{ month: string; goals: number; completed: number }>;
 
 	// Habits data
 	habitsData?: HabitAnalyticsData;
+
+	// Todos data
+	totalTodos: number;
+	completedTodos: number;
+	pendingTodos: number;
+	todosCompletionRate: number;
+
+	// Dailies data
+	totalDailies: number;
+	completedDailies: number;
+	availableDailies: number;
+	dailiesCompletionRate: number;
+
+	// Consolidated metrics
+	totalTasks: number;
+	completedTasks: number;
+	overallCompletionRate: number;
 }
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 export function AnalyticsDashboard() {
 	const { goals } = useGoals();
+	const { data: todos } = useTodos();
+	const { data: dailiesData } = useAvailableDailies();
 	const [timeRange, setTimeRange] = useState<
 		"week" | "month" | "quarter" | "year"
 	>("month");
@@ -84,21 +104,6 @@ export function AnalyticsDashboard() {
 		const completionRate =
 			totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
 
-		// Goals by Category
-		const categoryMap = new Map<string, number>();
-		for (const goal of filteredGoals) {
-			const category = goal.category;
-			categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
-		}
-
-		const goalsByCategory = Array.from(categoryMap.entries()).map(
-			([name, value], index) => ({
-				name: getCategoryLabel(name),
-				value,
-				color: COLORS[index % COLORS.length],
-			}),
-		);
-
 		// Goals by Priority
 		const priorityMap = new Map<string, number>();
 		for (const goal of filteredGoals) {
@@ -120,6 +125,31 @@ export function AnalyticsDashboard() {
 		// Monthly Trends
 		const monthlyTrends = generateMonthlyTrends(filteredGoals);
 
+		// Todos analytics
+		const filteredTodos = todos?.filter(
+			(todo) => todo.createdAt >= startDate,
+		) || [];
+		const totalTodos = filteredTodos.length;
+		const completedTodos = filteredTodos.filter(
+			(todo) => todo.lastCompletedDate !== undefined,
+		).length;
+		const pendingTodos = totalTodos - completedTodos;
+		const todosCompletionRate =
+			totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0;
+
+		// Dailies analytics
+		const availableDailies = dailiesData?.availableDailies?.length || 0;
+		const completedDailies = dailiesData?.completedToday?.length || 0;
+		const totalDailies = availableDailies + completedDailies;
+		const dailiesCompletionRate =
+			totalDailies > 0 ? (completedDailies / totalDailies) * 100 : 0;
+
+		// Consolidated metrics
+		const totalTasks = totalGoals + totalTodos + totalDailies;
+		const completedTasks = completedGoals + completedTodos + completedDailies;
+		const overallCompletionRate =
+			totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
 		setAnalyticsData({
 			totalGoals,
 			completedGoals,
@@ -127,12 +157,22 @@ export function AnalyticsDashboard() {
 			overdueGoals,
 			completionRate,
 			averageCompletionTime: 0, // TODO: Implementar cálculo real
-			goalsByCategory,
 			goalsByPriority,
 			weeklyProgress,
 			monthlyTrends,
+			totalTodos,
+			completedTodos,
+			pendingTodos,
+			todosCompletionRate,
+			totalDailies,
+			completedDailies,
+			availableDailies,
+			dailiesCompletionRate,
+			totalTasks,
+			completedTasks,
+			overallCompletionRate,
 		});
-	}, [timeRange, goals]);
+	}, [timeRange, goals, todos, dailiesData]);
 
 	useEffect(() => {
 		if (goals.length > 0) {
@@ -143,6 +183,8 @@ export function AnalyticsDashboard() {
 	const getStartDate = (range: string) => {
 		const now = new Date();
 		switch (range) {
+			case "day":
+				return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 			case "week":
 				return startOfWeek(now, { locale: ptBR });
 			case "month":
@@ -271,6 +313,7 @@ export function AnalyticsDashboard() {
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
+						<SelectItem value="day">Dia</SelectItem>
 						<SelectItem value="week">Semana</SelectItem>
 						<SelectItem value="month">Mês</SelectItem>
 						<SelectItem value="quarter">Trimestre</SelectItem>
@@ -279,7 +322,86 @@ export function AnalyticsDashboard() {
 				</Select>
 			</div>
 
-			{/* Key Metrics */}
+			{/* Consolidated Summary */}
+			<div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+				<Card>
+					<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+						<CardTitle className="font-medium text-sm">
+							Total de Tarefas
+						</CardTitle>
+						<Target className="w-4 h-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="font-bold text-2xl">
+							{analyticsData.totalTasks}
+						</div>
+						<p className="text-muted-foreground text-xs">
+							{timeRange === "week"
+								? "Esta semana"
+								: timeRange === "month"
+									? "Este mês"
+									: timeRange === "quarter"
+										? "Este trimestre"
+										: "Este ano"}
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+						<CardTitle className="font-medium text-sm">
+							Taxas de Conclusão Geral
+						</CardTitle>
+						<CheckCircle className="w-4 h-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="font-bold text-2xl">
+							{analyticsData.overallCompletionRate.toFixed(1)}%
+						</div>
+						<p className="text-muted-foreground text-xs">
+							{analyticsData.completedTasks} de{" "}
+							{analyticsData.totalTasks} concluídas
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+						<CardTitle className="font-medium text-sm">
+							Metas + Hábitos + Todos
+						</CardTitle>
+						<Clock className="w-4 h-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="font-bold text-2xl">
+							{analyticsData.totalGoals + (habitsAnalytics?.totalHabits || 0) + analyticsData.totalTodos}
+						</div>
+						<p className="text-muted-foreground text-xs">
+							Itens ativos no período
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+						<CardTitle className="font-medium text-sm">
+							Dailies Hoje
+						</CardTitle>
+						<AlertTriangle className="w-4 h-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="font-bold text-2xl">
+							{analyticsData.dailiesCompletionRate.toFixed(1)}%
+						</div>
+						<p className="text-muted-foreground text-xs">
+							{analyticsData.completedDailies} de{" "}
+							{analyticsData.totalDailies} concluídos
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Category-specific Metrics */}
 			<div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
@@ -361,6 +483,8 @@ export function AnalyticsDashboard() {
 			<Tabs defaultValue="overview" className="space-y-4">
 				<TabsList>
 					<TabsTrigger value="overview">Visão Geral</TabsTrigger>
+					<TabsTrigger value="categories">Resumo por Categoria</TabsTrigger>
+					<TabsTrigger value="evolution">Evolução Temporal</TabsTrigger>
 					<TabsTrigger value="habits">Hábitos</TabsTrigger>
 					<TabsTrigger value="progress">
 						Progresso Semanal
@@ -375,32 +499,6 @@ export function AnalyticsDashboard() {
 								<CardTitle>Metas por Categoria</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<ResponsiveContainer width="100%" height={300}>
-									<PieChart>
-										<Pie
-											data={analyticsData.goalsByCategory}
-											cx="50%"
-											cy="50%"
-											labelLine={false}
-											label={({ name, percent }) =>
-												`${name} ${(percent * 100).toFixed(0)}%`
-											}
-											outerRadius={80}
-											fill="#8884d8"
-											dataKey="value"
-										>
-											{analyticsData.goalsByCategory.map(
-												(entry) => (
-													<Cell
-														key={entry.name}
-														fill={entry.color}
-													/>
-												),
-											)}
-										</Pie>
-										<Tooltip />
-									</PieChart>
-								</ResponsiveContainer>
 							</CardContent>
 						</Card>
 
@@ -423,6 +521,293 @@ export function AnalyticsDashboard() {
 							</CardContent>
 						</Card>
 					</div>
+				</TabsContent>
+
+				<TabsContent value="categories" className="space-y-4">
+					{/* Goals Summary */}
+					<div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+						<Card>
+							<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+								<CardTitle className="font-medium text-sm">
+									Metas
+								</CardTitle>
+								<Target className="w-4 h-4 text-muted-foreground" />
+							</CardHeader>
+							<CardContent>
+								<div className="font-bold text-2xl">
+									{analyticsData.totalGoals}
+								</div>
+								<p className="text-muted-foreground text-xs">
+									{analyticsData.completionRate.toFixed(1)}% concluídas
+								</p>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+								<CardTitle className="font-medium text-sm">
+									Todos
+								</CardTitle>
+								<CheckCircle className="w-4 h-4 text-muted-foreground" />
+							</CardHeader>
+							<CardContent>
+								<div className="font-bold text-2xl">
+									{analyticsData.totalTodos}
+								</div>
+								<p className="text-muted-foreground text-xs">
+									{analyticsData.todosCompletionRate.toFixed(1)}% concluídos
+								</p>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+								<CardTitle className="font-medium text-sm">
+									Dailies
+								</CardTitle>
+								<Clock className="w-4 h-4 text-muted-foreground" />
+							</CardHeader>
+							<CardContent>
+								<div className="font-bold text-2xl">
+									{analyticsData.totalDailies}
+								</div>
+								<p className="text-muted-foreground text-xs">
+									{analyticsData.dailiesCompletionRate.toFixed(1)}% concluídos
+								</p>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+								<CardTitle className="font-medium text-sm">
+									Hábitos
+								</CardTitle>
+								<AlertTriangle className="w-4 h-4 text-muted-foreground" />
+							</CardHeader>
+							<CardContent>
+								<div className="font-bold text-2xl">
+									{habitsAnalytics?.totalHabits || 0}
+								</div>
+								<p className="text-muted-foreground text-xs">
+									{habitsAnalytics?.completionRate.toFixed(1) || 0}% concluídos
+								</p>
+							</CardContent>
+						</Card>
+					</div>
+
+					{/* Category Comparison Chart */}
+					<Card>
+						<CardHeader>
+							<CardTitle>Comparação por Categoria</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<ResponsiveContainer width="100%" height={300}>
+								<BarChart
+									data={[
+										{
+											category: "Metas",
+											total: analyticsData.totalGoals,
+											completed: analyticsData.completedGoals,
+											rate: analyticsData.completionRate,
+										},
+										{
+											category: "Todos",
+											total: analyticsData.totalTodos,
+											completed: analyticsData.completedTodos,
+											rate: analyticsData.todosCompletionRate,
+										},
+										{
+											category: "Dailies",
+											total: analyticsData.totalDailies,
+											completed: analyticsData.completedDailies,
+											rate: analyticsData.dailiesCompletionRate,
+										},
+										{
+											category: "Hábitos",
+											total: habitsAnalytics?.totalHabits || 0,
+											completed: habitsAnalytics?.activeHabits || 0,
+											rate: habitsAnalytics?.completionRate || 0,
+										},
+									]}
+								>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="category" />
+									<YAxis />
+									<Tooltip />
+									<Bar dataKey="total" fill="#8884d8" name="Total" />
+									<Bar dataKey="completed" fill="#00C49F" name="Concluídos" />
+								</BarChart>
+							</ResponsiveContainer>
+						</CardContent>
+					</Card>
+				</TabsContent>
+
+				<TabsContent value="evolution" className="space-y-4">
+					<div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
+						<Card>
+							<CardHeader>
+								<CardTitle>Evolução de Metas</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<ResponsiveContainer width="100%" height={300}>
+									<LineChart data={analyticsData.monthlyTrends}>
+										<CartesianGrid strokeDasharray="3 3" />
+										<XAxis dataKey="month" />
+										<YAxis />
+										<Tooltip />
+										<Line
+											type="monotone"
+											dataKey="goals"
+											stroke="#8884d8"
+											name="Total de Metas"
+										/>
+										<Line
+											type="monotone"
+											dataKey="completed"
+											stroke="#00C49F"
+											name="Concluídas"
+										/>
+									</LineChart>
+								</ResponsiveContainer>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader>
+								<CardTitle>Progresso Semanal Consolidado</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<ResponsiveContainer width="100%" height={300}>
+									<BarChart data={analyticsData.weeklyProgress}>
+										<CartesianGrid strokeDasharray="3 3" />
+										<XAxis dataKey="date" />
+										<YAxis />
+										<Tooltip />
+										<Bar
+											dataKey="completed"
+											fill="#00C49F"
+											name="Concluídas"
+										/>
+										<Bar
+											dataKey="total"
+											fill="#8884d8"
+											name="Total"
+										/>
+									</BarChart>
+								</ResponsiveContainer>
+							</CardContent>
+						</Card>
+					</div>
+
+					{habitsAnalytics && (
+						<div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
+							<Card>
+								<CardHeader>
+									<CardTitle>Evolução de Hábitos</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<ResponsiveContainer width="100%" height={300}>
+										<LineChart data={habitsAnalytics.dailyProgress}>
+											<CartesianGrid strokeDasharray="3 3" />
+											<XAxis dataKey="date" />
+											<YAxis />
+											<Tooltip />
+											<Line
+												type="monotone"
+												dataKey="entries"
+												stroke="#8884d8"
+												name="Entradas"
+											/>
+											<Line
+												type="monotone"
+												dataKey="target"
+												stroke="#82ca9d"
+												name="Meta"
+											/>
+										</LineChart>
+									</ResponsiveContainer>
+								</CardContent>
+							</Card>
+
+							<Card>
+								<CardHeader>
+									<CardTitle>Tendências Semanais de Hábitos</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<ResponsiveContainer width="100%" height={300}>
+										<BarChart data={habitsAnalytics.weeklyTrends}>
+											<CartesianGrid strokeDasharray="3 3" />
+											<XAxis dataKey="week" />
+											<YAxis />
+											<Tooltip />
+											<Bar
+												dataKey="totalEntries"
+												fill="#8884d8"
+												name="Total de Entradas"
+											/>
+										</BarChart>
+									</ResponsiveContainer>
+								</CardContent>
+							</Card>
+						</div>
+					)}
+
+					{/* Overall Evolution Chart */}
+					<Card>
+						<CardHeader>
+							<CardTitle>Evolução Geral do Sistema</CardTitle>
+							<p className="text-muted-foreground text-sm">
+								Comparação da evolução de todas as categorias ao longo do tempo
+							</p>
+						</CardHeader>
+						<CardContent>
+							<ResponsiveContainer width="100%" height={400}>
+								<LineChart
+									data={analyticsData.monthlyTrends.map((trend, index) => ({
+										...trend,
+										habitsEntries: habitsAnalytics?.weeklyTrends[index]?.totalEntries || 0,
+										todosCompleted: Math.floor(analyticsData.totalTodos * (trend.completed / trend.goals || 0)),
+										dailiesCompleted: Math.floor(analyticsData.totalDailies * 0.7), // Mock data for dailies
+									}))}
+								>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="month" />
+									<YAxis />
+									<Tooltip />
+									<Line
+										type="monotone"
+										dataKey="goals"
+										stroke="#8884d8"
+										name="Metas"
+									/>
+									<Line
+										type="monotone"
+										dataKey="completed"
+										stroke="#00C49F"
+										name="Metas Concluídas"
+									/>
+									<Line
+										type="monotone"
+										dataKey="habitsEntries"
+										stroke="#FFBB28"
+										name="Entradas de Hábitos"
+									/>
+									<Line
+										type="monotone"
+										dataKey="todosCompleted"
+										stroke="#FF8042"
+										name="Todos Concluídos"
+									/>
+									<Line
+										type="monotone"
+										dataKey="dailiesCompleted"
+										stroke="#00C49F"
+										name="Dailies Concluídos"
+									/>
+								</LineChart>
+							</ResponsiveContainer>
+						</CardContent>
+					</Card>
 				</TabsContent>
 
 				<TabsContent value="habits" className="space-y-4">

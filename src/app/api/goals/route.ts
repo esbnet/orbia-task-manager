@@ -1,10 +1,10 @@
 import { CreateGoalUseCase } from "@/application/use-cases/goal/create-goal/create-goal-use-case";
-import type { Goal } from "@/domain/entities/goal";
 import { ListGoalsUseCase } from "@/application/use-cases/goal/list-goals/list-goals-use-case";
+import { auth } from "@/auth";
+import type { Goal } from "@/domain/entities/goal";
+import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
-import { auth } from "@/auth";
 
 const goalRepository = new PrismaGoalRepository();
 const createGoalUseCase = new CreateGoalUseCase(goalRepository);
@@ -248,12 +248,6 @@ export async function POST(request: NextRequest) {
 		const validatedPriority = priority && validPriorities.includes(priority)
 			? priority
 			: "MEDIUM";
-
-		// Validação de category
-		const validCategories: Goal["category"][] = ["PERSONAL", "WORK", "HEALTH", "LEARNING"];
-		const validatedCategory = category && validCategories.includes(category)
-			? category
-			: "PERSONAL";
 
 		// Validação de tags
 		const validatedTags = Array.isArray(tags)

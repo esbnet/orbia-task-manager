@@ -136,30 +136,6 @@ export class HttpGoalRepository implements GoalRepository {
 		return response.json();
 	}
 
-	async findByCategory(category: Goal["category"]): Promise<Goal[]> {
-		const response = await fetch(`${this.baseUrl}?category=${category}`);
-		if (!response.ok) {
-			throw new Error("Erro ao buscar metas por categoria");
-		}
-		return response.json();
-	}
-
-	async updateCategory(id: string, category: Goal["category"]): Promise<Goal> {
-		const response = await fetch(`${this.baseUrl}/${id}/category`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({ category }),
-		});
-
-		if (!response.ok) {
-			throw new Error("Erro ao atualizar categoria da meta");
-		}
-
-		return response.json();
-	}
-
 	async findByTags(tags: string[]): Promise<Goal[]> {
 		const tagsParam = tags.join(",");
 		const response = await fetch(`${this.baseUrl}?tags=${tagsParam}`);

@@ -36,7 +36,7 @@ export function MainNav({
 			>
 				Config
 			</Link>
-			<Link
+			{/* <Link
 				href="/analytics"
 				className={cn(
 					"font-medium text-muted-foreground hover:text-primary text-sm transition-colors",
@@ -44,6 +44,15 @@ export function MainNav({
 				)}
 			>
 				Analytics
+			</Link> */}
+			<Link
+				href="/metrics"
+				className={cn(
+					"font-medium text-muted-foreground hover:text-primary text-sm transition-colors",
+					pathname === "/metrics" && "text-primary",
+				)}
+			>
+				Métricas
 			</Link>
 			<Link
 				href="/profile"

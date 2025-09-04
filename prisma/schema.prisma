@@ -265,7 +265,6 @@ model Goal {
     targetDate  DateTime
     status      String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CANCELLED
     priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
-    category    String   @default("PERSONAL") // PERSONAL, WORK, HEALTH, LEARNING
     tags        String[]
     userId      String
     createdAt   DateTime @default(now())

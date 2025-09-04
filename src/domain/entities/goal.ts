@@ -5,7 +5,6 @@ export interface Goal {
 	targetDate: Date;
 	status: GoalStatus;
 	priority: GoalPriority;
-	category: GoalCategory;
 	tags: string[];
 	userId: string;
 	createdAt: Date;
