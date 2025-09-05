@@ -230,9 +230,8 @@ export const DailyColumn = () => {
 				</div>
 			)}
 
-
 			{/* Dailies Completadas Hoje */}
-			{completedDailies.length > 0 && (
+			{!isLoading && completedDailies.length > 0 && (
 				<div className="space-y-4">
 					<h3 className="font-semibold text-green-800">Completadas Hoje</h3>
 					{completedDailies.map((daily: Daily) => (
@@ -262,7 +261,7 @@ export const DailyColumn = () => {
 			)}
 
 			{/* Estado vazio */}
-			{availableDailies.length === 0 && completedDailies.length === 0 && (
+			{!isLoading && availableDailies.length === 0 && completedDailies.length === 0 && (
 				<Card className="bg-gray-50 border-gray-300 border-dashed">
 					<CardContent className="py-8 text-center">
 						<CalendarCheck className="mx-auto mb-3 w-12 h-12 text-gray-400" />

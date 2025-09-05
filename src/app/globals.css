@@ -169,3 +169,52 @@
 .animate-slideUp {
 	animation: slideUp 1s ease-in-out forwards;
 }
+
+/* Animações para a página 404 */
+@keyframes fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.animate-fade-in {
+	animation: fade-in 0.8s ease-out forwards;
+	opacity: 0;
+}
+
+.animation-delay-200 {
+	animation-delay: 0.2s;
+}
+
+.animation-delay-300 {
+	animation-delay: 0.3s;
+}
+
+.animation-delay-400 {
+	animation-delay: 0.4s;
+}
+
+.animation-delay-600 {
+	animation-delay: 0.6s;
+}
+
+.animation-delay-800 {
+	animation-delay: 0.8s;
+}
+
+.animation-delay-900 {
+	animation-delay: 0.9s;
+}
+
+.animation-delay-1000 {
+	animation-delay: 1s;
+}
+
+.animation-delay-1200 {
+	animation-delay: 1.2s;
+}

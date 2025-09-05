@@ -1,10 +1,9 @@
-export interface CreateGoalDto {
-	title: string;
+export interface UpdateGoalDto {
+	id: string;
+	title?: string;
 	description?: string;
-	targetDate: Date;
+	targetDate?: Date;
 	priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-	category?: "PERSONAL" | "WORK" | "HEALTH" | "LEARNING";
 	tags?: string[];
-	userId: string;
 	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
 }

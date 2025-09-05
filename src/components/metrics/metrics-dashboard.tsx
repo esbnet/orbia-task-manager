@@ -21,7 +21,7 @@ import {
     TrendingUp,
     Zap
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Bar,
     BarChart,
@@ -40,6 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useGoals } from "@/contexts/goal-context";
 import { useAvailableDailies } from "@/hooks/use-dailies";
+import { useHabits } from "@/hooks/use-habits";
 import { useHabitsAnalytics } from "@/hooks/use-habits-analytics";
 import { useTodos } from "@/hooks/use-todos";
 
@@ -95,6 +96,64 @@ export function MetricsDashboard() {
     const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("month");
     const { data: habitsAnalytics } = useHabitsAnalytics(timeRange);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
+
+    // Hooks para obter estatísticas de tags
+    const { data: habits } = useHabits();
+
+    const habitTags = useMemo(() => {
+        if (!habits) return [];
+
+        const tagCounts: { [key: string]: number } = {};
+
+        habits.forEach((habit: any) => {
+            habit.tags.forEach((tag: string) => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+        });
+
+        return Object.entries(tagCounts)
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count);
+    }, [habits]);
+
+    const todoTags = (() => {
+        if (!todos) return [];
+        const tagCounts: { [key: string]: number } = {};
+        todos.forEach((todo: any) => {
+            todo.tags.forEach((tag: string) => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+        });
+        return Object.entries(tagCounts)
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count);
+    })();
+
+    const dailyTags = (() => {
+        if (!dailiesData?.availableDailies) return [];
+        const tagCounts: { [key: string]: number } = {};
+        dailiesData.availableDailies.forEach((daily: any) => {
+            daily.tags.forEach((tag: string) => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+        });
+        return Object.entries(tagCounts)
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count);
+    })();
+
+    const goalTags = (() => {
+        if (!goals) return [];
+        const tagCounts: { [key: string]: number } = {};
+        goals.forEach((goal: any) => {
+            goal.tags.forEach((tag: string) => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+        });
+        return Object.entries(tagCounts)
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count);
+    })();
 
     const calculateMetrics = useCallback(() => {
         if (!habitsAnalytics || !todos || !dailiesData) return;
@@ -479,16 +538,7 @@ export function MetricsDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={(() => {
-                                        const tagCounts: { [key: string]: number } = {};
-                                        // Como não temos acesso direto aos hábitos aqui, vamos usar uma abordagem diferente
-                                        // ou simplesmente mostrar dados mockados por enquanto
-                                        return [
-                                            { tag: "Saúde", count: habitsAnalytics?.activeHabits || 0 },
-                                            { tag: "Produtividade", count: Math.floor((habitsAnalytics?.activeHabits || 0) * 0.7) },
-                                            { tag: "Aprendizado", count: Math.floor((habitsAnalytics?.activeHabits || 0) * 0.5) },
-                                        ];
-                                    })()}>
+                                    <BarChart data={habitTags}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="tag" />
                                         <YAxis />
@@ -633,15 +683,7 @@ export function MetricsDashboard() {
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={(() => {
-                                    const tagCounts: { [key: string]: number } = {};
-                                    todos?.forEach(todo => {
-                                        todo.tags.forEach(tag => {
-                                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-                                        });
-                                    });
-                                    return Object.entries(tagCounts).map(([tag, count]) => ({ tag, count }));
-                                })()}>
+                                <BarChart data={todoTags}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="tag" />
                                     <YAxis />
@@ -779,15 +821,7 @@ export function MetricsDashboard() {
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={(() => {
-                                    const tagCounts: { [key: string]: number } = {};
-                                    dailiesData?.availableDailies?.forEach(daily => {
-                                        daily.tags.forEach(tag => {
-                                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-                                        });
-                                    });
-                                    return Object.entries(tagCounts).map(([tag, count]) => ({ tag, count }));
-                                })()}>
+                                <BarChart data={dailyTags}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="tag" />
                                     <YAxis />
@@ -944,15 +978,7 @@ export function MetricsDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={(() => {
-                                        const tagCounts: { [key: string]: number } = {};
-                                        goals.forEach(goal => {
-                                            goal.tags.forEach(tag => {
-                                                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-                                            });
-                                        });
-                                        return Object.entries(tagCounts).map(([tag, count]) => ({ tag, count }));
-                                    })()}>
+                                    <BarChart data={goalTags}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="tag" />
                                         <YAxis />

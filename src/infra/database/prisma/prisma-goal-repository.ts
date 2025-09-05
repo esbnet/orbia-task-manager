@@ -26,11 +26,44 @@ export class PrismaGoalRepository implements GoalRepository {
 	updateCategory(id: string, category: GoalCategory): Promise<Goal> {
 		throw new Error("Method not implemented." + category + id);
 	}
-	findByTags(tags: string[]): Promise<Goal[]> {
-		throw new Error("Method not implemented." + tags);
+	async findByTags(tags: string[]): Promise<Goal[]> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		const goals = await prisma.goal.findMany({
+			where: {
+				userId,
+				tags: {
+					hasSome: tags,
+				},
+			},
+			orderBy: { createdAt: "desc" },
+		});
+
+		return goals.map(this.toDomain);
 	}
 	findByTag(tag: string): Promise<Goal[]> {
-		throw new Error("Method not implemented." + tag);
+		return this.findByTags([tag]);
+	}
+
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		const result = await prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+			SELECT
+				UNNEST(tags) as tag,
+				COUNT(*) as count
+			FROM goals
+			WHERE "userId" = ${userId}
+			GROUP BY UNNEST(tags)
+			ORDER BY count DESC
+		`;
+
+		return result.map(row => ({
+			tag: row.tag,
+			count: Number(row.count)
+		}));
 	}
 	findOverdueByUserId(userId: string): Promise<Goal[]> {
 		throw new Error("Method not implemented." + userId);
@@ -225,6 +258,192 @@ export class PrismaGoalRepository implements GoalRepository {
 		});
 
 		return goals.map(this.toDomain);
+	}
+
+	// Métodos para tarefas anexadas
+	async attachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+		const userId = await getCurrentUserId();
+		if (!userId) throw new Error("User not authenticated");
+
+		// Verificar se a meta existe e pertence ao usuário
+		const goal = await prisma.goal.findUnique({
+			where: { id: goalId, userId },
+		});
+		if (!goal) throw new Error("Goal not found");
+
+		// Verificar se a tarefa existe e pertence ao usuário
+		let taskExists = false;
+		let taskTitle = "";
+		let taskDifficulty = "";
+
+		if (taskType === "habit") {
+			const habit = await prisma.habit.findUnique({
+				where: { id: taskId, userId },
+			});
+			if (habit) {
+				taskExists = true;
+				taskTitle = habit.title;
+				taskDifficulty = habit.difficulty;
+			}
+		} else if (taskType === "daily") {
+			const daily = await prisma.daily.findUnique({
+				where: { id: taskId, userId },
+			});
+			if (daily) {
+				taskExists = true;
+				taskTitle = daily.title;
+				taskDifficulty = daily.difficulty;
+			}
+		} else if (taskType === "todo") {
+			const todo = await prisma.todo.findUnique({
+				where: { id: taskId, userId },
+			});
+			if (todo) {
+				taskExists = true;
+				taskTitle = todo.title;
+				taskDifficulty = todo.difficulty;
+			}
+		}
+
+		if (!taskExists) throw new Error("Task not found");
+
+		// Criar o relacionamento
+		await prisma.goalTask.create({
+			data: {
+				goalId,
+				taskId,
+				taskType,
+			},
+		});
+	}
+
+	async detachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+		const userId = await getCurrentUserId();
+		if (!userId) throw new Error("User not authenticated");
+
+		// Verificar se a meta existe e pertence ao usuário
+		const goal = await prisma.goal.findUnique({
+			where: { id: goalId, userId },
+		});
+		if (!goal) throw new Error("Goal not found");
+
+		// Remover o relacionamento
+		await prisma.goalTask.deleteMany({
+			where: {
+				goalId,
+				taskId,
+				taskType,
+			},
+		});
+	}
+
+	async getAttachedTasks(goalId: string): Promise<import("@/domain/entities/goal").GoalAttachedTask[]> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		// Verificar se a meta existe e pertence ao usuário
+		const goal = await prisma.goal.findUnique({
+			where: { id: goalId, userId },
+		});
+		if (!goal) return [];
+
+		const goalTasks = await prisma.goalTask.findMany({
+			where: { goalId },
+		});
+
+		const attachedTasks: import("@/domain/entities/goal").GoalAttachedTask[] = [];
+
+		for (const goalTask of goalTasks) {
+			let taskTitle = "";
+			let taskDifficulty = "";
+
+			if (goalTask.taskType === "habit") {
+				const habit = await prisma.habit.findUnique({
+					where: { id: goalTask.taskId },
+				});
+				if (habit) {
+					taskTitle = habit.title;
+					taskDifficulty = habit.difficulty;
+				}
+			} else if (goalTask.taskType === "daily") {
+				const daily = await prisma.daily.findUnique({
+					where: { id: goalTask.taskId },
+				});
+				if (daily) {
+					taskTitle = daily.title;
+					taskDifficulty = daily.difficulty;
+				}
+			} else if (goalTask.taskType === "todo") {
+				const todo = await prisma.todo.findUnique({
+					where: { id: goalTask.taskId },
+				});
+				if (todo) {
+					taskTitle = todo.title;
+					taskDifficulty = todo.difficulty;
+				}
+			}
+
+			if (taskTitle) {
+				attachedTasks.push({
+					id: goalTask.id,
+					taskId: goalTask.taskId,
+					taskType: goalTask.taskType as "habit" | "daily" | "todo",
+					taskTitle,
+					taskDifficulty,
+				});
+			}
+		}
+
+		return attachedTasks;
+	}
+
+	async updateAttachedTasks(goalId: string, tasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>): Promise<void> {
+		const userId = await getCurrentUserId();
+		if (!userId) throw new Error("User not authenticated");
+
+		// Verificar se a meta existe e pertence ao usuário
+		const goal = await prisma.goal.findUnique({
+			where: { id: goalId, userId },
+		});
+		if (!goal) throw new Error("Goal not found");
+
+		// Remover todos os relacionamentos existentes
+		await prisma.goalTask.deleteMany({
+			where: { goalId },
+		});
+
+		// Criar novos relacionamentos
+		for (const task of tasks) {
+			// Verificar se a tarefa existe
+			let taskExists = false;
+
+			if (task.taskType === "habit") {
+				const habit = await prisma.habit.findUnique({
+					where: { id: task.taskId, userId },
+				});
+				if (habit) taskExists = true;
+			} else if (task.taskType === "daily") {
+				const daily = await prisma.daily.findUnique({
+					where: { id: task.taskId, userId },
+				});
+				if (daily) taskExists = true;
+			} else if (task.taskType === "todo") {
+				const todo = await prisma.todo.findUnique({
+					where: { id: task.taskId, userId },
+				});
+				if (todo) taskExists = true;
+			}
+
+			if (taskExists) {
+				await prisma.goalTask.create({
+					data: {
+						goalId,
+						taskId: task.taskId,
+						taskType: task.taskType,
+					},
+				});
+			}
+		}
 	}
 
 	// Converts Prisma entity to domain entity

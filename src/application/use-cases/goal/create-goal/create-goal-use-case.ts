@@ -16,6 +16,13 @@ export class CreateGoalUseCase {
 			userId: dto.userId,
 		};
 
-		return await this.goalRepository.create(goal);
+		const createdGoal = await this.goalRepository.create(goal);
+
+		// Anexar tarefas se fornecidas
+		if (dto.attachedTasks && dto.attachedTasks.length > 0) {
+			await this.goalRepository.updateAttachedTasks(createdGoal.id, dto.attachedTasks);
+		}
+
+		return createdGoal;
 	}
 }

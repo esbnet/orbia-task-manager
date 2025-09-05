@@ -22,11 +22,69 @@ export class PrismaDailyRepository implements DailyRepository {
 	moveToPosition(id: string, position: number): Promise<Daily> {
 		throw new Error("Method not implemented." + " " + position + " " + id);
 	}
-	findByTags(tags: string[]): Promise<Daily[]> {
-		throw new Error("Method not implemented." + " " + tags);
+	async findByTags(tags: string[]): Promise<Daily[]> {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) return [];
+
+		const daily = await prisma.daily.findMany({
+			where: {
+				userId,
+				tags: {
+					hasSome: tags,
+				},
+			},
+			orderBy: { order: "asc" },
+			select: {
+				id: true,
+				userId: true,
+				title: true,
+				observations: true,
+				tasks: true,
+				difficulty: true,
+				startDate: true,
+				repeatType: true,
+				repeatFrequency: true,
+				tags: true,
+				order: true,
+				lastCompletedDate: true,
+				createdAt: true,
+				subtasks: {
+					orderBy: { order: "asc" },
+					select: {
+						id: true,
+						title: true,
+						completed: true,
+						dailyId: true,
+						order: true,
+						createdAt: true,
+					},
+				},
+			},
+		});
+		return daily.map(this.toDomain);
 	}
 	findByTag(tag: string): Promise<Daily[]> {
-		throw new Error("Method not implemented." + " " + tag);
+		return this.findByTags([tag]);
+	}
+
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) return [];
+
+		const result = await prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+			SELECT
+				UNNEST(tags) as tag,
+				COUNT(*) as count
+			FROM dailies
+			WHERE "userId" = ${userId}
+			GROUP BY UNNEST(tags)
+			ORDER BY count DESC
+		`;
+
+		return result.map(row => ({
+			tag: row.tag,
+			count: Number(row.count)
+		}));
 	}
 	async list(): Promise<Daily[]> {
 		const userId = await getCurrentUserIdWithFallback();

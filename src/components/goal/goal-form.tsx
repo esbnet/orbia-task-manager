@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarIcon, Trash2 } from "lucide-react";
 import {
 	Dialog,
 	DialogClose,
@@ -23,20 +22,54 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { CalendarIcon, SaveIcon, SplineIcon, Trash2, } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import type { Goal } from "@/domain/entities/goal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect } from "../ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
+import { useGoals } from "@/contexts/goal-context";
+import type { Goal } from "@/domain/entities/goal";
+import { useActiveTasks } from "@/hooks/use-active-tasks";
+import { useTags } from "@/hooks/use-tags";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useGoals } from "@/contexts/goal-context";
-import { useTags } from "@/hooks/use-tags";
+import { MultiSelect } from "../ui/multi-select";
+
+interface AttachedTask {
+	id: string;
+	taskId: string;
+	taskType: "habit" | "daily" | "todo";
+	taskTitle: string;
+	taskDifficulty: string;
+}
+
+// Hook inline para buscar tarefas anexadas
+function useAttachedTasks(goalId?: string) {
+	return useQuery({
+		queryKey: ["attached-tasks", goalId],
+		queryFn: async (): Promise<AttachedTask[]> => {
+			if (!goalId) return [];
+
+			const response = await fetch(`/api/goals/${goalId}/tasks`);
+
+			if (!response.ok) {
+				throw new Error("Erro ao buscar tarefas anexadas: " + response.status);
+			}
+
+			const data = await response.json();
+
+			return data;
+		},
+		enabled: !!goalId,
+		staleTime: 2 * 60 * 1000,
+		retry: 1,
+	});
+}
 
 interface GoalFormData {
 	title: string;
@@ -44,6 +77,7 @@ interface GoalFormData {
 	targetDate: Date;
 	priority: Goal["priority"];
 	tags: string[];
+	attachedTasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
 }
 
 interface GoalFormProps {
@@ -57,13 +91,17 @@ const priorities: Goal["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
 export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProps) {
 	const { tagOptions } = useTags();
+	const { data: activeTasks, isLoading: isLoadingTasks } = useActiveTasks();
+	const { data: attachedTasksData, isLoading: isLoadingAttachedTasks } = useAttachedTasks(goal?.id);
 	const [formData, setFormData] = useState<GoalFormData>({
 		title: "",
 		description: "",
 		targetDate: new Date(),
 		priority: "MEDIUM",
 		tags: [],
+		attachedTasks: [],
 	});
+	const [isSaving, setIsSaving] = useState(false);
 
 	useEffect(() => {
 		// Se a goal tem ID, é uma edição, senão é criação
@@ -75,6 +113,7 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 				targetDate: goal.targetDate,
 				priority: goal.priority,
 				tags: goal.tags,
+				attachedTasks: [],
 			});
 		} else {
 			// Modo criação: limpar todos os campos
@@ -84,20 +123,39 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 				targetDate: new Date(),
 				priority: "MEDIUM",
 				tags: [],
+				attachedTasks: [],
 			});
 		}
 	}, [goal?.id, goal?.title, goal?.description, goal?.targetDate, goal?.priority, goal?.tags, goal]);
 
-	const handleSubmit = (e: React.FormEvent) => {
+	// Efeito separado para atualizar attachedTasks quando os dados são carregados
+	useEffect(() => {
+		if (attachedTasksData) {
+			console.log("Attaching tasks...", attachedTasksData);
+			setFormData((prev) => ({
+				...prev,
+				attachedTasks: attachedTasksData.map((task) => ({
+					taskId: task.taskId,
+					taskType: task.taskType,
+				})),
+			}));
+		}
+	}, [attachedTasksData]);
+
+	const handleSubmit = useCallback((e: React.FormEvent) => {
 		e.preventDefault();
+		setIsSaving(true);
+
 		if (formData.title.trim() && formData.targetDate) {
 			onSubmit(formData);
 		}
-	};
 
-	const handleCancel = () => {
+		setIsSaving(false);
+	}, [formData, onSubmit]);
+
+	const handleCancel = useCallback(() => {
 		onCancel();
-	};
+	}, [onCancel]);
 
 	return (
 		<Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
@@ -223,6 +281,32 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 						/>
 					</div>
 
+					<div className="space-y-2">
+						<Label>Tarefas Relacionadas</Label>
+						<MultiSelect
+							key={`attached-tasks-${formData.attachedTasks.length}`}
+							id="attachedTasks"
+							options={activeTasks?.map(task => ({
+								label: `${task.icon} ${task.title}`,
+								value: `${task.type}:${task.id}`,
+								color: task.type === "habit" ? "#10b981" : task.type === "daily" ? "#3b82f6" : "#f59e0b"
+							})) || []}
+							onValueChange={(value: string[]) => {
+								const attachedTasks = value.map(v => {
+									const [taskType, taskId] = v.split(":");
+									return { taskId, taskType: taskType as "habit" | "daily" | "todo" };
+								});
+								setFormData((prev) => ({ ...prev, attachedTasks }));
+							}}
+							defaultValue={activeTasks && formData.attachedTasks ? formData.attachedTasks.map(task => `${task.taskType}:${task.taskId}`) : []}
+							value={activeTasks && formData.attachedTasks ? formData.attachedTasks.map(task => `${task.taskType}:${task.taskId}`) : []}
+							placeholder={isLoadingAttachedTasks ? "Carregando tarefas..." : "Selecionar tarefas relacionadas"}
+							variant="inverted"
+							maxCount={5}
+							disabled={isLoadingAttachedTasks}
+						/>
+					</div>
+
 					<div className="flex justify-end gap-2 pt-4">
 						<Button
 							type="button"
@@ -234,8 +318,10 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 						<Button
 							type="submit"
 							className=""
+							disabled={isSaving}
 						>
-							{goal ? "Atualizar" : "Criar"} Meta
+							<SaveIcon />
+							{isSaving ? <SplineIcon className="animate-spin" /> : "Salvar"}
 						</Button>
 					</div>
 				</form>

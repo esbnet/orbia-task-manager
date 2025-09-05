@@ -149,6 +149,15 @@ export class HttpGoalRepository implements GoalRepository {
 		return this.findByTags([tag]);
 	}
 
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const response = await fetch(`${this.baseUrl}/tags/stats`);
+		if (!response.ok) {
+			throw new Error("Erro ao buscar estatísticas de tags das metas");
+		}
+		const json = await response.json();
+		return json.tagStats || [];
+	}
+
 	async findByDateRange(startDate: Date, endDate: Date): Promise<Goal[]> {
 		const start = startDate.toISOString();
 		const end = endDate.toISOString();
@@ -189,5 +198,51 @@ export class HttpGoalRepository implements GoalRepository {
 			throw new Error("Erro ao buscar metas que vencem em breve do usuário");
 		}
 		return response.json();
+	}
+
+	async attachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+		const response = await fetch(`${this.baseUrl}/${goalId}/tasks`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ taskId, taskType }),
+		});
+
+		if (!response.ok) {
+			throw new Error("Erro ao anexar tarefa à meta");
+		}
+	}
+
+	async detachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+		const response = await fetch(`${this.baseUrl}/${goalId}/tasks/${taskId}?taskType=${taskType}`, {
+			method: "DELETE",
+		});
+
+		if (!response.ok) {
+			throw new Error("Erro ao remover tarefa da meta");
+		}
+	}
+
+	async getAttachedTasks(goalId: string): Promise<import("@/domain/entities/goal").GoalAttachedTask[]> {
+		const response = await fetch(`${this.baseUrl}/${goalId}/tasks`);
+		if (!response.ok) {
+			throw new Error("Erro ao buscar tarefas anexadas à meta");
+		}
+		return response.json();
+	}
+
+	async updateAttachedTasks(goalId: string, tasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>): Promise<void> {
+		const response = await fetch(`${this.baseUrl}/${goalId}/tasks`, {
+			method: "PUT",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ tasks }),
+		});
+
+		if (!response.ok) {
+			throw new Error("Erro ao atualizar tarefas anexadas à meta");
+		}
 	}
 }

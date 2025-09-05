@@ -109,4 +109,11 @@ export class ApiHabitRepository implements HabitRepository {
 	async findByTag(tag: string): Promise<Habit[]> {
 		return this.findByTags([tag]);
 	}
+
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const json = await this.httpClient.get<{ tagStats: Array<{ tag: string; count: number }> }>(
+			`${this.baseUrl}/tags/stats`,
+		);
+		return json.tagStats || [];
+	}
 }

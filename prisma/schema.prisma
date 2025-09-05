@@ -272,6 +272,7 @@ model Goal {
 
     user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
     milestones GoalMilestone[]
+    goalTasks  GoalTask[]
 
     @@map("goals")
 }
@@ -291,4 +292,17 @@ model GoalMilestone {
     goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
     @@map("goal_milestones")
+}
+
+model GoalTask {
+    id        String   @id @default(cuid())
+    goalId    String
+    taskId    String
+    taskType  String // "habit", "daily", "todo"
+    createdAt DateTime @default(now())
+
+    goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+    @@unique([goalId, taskId, taskType])
+    @@map("goal_tasks")
 }

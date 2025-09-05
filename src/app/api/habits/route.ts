@@ -1,10 +1,10 @@
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
 import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
 import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
-import type { NextRequest } from "next/server";
-import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { ToggleCompleteUseCase as ToggleCompleteHabitUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
+import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
+import type { NextRequest } from "next/server";
 
 // Instância única do repositório
 //const habitRepository = new InJsonFileHabitRepository();
@@ -21,9 +21,15 @@ const habitRepository = new PrismaHabitRepository();
  *         description: Lista de hábitos
  */
 export async function GET() {
-	const useCase = new ListHabitsUseCase(habitRepository);
-	const result = await useCase.execute();
-	return Response.json({ habits: result.habits });
+	try {
+		const useCase = new ListHabitsUseCase(habitRepository);
+		const result = await useCase.execute();
+		return Response.json({ habits: result.habits });
+	} catch (error) {
+		console.error("Erro na API habits:", error);
+		// Retorna dados vazios em caso de erro para não quebrar o frontend
+		return Response.json({ habits: [] });
+	}
 }
 
 /**

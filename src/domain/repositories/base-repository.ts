@@ -47,6 +47,7 @@ export interface OrderableRepository<T extends BaseEntity> extends BaseRepositor
 export interface TaggableRepository<T extends BaseEntity> extends BaseRepository<T> {
 	findByTags(tags: string[]): Promise<T[]>;
 	findByTag(tag: string): Promise<T[]>;
+	getTagStats(): Promise<Array<{ tag: string; count: number }>>;
 }
 
 // Repository with status functionality

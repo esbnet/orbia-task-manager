@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const { title, description, targetDate, priority, category, tags } = body;
+		const { title, description, targetDate, priority, category, tags, attachedTasks } = body;
 
 		// Validação de campos obrigatórios
 		if (!title || typeof title !== "string" || title.trim().length === 0) {
@@ -262,6 +262,17 @@ export async function POST(request: NextRequest) {
 			});
 		}
 
+		// Validação de tarefas anexadas
+		let validatedAttachedTasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }> = [];
+		if (attachedTasks && Array.isArray(attachedTasks)) {
+			validatedAttachedTasks = attachedTasks.filter(task =>
+				task &&
+				typeof task.taskId === "string" &&
+				typeof task.taskType === "string" &&
+				["habit", "daily", "todo"].includes(task.taskType)
+			);
+		}
+
 		// Execução do use case
 		const goal = await createGoalUseCase.execute({
 			title: title.trim(),
@@ -270,6 +281,7 @@ export async function POST(request: NextRequest) {
 			priority: validatedPriority,
 			tags: validatedTags,
 			userId: session.user.id,
+			attachedTasks: validatedAttachedTasks,
 		});
 
 		return NextResponse.json(goal, { status: 201 });

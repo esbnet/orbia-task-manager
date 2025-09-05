@@ -35,7 +35,14 @@ export class ApiTodoRepository implements TodoRepository {
 		throw new Error("Method not implemented." + tags);
 	}
 	findByTag(tag: string): Promise<Todo[]> {
-		throw new Error("Method not implemented." + tag);
+		return this.findByTags([tag]);
+	}
+
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const json = await this.httpClient.get<{ tagStats: Array<{ tag: string; count: number }> }>(
+			`${this.baseUrl}/tags/stats`,
+		);
+		return json.tagStats || [];
 	}
 
 	async list(): Promise<Todo[]> {

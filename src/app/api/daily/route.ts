@@ -20,9 +20,15 @@ const dailyRepo = new PrismaDailyRepository();
  *         description: Lista de atividades diárias
  */
 export async function GET() {
-	const useCase = new ListDailyUseCase(dailyRepo);
-	const result = await useCase.execute();
-	return Response.json({ daily: result.daily });
+	try {
+		const useCase = new ListDailyUseCase(dailyRepo);
+		const result = await useCase.execute();
+		return Response.json({ daily: result.daily });
+	} catch (error) {
+		console.error("Erro na API daily:", error);
+		// Retorna dados vazios em caso de erro para não quebrar o frontend
+		return Response.json({ daily: [] });
+	}
 }
 
 /**

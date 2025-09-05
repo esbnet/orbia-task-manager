@@ -17,19 +17,19 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { SaveIcon, SplineIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { Habit } from "@/domain/entities/habit";
-import type { HabitFormData } from "@/types/habit";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import type { Habit } from "@/domain/entities/habit";
 import { useTags } from "@/hooks/use-tags";
+import type { HabitFormData } from "@/types/habit";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface HabitFormProps {
 	habit?: Habit | null;
@@ -44,6 +44,7 @@ const resetOptions: Habit["reset"][] = ["Diariamente", "Semanalmente", "Mensalme
 
 export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormProps) {
 	const { tagOptions } = useTags();
+	const [isSaving, setIsSaving] = useState(false);
 	const [formData, setFormData] = useState<HabitFormData>({
 		userId: "",
 		title: "",
@@ -90,9 +91,11 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+		setIsSaving(true);
 		if (formData.title.trim()) {
 			onSubmit(formData);
 		}
+		setIsSaving(false);
 	};
 
 	const handleCancel = () => {
@@ -234,8 +237,9 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 						<Button type="button" variant="outline" onClick={handleCancel}>
 							Cancelar
 						</Button>
-						<Button type="submit">
-							{habit ? "Atualizar" : "Criar"} Hábito
+						<Button type="submit" disabled={isSaving} >
+							<SaveIcon />
+							{isSaving ? <SplineIcon className="animate-spin" /> : "Salvar"}
 						</Button>
 					</div>
 				</form>

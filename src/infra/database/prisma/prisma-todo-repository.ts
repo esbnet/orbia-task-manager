@@ -25,11 +25,48 @@ export class PrismaTodoRepository implements TodoRepository {
 	moveToPosition(id: string, position: number): Promise<Todo> {
 		throw new Error("Method not implemented." + position + id);
 	}
-	findByTags(tags: string[]): Promise<Todo[]> {
-		throw new Error("Method not implemented." + tags);
+	async findByTags(tags: string[]): Promise<Todo[]> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		const todos = await prisma.todo.findMany({
+			where: {
+				userId,
+				tags: {
+					hasSome: tags,
+				},
+			},
+			orderBy: { order: "asc" },
+			include: {
+				subtasks: {
+					orderBy: { order: "asc" },
+				},
+			},
+		});
+		return todos.map(this.toDomain);
 	}
 	findByTag(tag: string): Promise<Todo[]> {
-		throw new Error("Method not implemented." + tag );
+		return this.findByTags([tag]);
+	}
+
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		const result = await prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+			SELECT
+				UNNEST(tags) as tag,
+				COUNT(*) as count
+			FROM todos
+			WHERE "userId" = ${userId}
+			GROUP BY UNNEST(tags)
+			ORDER BY count DESC
+		`;
+
+		return result.map(row => ({
+			tag: row.tag,
+			count: Number(row.count)
+		}));
 	}
 	async list(): Promise<Todo[]> {
 		const userId = await getCurrentUserId();

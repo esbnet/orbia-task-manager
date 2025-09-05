@@ -1,20 +1,22 @@
 "use client";
 
-import { AlertTriangle, Plus, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, Plus, Target, TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useGoals } from "@/contexts/goal-context";
 import type { Goal } from "@/domain/entities/goal";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { GoalCard } from "./goal-card";
 import { GoalForm } from "./goal-form";
-import { useGoals } from "@/contexts/goal-context";
-import { useState } from "react";
 
 export function GoalColumn() {
 	const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+	const queryClient = useQueryClient();
 
 	const inProgressGoals = goals.filter(
 		(goal) => goal.status === "IN_PROGRESS",
@@ -30,9 +32,14 @@ export function GoalColumn() {
 		targetDate: Date;
 		priority: Goal["priority"];
 		tags: string[];
+		attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
 	}) => {
-		await createGoal(goalData);
-		setIsFormOpen(false);
+		try {
+			await createGoal(goalData);
+			setIsFormOpen(false);
+		} catch (error) {
+			console.error("Erro ao criar meta:", error);
+		}
 	};
 
 	const handleEditGoal = async (goalData: {
@@ -41,9 +48,42 @@ export function GoalColumn() {
 		targetDate: Date;
 		priority: Goal["priority"];
 		tags: string[];
+		attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
 	}) => {
 		if (editingGoal) {
-			await updateGoal(editingGoal.id, goalData);
+			// Para edição, precisamos converter GoalFormData para Partial<Goal>
+			const updateData: Partial<Goal> = {
+				title: goalData.title,
+				description: goalData.description,
+				targetDate: goalData.targetDate,
+				priority: goalData.priority,
+				tags: goalData.tags,
+			};
+
+			await updateGoal(editingGoal.id, updateData);
+
+			// Se houver tarefas anexadas, atualizar separadamente
+			if (goalData.attachedTasks && goalData.attachedTasks.length > 0) {
+				try {
+					const response = await fetch(`/api/goals/${editingGoal.id}/tasks`, {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ tasks: goalData.attachedTasks }),
+					});
+
+					if (!response.ok) {
+						console.error("Erro ao atualizar tarefas anexadas");
+					} else {
+						// Invalidar o cache das tarefas anexadas para forçar recarregamento
+						queryClient.invalidateQueries({ queryKey: ["attached-tasks", editingGoal.id] });
+					}
+				} catch (error) {
+					console.error("Erro ao atualizar tarefas anexadas:", error);
+				}
+			}
+
 			setEditingGoal(null);
 			setIsFormOpen(false);
 		}

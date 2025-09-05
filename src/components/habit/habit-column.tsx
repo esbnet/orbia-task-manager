@@ -224,7 +224,7 @@ export function HabitColumn() {
 					</div>
 				)}
 
-				{completedHabits.length > 0 && (
+				{!isLoading && completedHabits.length > 0 && (
 					<div>
 						<h3 className="flex items-center gap-1 mb-2 font-semibold text-green-600 text-sm">
 							<TrendingUp className="w-4 h-4" />
@@ -254,7 +254,7 @@ export function HabitColumn() {
 					</div>
 				)}
 
-				{habits.length === 0 && (
+				{!isLoading && habits.length === 0 && (
 					<Card className="bg-gray-50 border-gray-300 border-dashed">
 						<CardContent className="py-8 text-center">
 							<Dumbbell className="mx-auto mb-3 w-12 h-12 text-gray-400" />

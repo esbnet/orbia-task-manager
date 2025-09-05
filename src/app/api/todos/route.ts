@@ -20,9 +20,15 @@ const todoRepo = new PrismaTodoRepository();
  *         description: Lista de tarefas
  */
 export async function GET() {
-	const useCase = new ListTodosUseCase(todoRepo);
-	const result = await useCase.execute();
-	return Response.json({ todos: result.todos });
+	try {
+		const useCase = new ListTodosUseCase(todoRepo);
+		const result = await useCase.execute();
+		return Response.json({ todos: result.todos });
+	} catch (error) {
+		console.error("Erro na API todos:", error);
+		// Retorna dados vazios em caso de erro para não quebrar o frontend
+		return Response.json({ todos: [] });
+	}
 }
 
 /**

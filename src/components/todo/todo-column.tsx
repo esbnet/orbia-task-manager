@@ -129,12 +129,7 @@ export const TodoColumn = () => {
 			)}
 
 			<div className="space-y-4">
-				<h3 className="flex items-center gap-1 mb-2 font-semibold text-blue-600 text-sm">
-					<ListChecks className="w-4 h-4 text-blue-600" />
-					Disponíveis
-				</h3>
-
-				{!isLoading && inProgressTodos.length > 0 ? (
+				{inProgressTodos.length > 0 ? (
 					inProgressTodos.map((todo) => (
 						<TodoCard
 							key={todo.id}
@@ -143,25 +138,27 @@ export const TodoColumn = () => {
 						/>
 					))
 				) : (
-					<Card className="bg-gray-50 border-gray-300 border-dashed">
-						<CardContent className="py-8 text-center">
-							<ListChecks className="mx-auto mb-3 w-12 h-12 text-gray-400" />
-							<h3 className="mb-2 font-medium text-gray-600 text-lg">
-								Nenhum afazer cadastrado
-							</h3>
-							<p className="mb-4 text-gray-500">
-								Comece criando seu primeiro afazer para
-								organizar suas tarefas
-							</p>
-							<Button
-								onClick={() => setIsFormOpen(true)}
-								className="bg-blue-600 hover:bg-blue-700"
-							>
-								<Plus className="mr-2 w-4 h-4" />
-								Criar Primeiro Afazer
-							</Button>
-						</CardContent>
-					</Card>
+					!isLoading && (
+						<Card className="bg-gray-50 border-gray-300 border-dashed">
+							<CardContent className="py-8 text-center">
+								<ListChecks className="mx-auto mb-3 w-12 h-12 text-gray-400" />
+								<h3 className="mb-2 font-medium text-gray-600 text-lg">
+									Nenhum afazer cadastrado
+								</h3>
+								<p className="mb-4 text-gray-500">
+									Comece criando seu primeiro afazer para
+									organizar suas tarefas
+								</p>
+								<Button
+									onClick={() => setIsFormOpen(true)}
+									className="bg-blue-600 hover:bg-blue-700"
+								>
+									<Plus className="mr-2 w-4 h-4" />
+									Criar Primeiro Afazer
+								</Button>
+							</CardContent>
+						</Card>
+					)
 				)}
 			</div>
 

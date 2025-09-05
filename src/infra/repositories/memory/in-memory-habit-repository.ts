@@ -121,6 +121,20 @@ export class InMemoryHabitRepository implements HabitRepository {
 		return this.findByTags([tag]);
 	}
 
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const tagCounts: { [key: string]: number } = {};
+
+		this.habits.forEach((habit) => {
+			habit.tags.forEach((tag) => {
+				tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+			});
+		});
+
+		return Object.entries(tagCounts)
+			.map(([tag, count]) => ({ tag, count }))
+			.sort((a, b) => b.count - a.count);
+	}
+
 	// Utility methods for testing
 	clear(): void {
 		this.habits = [];

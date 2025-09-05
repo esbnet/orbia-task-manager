@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import type { Goal } from "@/domain/entities/goal";
+import { toast } from "sonner";
 
 interface GoalFormData {
 	title: string;
@@ -10,6 +11,7 @@ interface GoalFormData {
 	targetDate: Date;
 	priority: Goal["priority"];
 	tags: string[];
+	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
 }
 
 interface GoalContextType {
@@ -60,7 +62,10 @@ export function GoalProvider({ children }: { children: React.ReactNode }) {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify(data),
+				body: JSON.stringify({
+					...data,
+					attachedTasks: data.attachedTasks || [],
+				}),
 			});
 
 			if (!response.ok) {
@@ -69,8 +74,10 @@ export function GoalProvider({ children }: { children: React.ReactNode }) {
 
 			const newGoal = await response.json();
 			setGoals((prev) => [newGoal, ...prev]);
+			toast.success("Meta criada com sucesso!");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Erro ao criar meta");
+			toast.error("Erro ao criar meta");
 			throw err;
 		}
 	};
@@ -95,10 +102,12 @@ export function GoalProvider({ children }: { children: React.ReactNode }) {
 			setGoals((prev) =>
 				prev.map((goal) => (goal.id === id ? updatedGoal : goal)),
 			);
+			toast.success("Meta atualizada com sucesso!");
 		} catch (err) {
 			setError(
 				err instanceof Error ? err.message : "Erro ao atualizar meta",
 			);
+			toast.error("Erro ao atualizar meta");
 			throw err;
 		}
 	};
@@ -116,10 +125,12 @@ export function GoalProvider({ children }: { children: React.ReactNode }) {
 			}
 
 			setGoals((prev) => prev.filter((goal) => goal.id !== id));
+			toast.success("Meta excluída com sucesso!");
 		} catch (err) {
 			setError(
 				err instanceof Error ? err.message : "Erro ao excluir meta",
 			);
+			toast.error("Erro ao excluir meta");
 			throw err;
 		}
 	};

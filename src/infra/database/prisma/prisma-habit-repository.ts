@@ -1,6 +1,6 @@
-import type { CreateEntityData } from "@/domain/repositories/base-repository";
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitRepository } from "@/domain/repositories/all-repository";
+import type { CreateEntityData } from "@/domain/repositories/base-repository";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
@@ -225,6 +225,26 @@ export class PrismaHabitRepository implements HabitRepository {
 
 	async findByTag(tag: string): Promise<Habit[]> {
 		return this.findByTags([tag]);
+	}
+
+	async getTagStats(): Promise<Array<{ tag: string; count: number }>> {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) return [];
+
+		const result = await prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+			SELECT
+				UNNEST(tags) as tag,
+				COUNT(*) as count
+			FROM habits
+			WHERE "userId" = ${userId}
+			GROUP BY UNNEST(tags)
+			ORDER BY count DESC
+		`;
+
+		return result.map(row => ({
+			tag: row.tag,
+			count: Number(row.count)
+		}));
 	}
 
 	private toDomain(habit: {
