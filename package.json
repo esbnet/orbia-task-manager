@@ -59,7 +59,8 @@
 		"swagger-ui-react": "^5.28.0",
 		"tailwind-merge": "^3.2.0",
 		"ts-node": "^10.9.2",
-		"vite-tsconfig-paths": "^5.1.4"
+		"vite-tsconfig-paths": "^5.1.4",
+		"zod": "^4.1.5"
 	},
 	"devDependencies": {
 		"@babel/preset-typescript": "^7.27.1",

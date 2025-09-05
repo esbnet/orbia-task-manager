@@ -6,12 +6,34 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "../ui/separator";
+import { useTags } from "@/hooks/use-tags";
 import type { Tag } from "@/types";
-import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { useTags } from "@/hooks/use-tags";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Separator } from "../ui/separator";
+
+// Zod schemas for validation
+const tagNameSchema = z.string()
+	.min(1, "Nome da tag é obrigatório")
+	.min(2, "Nome deve ter pelo menos 2 caracteres")
+	.max(50, "Nome deve ter no máximo 50 caracteres")
+	.regex(/^[A-Za-zÀ-ÖØ-öø-ÿ0-9&*%$#@+\-/ ]+$/, "Nome contém caracteres inválidos");
+
+const tagColorSchema = z.string()
+	.min(1, "Cor é obrigatória")
+	.regex(/^#[0-9A-Fa-f]{6}$/, "Formato de cor inválido");
+
+const createTagSchema = z.object({
+	name: tagNameSchema,
+	color: tagColorSchema,
+});
+
+const updateTagSchema = z.object({
+	name: tagNameSchema,
+	color: tagColorSchema,
+});
 
 export function TagsSettings() {
 	const { data: session } = useSession();
@@ -24,24 +46,18 @@ export function TagsSettings() {
 	const validateTag = (name: string, color: string, isEditing = false) => {
 		const errors: { name?: string; color?: string } = {};
 
-		// Name validation
-		if (!name.trim()) {
-			errors.name = "Nome da tag é obrigatório";
-		} else if (name.trim().length < 2) {
-			errors.name = "Nome deve ter pelo menos 2 caracteres";
-		} else if (name.trim().length > 50) {
-			errors.name = "Nome deve ter no máximo 50 caracteres";
-		} else if (!/^[a-zA-Z0-9\s\-_À-ÿ]+$/.test(name.trim())) {
-			errors.name = "Nome contém caracteres inválidos";
+		// Validate with Zod schemas
+		const nameResult = tagNameSchema.safeParse(name.trim());
+		const colorResult = tagColorSchema.safeParse(color);
+
+		if (!nameResult.success) {
+			errors.name = nameResult.error.issues[0]?.message;
 		} else if (!isEditing && tags.some(tag => tag.name.toLowerCase() === name.trim().toLowerCase())) {
 			errors.name = "Já existe uma tag com este nome";
 		}
 
-		// Color validation
-		if (!color) {
-			errors.color = "Cor é obrigatória";
-		} else if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
-			errors.color = "Formato de cor inválido";
+		if (!colorResult.success) {
+			errors.color = colorResult.error.issues[0]?.message;
 		}
 
 		return errors;
