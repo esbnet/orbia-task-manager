@@ -1,7 +1,5 @@
 "use client";
 
-import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
-import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import {
 	Dialog,
 	DialogClose,
@@ -24,21 +22,23 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import { format, setDefaultOptions } from "date-fns";
+import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import type { Daily } from "@/types";
-import { DailyCard } from "./daily-card";
-import { DailySubtaskList } from "./daily-subtask-list";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
 import { useDailyContext } from "@/contexts/daily-context";
 import { useTags } from "@/hooks/use-tags";
+import type { Daily } from "@/types";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { DailyCard } from "./daily-card";
+import { DailySubtaskList } from "./daily-subtask-list";
 
 setDefaultOptions({ locale: ptBR });
 
@@ -384,7 +384,7 @@ export function DailyForm({
 							</DialogClose>
 							<Button
 								type="submit"
-								className=""
+								className="flex-1"
 								disabled={isLoading}
 							>
 								<SaveIcon />

@@ -17,7 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { SaveIcon, SplineIcon, Trash2 } from "lucide-react";
+import { LoaderCircle, SaveIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Habit } from "@/domain/entities/habit";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 import { useTags } from "@/hooks/use-tags";
 import type { HabitFormData } from "@/types/habit";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,7 +45,7 @@ const resetOptions: Habit["reset"][] = ["Diariamente", "Semanalmente", "Mensalme
 
 export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormProps) {
 	const { tagOptions } = useTags();
-	const [isSaving, setIsSaving] = useState(false);
+	const saveLoading = useButtonLoading();
 	const [formData, setFormData] = useState<HabitFormData>({
 		userId: "",
 		title: "",
@@ -89,13 +90,13 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 		}
 	}, [habit]);
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setIsSaving(true);
 		if (formData.title.trim()) {
-			onSubmit(formData);
+			await saveLoading.executeAsync(async () => {
+				await onSubmit(formData);
+			});
 		}
-		setIsSaving(false);
 	};
 
 	const handleCancel = () => {
@@ -112,7 +113,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 					</DialogTitle>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-4">
+				<form onSubmit={handleSubmit} className={`space-y-4 ${saveLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
 					<div className="space-y-2">
 						<Label htmlFor="title">Título *</Label>
 						<Input
@@ -237,9 +238,11 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 						<Button type="button" variant="outline" onClick={handleCancel}>
 							Cancelar
 						</Button>
-						<Button type="submit" disabled={isSaving} >
-							<SaveIcon />
-							{isSaving ? <SplineIcon className="animate-spin" /> : "Salvar"}
+						<Button type="submit" disabled={saveLoading.isLoading} className="flex-1">
+							{saveLoading.isLoading ?
+								<LoaderCircle className="animate-spin" /> :
+								<><SaveIcon />Salvar</>
+							}
 						</Button>
 					</div>
 				</form>

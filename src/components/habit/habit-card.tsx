@@ -1,23 +1,24 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
 	Calendar,
 	ChevronDown,
 	Edit,
+	LoaderCircle,
 	PlusCircle,
 	Tag,
 	TrendingUp
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { memo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Habit } from "@/domain/entities/habit";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 
 const priorityColors = {
 	"Baixa": "border-gray-300 text-gray-600",
@@ -40,6 +41,7 @@ interface HabitCardProps {
 	currentCount?: number;
 	target?: number;
 	todayCount?: number;
+	isRegister: boolean;
 }
 
 export const HabitCard = memo(function HabitCard({
@@ -49,6 +51,7 @@ export const HabitCard = memo(function HabitCard({
 	onRegister,
 	currentCount = 0,
 	todayCount = 0,
+	isRegister = false
 }: HabitCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const registerLoading = useButtonLoading();
@@ -60,10 +63,16 @@ export const HabitCard = memo(function HabitCard({
 		onStatusChange?.(habit.id, newStatus);
 	};
 
+	const handleRegister = async () => {
+		await registerLoading.executeAsync(async () => {
+			await onRegister?.(habit.id);
+		});
+	};
+
 	return (
 		<Card
 			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""
-				}`}
+				} ${registerLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}
 		>
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start">
@@ -112,12 +121,12 @@ export const HabitCard = memo(function HabitCard({
 									title="Registrar ocorrência"
 									size="sm"
 									variant="ghost"
-									onClick={() => onRegister?.(habit.id)}
+									onClick={handleRegister}
 									className="hover:bg-blue-50 border-blue-200 text-blue-600"
 									disabled={registerLoading.isLoading}
 								>
 									{registerLoading.isLoading ? (
-										<div className="border-2 border-t-transparent border-blue-600 rounded-full w-4 h-4 animate-spin" />
+										<LoaderCircle className="w-4 h-4 animate-spin duration-200" />
 									) : (
 										<PlusCircle className="w-4 h-4" />
 									)}

@@ -276,7 +276,7 @@ export function TodoForm({
 							</DialogClose>
 							<Button
 								type="submit"
-								className=""
+								className="flex-1"
 								disabled={isLoading}
 							>
 								<SaveIcon />

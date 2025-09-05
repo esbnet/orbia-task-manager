@@ -317,7 +317,7 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true }: GoalFormProp
 						</Button>
 						<Button
 							type="submit"
-							className=""
+							className="flex-1"
 							disabled={isSaving}
 						>
 							<SaveIcon />
