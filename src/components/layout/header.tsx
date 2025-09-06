@@ -9,8 +9,8 @@ export async function Header() {
   const user = session?.user;
 
   return (
-    <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur p-2 border-b w-full">
-      <div className="flex md:flex-row flex-col justify-between items-center gap-2 m-auto md:p-2 h-16 container">
+    <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur p-4 border-b w-full">
+      <div className="flex md:flex-row flex-col justify-between items-center gap-2 m-auto md:p-2 h-fit container">
 
         <div className="flex items-center gap-4 bg-slate-950 px-4 py-2 rounded-full text-slate-300">
           <Link href="/" className="flex items-center gap-2">

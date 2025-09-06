@@ -1,17 +1,19 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
 	Clock,
 	Edit,
+	LoaderCircle,
 	Tag
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Daily } from "../../types";
-import { toast } from "sonner";
 import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { Daily } from "../../types";
 
 interface DailyCardProps {
 	daily: Daily;
@@ -43,20 +45,28 @@ export function DailyCard({
 	nextAvailableAt
 }: DailyCardProps) {
 	const completeLoading = useButtonLoading();
+	const [isCompleting, setIsCompleting] = useState(false);
 	const difficulty = difficultyConfig[daily.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 	const repeatConfig = repeatTypeConfig[daily.repeat?.type as keyof typeof repeatTypeConfig] || repeatTypeConfig["Diariamente"];
 	const RepeatIcon = repeatConfig.icon;
 
 	const handleComplete = async () => {
+		if (isCompleting || completeLoading.isLoading) return;
+
+		setIsCompleting(true);
 		if (onComplete) {
-			await completeLoading.executeAsync(
-				async () => {
-					await onComplete(daily.id);
-					toast.success(`Daily "${daily.title}" completada!`);
-				},
-				undefined,
-				() => toast.error("Erro ao completar daily. Tente novamente.")
-			);
+			try {
+				await completeLoading.executeAsync(
+					async () => {
+						await onComplete(daily.id);
+						toast.success(`Daily "${daily.title}" completada!`);
+					},
+					undefined,
+					() => toast.error("Erro ao completar daily. Tente novamente.")
+				);
+			} finally {
+				setIsCompleting(false);
+			}
 		}
 	};
 
@@ -75,7 +85,7 @@ export function DailyCard({
 	};
 
 	return (
-		<Card className="hover:shadow-md transition-shadow duration-200">
+		<Card className={`hover:shadow-md transition-shadow duration-200 ${(completeLoading.isLoading || isCompleting) ? "opacity-50 pointer-events-none" : ""}`}>
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start">
 					<div className="flex-1">
@@ -93,13 +103,13 @@ export function DailyCard({
 											onClick={handleComplete}
 											size="sm"
 											variant="ghost"
-											className="hover:bg-amber-200 text-amber-600"
-											disabled={completeLoading.isLoading}
+											className="hover:bg-amber-100 text-amber-600"
+											disabled={completeLoading.isLoading || isCompleting}
 										>
-											{completeLoading.isLoading ? (
-												<div className="border-2 border-amber-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
+											{(completeLoading.isLoading || isCompleting) ? (
+												<LoaderCircle className="w-4 h-4 text-amber-600 animate-spin" />
 											) : (
-												<CheckCircle className="mr-1 w-4 h-4" />
+												<CheckCircle className="w-4 h-4" />
 											)}
 										</Button>
 									)}

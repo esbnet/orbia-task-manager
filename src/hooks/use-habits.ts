@@ -70,6 +70,12 @@ export function useCreateHabit() {
 		onSuccess: () => {
 			// Invalidate e refetch da lista de hábitos
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate cache de metas para atualizar tarefas disponíveis
+			queryClient.invalidateQueries({ queryKey: ["goals"] });
+			// Invalidate cache de tarefas anexadas
+			queryClient.invalidateQueries({ queryKey: ["attached-tasks"] });
+			// Invalidate cache de tarefas ativas para atualizar lista no formulário de metas
+			queryClient.invalidateQueries({ queryKey: ["active-tasks"] });
 		},
 	});
 }

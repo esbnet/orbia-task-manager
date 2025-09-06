@@ -131,6 +131,12 @@ export function useCreateDaily() {
 		onSuccess: () => {
 			// Invalidate all daily queries
 			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
+			// Invalidate cache de metas para atualizar tarefas disponíveis
+			queryClient.invalidateQueries({ queryKey: ["goals"] });
+			// Invalidate cache de tarefas anexadas
+			queryClient.invalidateQueries({ queryKey: ["attached-tasks"] });
+			// Invalidate cache de tarefas ativas para atualizar lista no formulário de metas
+			queryClient.invalidateQueries({ queryKey: ["active-tasks"] });
 		},
 	});
 }

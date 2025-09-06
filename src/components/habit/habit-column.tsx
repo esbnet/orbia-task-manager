@@ -217,7 +217,6 @@ export function HabitColumn() {
 										currentCount={stats?.currentPeriod?.period.count || 0}
 										target={stats?.currentPeriod?.period.target}
 										todayCount={stats?.todayEntries || 0}
-										isRegister={true}
 									/>
 								);
 							})}
@@ -238,7 +237,6 @@ export function HabitColumn() {
 									habit={habit}
 									onEdit={openEditForm}
 									onStatusChange={handleStatusChange}
-									isRegister={false}
 								/>
 							))}
 							{completedHabits.length > 3 && (

@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
 	Calendar,
+	CheckCircle,
 	ChevronDown,
 	Edit,
+	Gauge,
 	LoaderCircle,
-	PlusCircle,
+	RotateCcw,
 	Tag,
 	TrendingUp
 } from "lucide-react";
@@ -41,7 +43,6 @@ interface HabitCardProps {
 	currentCount?: number;
 	target?: number;
 	todayCount?: number;
-	isRegister: boolean;
 }
 
 export const HabitCard = memo(function HabitCard({
@@ -51,9 +52,9 @@ export const HabitCard = memo(function HabitCard({
 	onRegister,
 	currentCount = 0,
 	todayCount = 0,
-	isRegister = false
 }: HabitCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [isRegistering, setIsRegistering] = useState(false);
 	const registerLoading = useButtonLoading();
 	const editLoading = useButtonLoading();
 	const isOverdue =
@@ -64,17 +65,24 @@ export const HabitCard = memo(function HabitCard({
 	};
 
 	const handleRegister = async () => {
-		await registerLoading.executeAsync(async () => {
-			await onRegister?.(habit.id);
-		});
+		if (isRegistering || registerLoading.isLoading) return;
+
+		setIsRegistering(true);
+		try {
+			await registerLoading.executeAsync(async () => {
+				onRegister?.(habit.id);
+			});
+		} finally {
+			setIsRegistering(false);
+		}
 	};
 
 	return (
 		<Card
 			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""
-				} ${registerLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}
+				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="pb-3">
+			<CardHeader >
 				<div className="flex justify-between items-start">
 					<div className="flex-1">
 						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
@@ -113,6 +121,7 @@ export const HabitCard = memo(function HabitCard({
 							</div>
 						)}
 					</div>
+
 					<div className="flex items-center">
 						{habit.status === "Em Andamento" && (
 							<>
@@ -122,13 +131,13 @@ export const HabitCard = memo(function HabitCard({
 									size="sm"
 									variant="ghost"
 									onClick={handleRegister}
-									className="hover:bg-blue-50 border-blue-200 text-blue-600"
-									disabled={registerLoading.isLoading}
+									className="hover:bg-green-100 text-green-600"
+									disabled={registerLoading.isLoading || isRegistering}
 								>
-									{registerLoading.isLoading ? (
+									{(registerLoading.isLoading || isRegistering) ? (
 										<LoaderCircle className="w-4 h-4 animate-spin duration-200" />
 									) : (
-										<PlusCircle className="w-4 h-4" />
+										<CheckCircle className="w-4 h-4" />
 									)}
 								</Button>
 							</>
@@ -150,53 +159,12 @@ export const HabitCard = memo(function HabitCard({
 							</Button>
 						)}
 
-
 					</div>
 				</div>
 			</CardHeader>
 
 			<CardContent className="pt-0">
-				{habit.observations && (
-					<p className="mb-3 text-gray-600 dark:text-gray-400">
-						{habit.observations}
-					</p>
-				)}
-
-				<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm">
-					<Calendar className="w-4 h-4" />
-					<span>
-						Criado em:{" "}
-						{format(habit.createdAt, "dd 'de' MMMM 'de' yyyy", {
-							locale: ptBR,
-						})}
-					</span>
-					{isOverdue && (
-						<AlertTriangle className="w-4 h-4 text-red-500" />
-					)}
-				</div>
-
-				<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm">
-					<span>Dificuldade: {habit.difficulty}</span>
-					<span>•</span>
-					<span>Reset: {habit.reset}</span>
-				</div>
-
-				{habit.tags.length > 0 && (
-					<div className="flex flex-wrap gap-1 mt-3">
-						{habit.tags.map((tag) => (
-							<Badge
-								key={tag}
-								variant="secondary"
-								className="text-xs"
-							>
-								<Tag className="mr-1 w-3 h-3" />
-								{tag}
-							</Badge>
-						))}
-					</div>
-				)}
-
-				<div className="flex justify-between items-center mt-4 pt-3 border-gray-100 border-t">
+				<div className="flex justify-between items-center pt-3">
 					<div className="text-gray-500 text-xs">
 						Criado em{" "}
 						{format(habit.createdAt, "dd/MM/yyyy", { locale: ptBR })}
@@ -212,6 +180,44 @@ export const HabitCard = memo(function HabitCard({
 
 				{isExpanded && (
 					<div className="mt-3 pt-3 border-gray-100 border-t">
+						{habit.observations && (
+							<p className="mb-3 text-gray-600 dark:text-gray-400">
+								{habit.observations}
+							</p>
+						)}
+
+						<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm" title="data de criação">
+							<Calendar className="w-4 h-4" />
+							<span>
+								{format(habit.createdAt, "dd 'de' MMMM 'de' yyyy", {
+									locale: ptBR,
+								})}
+							</span>
+							{isOverdue && (
+								<AlertTriangle className="w-4 h-4 text-red-500" />
+							)}
+						</div>
+
+						<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm">
+							<span className="flex gap-2" title="dificuldade"><Gauge className="w-4 h-4" />{habit.difficulty}</span>
+							<span>•</span>
+							<span className="flex gap-2" title="ciclo de reinício" ><RotateCcw className="w-4 h-4" /> {habit.reset}</span>
+						</div>
+
+						{habit.tags.length > 0 && (
+							<div className="flex flex-wrap gap-1 my-3">
+								{habit.tags.map((tag) => (
+									<Badge
+										key={tag}
+										variant="secondary"
+										className="text-xs"
+									>
+										<Tag className="mr-1 w-3 h-3" />
+										{tag}
+									</Badge>
+								))}
+							</div>
+						)}
 						<div className="text-gray-600 dark:text-gray-400 text-sm">
 							<strong>Última atualização:</strong>{" "}
 							{format(habit.updatedAt, "dd/MM/yyyy 'às' HH:mm", {
