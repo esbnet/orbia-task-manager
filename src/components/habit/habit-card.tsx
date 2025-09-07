@@ -11,16 +11,19 @@ import {
 	LoaderCircle,
 	RotateCcw,
 	Tag,
-	TrendingUp
+	TrendingUp,
+	XCircle
 } from "lucide-react";
 import { memo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
 import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 const priorityColors = {
 	"Baixa": "border-gray-300 text-gray-600",
@@ -55,8 +58,10 @@ export const HabitCard = memo(function HabitCard({
 }: HabitCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isRegistering, setIsRegistering] = useState(false);
+	const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 	const registerLoading = useButtonLoading();
 	const editLoading = useButtonLoading();
+	const completeLoading = useButtonLoading();
 	const isOverdue =
 		habit.status === "Em Andamento" && habit.lastCompletedDate && habit.createdAt < new Date();
 
@@ -74,6 +79,17 @@ export const HabitCard = memo(function HabitCard({
 			});
 		} finally {
 			setIsRegistering(false);
+		}
+	};
+
+	const handleComplete = async () => {
+		try {
+			await completeLoading.executeAsync(async () => {
+				onStatusChange?.(habit.id, "Completo");
+				toast.success(`Hábito "${habit.title}" encerrado com sucesso!`);
+			});
+		} catch (error) {
+			toast.error("Erro ao encerrar hábito. Tente novamente.");
 		}
 	};
 
@@ -138,6 +154,22 @@ export const HabitCard = memo(function HabitCard({
 										<LoaderCircle className="w-4 h-4 animate-spin duration-200" />
 									) : (
 										<CheckCircle className="w-4 h-4" />
+									)}
+								</Button>
+
+								{/* Botão de encerrar hábito */}
+								<Button
+									title="Encerrar hábito"
+									size="sm"
+									variant="ghost"
+									onClick={() => setIsCompleteDialogOpen(true)}
+									className="hover:bg-red-100 text-red-600"
+									disabled={completeLoading.isLoading}
+								>
+									{completeLoading.isLoading ? (
+										<LoaderCircle className="w-4 h-4 animate-spin duration-200" />
+									) : (
+										<XCircle className="w-4 h-4" />
 									)}
 								</Button>
 							</>
@@ -227,6 +259,17 @@ export const HabitCard = memo(function HabitCard({
 					</div>
 				)}
 			</CardContent>
+
+			<ConfirmationDialog
+				open={isCompleteDialogOpen}
+				onOpenChange={setIsCompleteDialogOpen}
+				title="Encerrar Hábito"
+				description={`Tem certeza que deseja encerrar o hábito "${habit.title}" definitivamente? Esta ação não pode ser desfeita.`}
+				confirmText="Encerrar"
+				cancelText="Cancelar"
+				onConfirm={handleComplete}
+				variant="destructive"
+			/>
 		</Card>
 	);
 });

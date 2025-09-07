@@ -104,8 +104,6 @@ interface MetricsData {
     };
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
-
 // Componente Dialog de Recomendações
 function RecommendationsDialog({
     isOpen,
@@ -604,7 +602,7 @@ export function MetricsDashboard() {
                 "Acompanhe o progresso semanalmente",
                 "Celebre conquistas intermediárias",
                 "Ajuste metas baseado no feedback real",
-            ],
+            ].filter(Boolean),
         };
 
         // Recomendações práticas

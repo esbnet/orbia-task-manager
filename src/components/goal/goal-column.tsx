@@ -1,21 +1,22 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Plus, Target, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useGoals } from "@/contexts/goal-context";
 import type { Goal } from "@/domain/entities/goal";
-import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { GoalCard } from "./goal-card";
 import { GoalForm } from "./goal-form";
+import { useGoals } from "@/contexts/goal-context";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 export function GoalColumn() {
 	const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+	const [isSaving, setIsSaving] = useState(false);
 	const queryClient = useQueryClient();
 
 	const inProgressGoals = goals.filter(
@@ -34,11 +35,15 @@ export function GoalColumn() {
 		tags: string[];
 		attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
 	}) => {
+		setIsSaving(true);
 		try {
 			await createGoal(goalData);
 			setIsFormOpen(false);
+			setEditingGoal(null);
 		} catch (error) {
 			console.error("Erro ao criar meta:", error);
+		} finally {
+			setIsSaving(false);
 		}
 	};
 
@@ -51,41 +56,48 @@ export function GoalColumn() {
 		attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
 	}) => {
 		if (editingGoal) {
-			// Para edição, precisamos converter GoalFormData para Partial<Goal>
-			const updateData: Partial<Goal> = {
-				title: goalData.title,
-				description: goalData.description,
-				targetDate: goalData.targetDate,
-				priority: goalData.priority,
-				tags: goalData.tags,
-			};
+			setIsSaving(true);
+			try {
+				// Para edição, precisamos converter GoalFormData para Partial<Goal>
+				const updateData: Partial<Goal> = {
+					title: goalData.title,
+					description: goalData.description,
+					targetDate: goalData.targetDate,
+					priority: goalData.priority,
+					tags: goalData.tags,
+				};
 
-			await updateGoal(editingGoal.id, updateData);
+				await updateGoal(editingGoal.id, updateData);
 
-			// Se houver tarefas anexadas, atualizar separadamente
-			if (goalData.attachedTasks && goalData.attachedTasks.length > 0) {
-				try {
-					const response = await fetch(`/api/goals/${editingGoal.id}/tasks`, {
-						method: "PUT",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({ tasks: goalData.attachedTasks }),
-					});
+				// Se houver tarefas anexadas, atualizar separadamente
+				if (goalData.attachedTasks && goalData.attachedTasks.length > 0) {
+					try {
+						const response = await fetch(`/api/goals/${editingGoal.id}/tasks`, {
+							method: "PUT",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({ tasks: goalData.attachedTasks }),
+						});
 
-					if (!response.ok) {
-						console.error("Erro ao atualizar tarefas anexadas");
-					} else {
-						// Invalidar o cache das tarefas anexadas para forçar recarregamento
-						queryClient.invalidateQueries({ queryKey: ["attached-tasks", editingGoal.id] });
+						if (!response.ok) {
+							console.error("Erro ao atualizar tarefas anexadas");
+						} else {
+							// Invalidar o cache das tarefas anexadas para forçar recarregamento
+							queryClient.invalidateQueries({ queryKey: ["attached-tasks", editingGoal.id] });
+						}
+					} catch (error) {
+						console.error("Erro ao atualizar tarefas anexadas:", error);
 					}
-				} catch (error) {
-					console.error("Erro ao atualizar tarefas anexadas:", error);
 				}
-			}
 
-			setEditingGoal(null);
-			setIsFormOpen(false);
+				setEditingGoal(null);
+				setIsFormOpen(false);
+			} catch (error) {
+				console.error("Erro ao editar meta:", error);
+			} finally {
+				setIsSaving(false);
+			}
 		}
 	};
 	const handleDeleteGoal = async (goalId: string) => {
@@ -109,6 +121,7 @@ export function GoalColumn() {
 	const closeForm = () => {
 		setIsFormOpen(false);
 		setEditingGoal(null);
+		setIsSaving(false);
 	};
 
 	return (
@@ -277,6 +290,7 @@ export function GoalColumn() {
 				onSubmit={editingGoal ? handleEditGoal : handleCreateGoal}
 				onCancel={closeForm}
 				open={isFormOpen}
+				isLoading={isSaving}
 			/>
 		</div>
 	);
