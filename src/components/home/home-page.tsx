@@ -1,6 +1,26 @@
-import { ClientProviders } from '../providers/client-providers'
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { useSession } from "next-auth/react";
+import { ClientProviders } from '../providers/client-providers';
+import { TasksOverviewDialog } from './tasks-overview-dialog';
 
 export default function HomePage() {
+    const { data: session, status } = useSession();
+    const [showTasksDialog, setShowTasksDialog] = useState(false);
+
+    useEffect(() => {
+        if (status === "authenticated" && session?.user) {
+            // Show dialog after a short delay to ensure the page has loaded
+            const timer = setTimeout(() => {
+                setShowTasksDialog(true);
+            }, 1000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [status, session]);
+
     return (
         <main className="relative flex flex-col gap-4 mx-auto p-2 lg:max-w-[80vw] min-h-screen">
             <div className="flex shadow-sm border rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
@@ -14,6 +34,11 @@ export default function HomePage() {
             <div className="flex flex-col flex-1 gap-4 shadow-md p-4 border rounded-lg animate-[fadeIn_1s_ease-in-out_forwards]">
                 <ClientProviders />
             </div>
+
+            <TasksOverviewDialog
+                open={showTasksDialog}
+                onOpenChange={setShowTasksDialog}
+            />
         </main>
     )
 }
