@@ -68,13 +68,13 @@ export function TodoCard({
 							</div>
 
 							{/* Botões movidos para o topo */}
-							<div className="flex items-center gap-1">
+							<div className="flex items-center">
 								{!isCompleted && (
 									<Button
 										title="Marcar como concluído"
 										variant={"ghost"}
 										onClick={handleComplete}
-										size="sm"
+										size="icon"
 										className="hover:bg-blue-50 border-blue-200 text-blue-600"
 										disabled={completeLoading.isLoading}
 									>
@@ -89,9 +89,9 @@ export function TodoCard({
 									<Button
 										onClick={() => onEdit(todo)}
 										variant="ghost"
-										size="sm"
+										size="icon"
 									>
-										<Edit className="w-4 h-4" />
+										<Edit className="w-4 h-4 text-gray-600" />
 									</Button>
 								)}
 							</div>

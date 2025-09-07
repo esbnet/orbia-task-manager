@@ -5,6 +5,7 @@ import {
 	AlertTriangle,
 	Calendar,
 	CheckCircle,
+	ChevronDown,
 	Edit,
 	Tag,
 	Target,
@@ -13,6 +14,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Goal } from "@/domain/entities/goal";
 import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
@@ -52,6 +54,7 @@ export function GoalCard({
 	onStatusChange,
 }: GoalCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 	const statusChangeLoading = useButtonLoading();
 	const isOverdue =
 		goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date();
@@ -112,7 +115,7 @@ export function GoalCard({
 				}`}
 		>
 			<CardHeader className="pb-3">
-				<div className="flex justify-between items-start">
+				<div className="flex justify-between items-start gap-2">
 					<div className="flex-1">
 						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
 							{goal.title}
@@ -137,12 +140,12 @@ export function GoalCard({
 							</Badge>
 						</div>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex items-center">
 						{goal.status === "IN_PROGRESS" && (
 							<>
 								<Button
 									title="Concluído"
-									size="sm"
+									size="icon"
 									variant="ghost"
 									onClick={() =>
 										handleStatusChange("COMPLETED")
@@ -156,35 +159,33 @@ export function GoalCard({
 										<CheckCircle className="w-4 h-4" />
 									)}
 								</Button>
+								{onEdit && (
+									<Button
+										title="Editar"
+										size="icon"
+										variant="ghost"
+										onClick={() => onEdit(goal)}
+									>
+										<Edit className="w-4 h-4 text-gray-600" />
+									</Button>
+								)}
+
 								<Button
 									title="Cancelar"
-									size="sm"
+									size="icon"
 									variant="ghost"
-									onClick={() =>
-										handleStatusChange("CANCELLED")
-									}
-									className="hover:bg-gray-50 border-gray-200 text-gray-600"
+									onClick={() => setIsCancelDialogOpen(true)}
+									className="hover:bg-red-50 border-red-200 text-red-600"
 									disabled={statusChangeLoading.isLoading}
 								>
 									{statusChangeLoading.isLoading ? (
-										<div className="border-2 border-gray-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
+										<div className="border-2 border-t-transparent border-red-600 rounded-full w-4 h-4 animate-spin" />
 									) : (
 										<XCircle className="w-4 h-4" />
 									)}
 								</Button>
 							</>
 						)}
-						{onEdit && (
-							<Button
-								title="Editar"
-								size="sm"
-								variant="ghost"
-								onClick={() => onEdit(goal)}
-							>
-								<Edit className="w-4 h-4" />
-							</Button>
-						)}
-
 					</div>
 				</div>
 			</CardHeader>
@@ -269,7 +270,7 @@ export function GoalCard({
 						variant="ghost"
 						onClick={() => setIsExpanded(!isExpanded)}
 					>
-						{isExpanded ? "Ver menos" : "Ver mais"}
+						{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
 					</Button>
 				</div>
 
@@ -284,6 +285,16 @@ export function GoalCard({
 					</div>
 				)}
 			</CardContent>
+			<ConfirmationDialog
+				open={isCancelDialogOpen}
+				onOpenChange={setIsCancelDialogOpen}
+				title="Confirmar Cancelamento"
+				description="Tem certeza de que deseja cancelar esta meta? Esta ação não pode ser desfeita."
+				confirmText="Cancelar Meta"
+				cancelText="Manter"
+				onConfirm={() => handleStatusChange("CANCELLED")}
+				variant="destructive"
+			/>
 		</Card>
 	);
 }

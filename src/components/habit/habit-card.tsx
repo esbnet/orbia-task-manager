@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
+	Archive,
 	Calendar,
 	CheckCircle,
 	ChevronDown,
@@ -11,8 +12,7 @@ import {
 	LoaderCircle,
 	RotateCcw,
 	Tag,
-	TrendingUp,
-	XCircle
+	TrendingUp
 } from "lucide-react";
 import { memo, useState } from "react";
 
@@ -86,10 +86,10 @@ export const HabitCard = memo(function HabitCard({
 		try {
 			await completeLoading.executeAsync(async () => {
 				onStatusChange?.(habit.id, "Completo");
-				toast.success(`Hábito "${habit.title}" encerrado com sucesso!`);
+				toast.success(`Hábito "${habit.title}" arquivado com sucesso!`);
 			});
 		} catch (error) {
-			toast.error("Erro ao encerrar hábito. Tente novamente.");
+			toast.error("Erro ao arquivar hábito. Tente novamente.");
 		}
 	};
 
@@ -144,7 +144,7 @@ export const HabitCard = memo(function HabitCard({
 								{/* Botão principal de registro */}
 								<Button
 									title="Registrar ocorrência"
-									size="sm"
+									size="icon"
 									variant="ghost"
 									onClick={handleRegister}
 									className="hover:bg-green-100 text-green-600"
@@ -157,39 +157,40 @@ export const HabitCard = memo(function HabitCard({
 									)}
 								</Button>
 
-								{/* Botão de encerrar hábito */}
+								{onEdit && (
+									<Button
+										title="Editar"
+										size="icon"
+										variant="ghost"
+										onClick={() => onEdit(habit)}
+										disabled={editLoading.isLoading}
+									>
+										{editLoading.isLoading ? (
+											<div className="border-2 border-t-transparent rounded-full w-4 h-4 text-gray-400 animate-spin" />
+										) : (
+											<Edit className="w-4 h-4 text-gray-600" />
+										)}
+									</Button>
+								)}
+
+								{/* Botão de arquivar hábito */}
 								<Button
-									title="Encerrar hábito"
-									size="sm"
+									className="hover:bg-red-100 text-red-600"
+									title="Arquivar hábito"
+									size="icon"
 									variant="ghost"
 									onClick={() => setIsCompleteDialogOpen(true)}
-									className="hover:bg-red-100 text-red-600"
 									disabled={completeLoading.isLoading}
 								>
 									{completeLoading.isLoading ? (
-										<LoaderCircle className="w-4 h-4 animate-spin duration-200" />
+										<LoaderCircle className="w-4 h-4 text-red-600 animate-spin duration-200" />
 									) : (
-										<XCircle className="w-4 h-4" />
+										<Archive className="w-4 h-4" />
 									)}
 								</Button>
 							</>
 						)}
 
-						{onEdit && (
-							<Button
-								title="Editar"
-								size="sm"
-								variant="ghost"
-								onClick={() => onEdit(habit)}
-								disabled={editLoading.isLoading}
-							>
-								{editLoading.isLoading ? (
-									<div className="border-2 border-gray-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
-								) : (
-									<Edit className="w-4 h-4" />
-								)}
-							</Button>
-						)}
 
 					</div>
 				</div>
@@ -263,9 +264,9 @@ export const HabitCard = memo(function HabitCard({
 			<ConfirmationDialog
 				open={isCompleteDialogOpen}
 				onOpenChange={setIsCompleteDialogOpen}
-				title="Encerrar Hábito"
-				description={`Tem certeza que deseja encerrar o hábito "${habit.title}" definitivamente? Esta ação não pode ser desfeita.`}
-				confirmText="Encerrar"
+				title="Arquivar Hábito"
+				description={`Tem certeza que deseja arquivar o hábito "${habit.title}" definitivamente? Esta ação não pode ser desfeita.`}
+				confirmText="Arquivar"
 				cancelText="Cancelar"
 				onConfirm={handleComplete}
 				variant="destructive"

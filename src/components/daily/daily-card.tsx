@@ -96,14 +96,14 @@ export function DailyCard({
 							{isCompleted ? (
 								<CheckCircle className="w-5 h-5 text-green-600" />
 							) : (
-								<div className="flex items-center gap-1">
+								<div className="flex items-center">
 									{!isCompleted && (
 										<Button
+											className="hover:bg-amber-100 text-amber-600"
 											title="Concluir"
 											onClick={handleComplete}
-											size="sm"
+											size="icon"
 											variant="ghost"
-											className="hover:bg-amber-100 text-amber-600"
 											disabled={completeLoading.isLoading || isCompleting}
 										>
 											{(completeLoading.isLoading || isCompleting) ? (
@@ -116,12 +116,11 @@ export function DailyCard({
 
 									{onEdit && (
 										<Button
-											title="Editar"
 											className="hover:bg-gray-200 text-gray-600"
-
+											title="Editar"
 											onClick={() => onEdit(daily)}
 											variant="ghost"
-											size="sm"
+											size="icon"
 										>
 											<Edit className="w-4 h-4" />
 										</Button>
