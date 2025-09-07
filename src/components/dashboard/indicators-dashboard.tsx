@@ -1,13 +1,13 @@
 "use client";
 
 import {
+    Award,
     BarChart3,
     Calendar,
     CheckCircle,
     Flame,
     Target,
-    Trophy,
-    Zap
+    Trophy
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -108,15 +108,15 @@ export function IndicatorsDashboard() {
 
             {/* 🔥 Seção 1 — Resumo do Dia */}
             <div className="gap-4 grid grid-cols-1 md:grid-cols-4">
-                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                <Card className="bg-gradient-to-br from-slate-50 to-slate-100 hover:shadow-md border-slate-200 transition-shadow">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-3">
-                            <div className="bg-blue-100 p-2 rounded-lg">
-                                <CheckCircle className="w-6 h-6 text-blue-600" />
+                            <div className="bg-slate-200 p-3 rounded-xl">
+                                <CheckCircle className="w-6 h-6 text-slate-600" />
                             </div>
                             <div>
-                                <p className="font-medium text-blue-600 text-sm">Tarefas Hoje</p>
-                                <p className="font-bold text-blue-900 text-2xl">
+                                <p className="font-medium text-slate-600 text-sm">Tarefas Hoje</p>
+                                <p className="font-bold text-slate-900 text-2xl">
                                     {dailySummary.completedTasks} / {dailySummary.totalTasks}
                                 </p>
                             </div>
@@ -124,15 +124,15 @@ export function IndicatorsDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                <Card className="bg-gradient-to-br from-amber-50 to-amber-100 hover:shadow-md border-amber-200 transition-shadow">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-3">
-                            <div className="bg-green-100 p-2 rounded-lg">
-                                <Zap className="w-6 h-6 text-green-600" />
+                            <div className="bg-amber-200 p-3 rounded-xl">
+                                <Award className="w-6 h-6 text-amber-600" />
                             </div>
                             <div>
-                                <p className="font-medium text-green-600 text-sm">Pontuação</p>
-                                <p className="font-bold text-green-900 text-2xl">
+                                <p className="font-medium text-amber-600 text-sm">Pontuação</p>
+                                <p className="font-bold text-amber-900 text-2xl">
                                     {dailySummary.dailyScore} pts
                                 </p>
                             </div>
@@ -140,10 +140,10 @@ export function IndicatorsDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+                <Card className="bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-md border-orange-200 transition-shadow">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-3">
-                            <div className="bg-orange-100 p-2 rounded-lg">
+                            <div className="bg-orange-200 p-3 rounded-xl">
                                 <Flame className="w-6 h-6 text-orange-600" />
                             </div>
                             <div>
@@ -156,15 +156,15 @@ export function IndicatorsDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 hover:shadow-md border-emerald-200 transition-shadow">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-3">
-                            <div className="bg-purple-100 p-2 rounded-lg">
-                                <Target className="w-6 h-6 text-purple-600" />
+                            <div className="bg-emerald-200 p-3 rounded-xl">
+                                <BarChart3 className="w-6 h-6 text-emerald-600" />
                             </div>
                             <div>
-                                <p className="font-medium text-purple-600 text-sm">Progresso</p>
-                                <p className="font-bold text-purple-900 text-2xl">
+                                <p className="font-medium text-emerald-600 text-sm">Progresso</p>
+                                <p className="font-bold text-emerald-900 text-2xl">
                                     {dailySummary.completionRate.toFixed(0)}%
                                 </p>
                             </div>
