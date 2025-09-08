@@ -1,17 +1,17 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
 	Edit,
 	Tag
 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useTodoContext } from "@/contexts/todo-context";
-import { useButtonLoading } from "@/hooks/use-button-loading";
-import { toast } from "sonner";
 import type { Todo } from "../../types";
+import { toast } from "sonner";
+import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useTodoContext } from "@/contexts/todo-context";
 
 interface TodoCardProps {
 	todo: Todo;
@@ -59,7 +59,7 @@ export function TodoCard({
 					<div className="flex-1">
 						<div className="flex justify-between items-center mb-2">
 							<div className="flex items-center gap-2">
-								<h3 className="font-semibold text-gray-900 line-clamp-1">
+								<h3 className="font-semibold line-clamp-1">
 									{todo.title}
 								</h3>
 								{isCompleted && (
