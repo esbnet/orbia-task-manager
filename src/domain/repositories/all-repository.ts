@@ -1,4 +1,5 @@
 import type {
+	BaseRepository,
 	CompletableRepository,
 	LogRepository,
 	OrderableRepository,
@@ -16,6 +17,7 @@ import type { Tag } from "../entities/tag";
 import type { Todo } from "../entities/todo";
 import type { TodoLog } from "../entities/todo-log";
 import type { TodoSubtask } from "../entities/todo-subtask";
+import type { UserConfig } from "../entities/user-config";
 
 // Daily repository with user ownership, completion, ordering, and tagging
 export interface DailyRepository
@@ -60,4 +62,10 @@ export interface TodoSubtaskRepository
 	extends SubtaskRepository<TodoSubtask>,
 		OrderableRepository<TodoSubtask> {
 	listByTodoId(todoId: string): Promise<TodoSubtask[]>;
+}
+
+// User config repository
+export interface UserConfigRepository extends BaseRepository<UserConfig> {
+	findByUserId(userId: string): Promise<UserConfig | null>;
+	upsert(userId: string, config: Partial<Omit<UserConfig, "id" | "userId" | "createdAt" | "updatedAt">>): Promise<UserConfig>;
 }

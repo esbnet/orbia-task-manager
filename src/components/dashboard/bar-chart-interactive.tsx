@@ -119,11 +119,11 @@ const chartConfig = {
 	},
 	desktop: {
 		label: "Desktop",
-		color: "var(--chart-2)",
+		color: "var(--chart-2, hsl(var(--primary)))",
 	},
 	mobile: {
 		label: "Mobile",
-		color: "var(--chart-1)",
+		color: "var(--chart-1, hsl(var(--secondary)))",
 	},
 } satisfies ChartConfig;
 

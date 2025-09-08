@@ -2,11 +2,11 @@ import "./globals.css";
 
 import { Kode_Mono, Lobster } from "next/font/google";
 
-import { AuthProvider } from "@/components/providers/session-provider";
-import type { Metadata } from "next";
 import { QueryClientProviderWrapper } from "@/components/providers/query-client-provider";
-import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "@/components/providers/session-provider";
+import { ThemeProviderWrapper } from "@/components/providers/theme-provider-wrapper";
 import { Toaster } from "@/components/ui/sonner";
+import type { Metadata } from "next";
 
 const lobster = Lobster({
 	subsets: ["latin"],
@@ -38,19 +38,10 @@ export default function RootLayout({
 			>
 				<AuthProvider>
 					<QueryClientProviderWrapper>
-						<ThemeProvider
-							attribute="class"
-							defaultTheme="dark"
-							enableSystem
-							disableTransitionOnChange
-							value={{
-								light: "light",
-								dark: "dark",
-							}}
-						>
+						<ThemeProviderWrapper>
 							<main className="flex-1">{children}</main>
 							<Toaster richColors />
-						</ThemeProvider>
+						</ThemeProviderWrapper>
 					</QueryClientProviderWrapper>
 				</AuthProvider>
 			</body>

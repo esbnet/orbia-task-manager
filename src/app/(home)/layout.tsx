@@ -1,6 +1,6 @@
-import { Header } from "@/components/layout/header";
-import { Metadata } from "next";
+import { HeaderWrapper } from "@/components/layout/header-wrapper";
 import { getCurrentUserId } from "@/hooks/use-current-user";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -22,9 +22,11 @@ export default async function RootLayout({
 	}
 
 	return (
-		<main className="flex-1">
-			<Header />
-			{children}
-		</main>
+		<>
+			<HeaderWrapper />
+			<main className="flex-1">
+				{children}
+			</main>
+		</>
 	);
 }

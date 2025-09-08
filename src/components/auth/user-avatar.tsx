@@ -11,8 +11,7 @@ import { LogOut, Settings, User } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { signOut } from "@/auth"
+import { signOutAction } from "@/actions/sign-out"
 
 interface UserAvatarProps {
   user: {
@@ -62,18 +61,14 @@ export function UserAvatar({ user }: UserAvatarProps) {
             <span>Configurações</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem className="p-3">
-          <ThemeToggle />
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <form
-            action={async () => {
-              "use server"
-              await signOut()
-            }}
-          >
-            <button type="submit" className="flex items-center w-full">
+          <form action={signOutAction}>
+            <button
+              type="submit"
+              className="flex items-center w-full"
+              onClick={() => localStorage.removeItem("tasksOverviewDialogShown")}
+            >
               <LogOut className="mr-2 w-4 h-4" />
               <span>Sair</span>
             </button>
