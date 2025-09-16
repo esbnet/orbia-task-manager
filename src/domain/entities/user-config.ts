@@ -1,5 +1,5 @@
 export type Theme = "light" | "dark" | "system";
-export type Language = "pt-BR" | "en-US" | "es-ES" | "fr-FR";
+export type Language = "pt-BR" | "en-US" | "es-ES";
 
 export interface UserConfig {
 	id: string;

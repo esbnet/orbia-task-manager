@@ -21,10 +21,10 @@ interface TodoCardProps {
 }
 
 const difficultyConfig = {
-	"Trivial": { color: "bg-gray-100 text-gray-800", stars: "⭐" },
-	"Fácil": { color: "bg-green-100 text-green-800", stars: "⭐⭐" },
-	"Médio": { color: "bg-yellow-100 text-yellow-800", stars: "⭐⭐⭐" },
-	"Difícil": { color: "bg-red-100 text-red-800", stars: "⭐⭐⭐⭐" },
+	"Trivial": { color: "bg-gray-50 text-gray-700 border border-gray-200", stars: "⭐" },
+	"Fácil": { color: "bg-green-50 text-green-700 border border-green-200", stars: "⭐⭐" },
+	"Médio": { color: "bg-yellow-50 text-yellow-800 border border-yellow-200", stars: "⭐⭐⭐" },
+	"Difícil": { color: "bg-red-50 text-red-700 border border-red-200", stars: "⭐⭐⭐⭐" },
 };
 
 export function TodoCard({
@@ -99,14 +99,23 @@ export function TodoCard({
 						</div>
 
 						<div className="flex items-center gap-2 mb-2">
-							<Badge className={`text-xs ${difficulty.color}`}>
+							<Badge className={`text-xs ${difficulty.color}`} title="Dificuldade">
 								{difficulty.stars} {todo.difficulty}
 							</Badge>
+
+							<Badge
+								className={`text-xs ${isCompleted ? "bg-green-50 text-green-700 border border-green-200" : "bg-blue-50 text-blue-700 border border-blue-200"}`}
+								title="Status"
+							>
+								<CheckCircle className="w-3 h-3" />
+								{isCompleted ? "Concluído" : "Em andamento"}
+							</Badge>
+
 							{todo.startDate && (
-								<div className="flex items-center gap-1 text-blue-600 text-sm">
-									<Calendar className="w-4 h-4" />
-									<span>{new Date(todo.startDate).toLocaleDateString()}</span>
-								</div>
+								<Badge className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs" title="Data de início">
+									<Calendar className="w-3 h-3" />
+									{new Date(todo.startDate).toLocaleDateString()}
+								</Badge>
 							)}
 						</div>
 
@@ -128,14 +137,14 @@ export function TodoCard({
 								<Badge
 									key={tag}
 									variant="secondary"
-									className="text-xs"
+									className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
 								>
 									<Tag className="mr-1 w-3 h-3" />
 									{tag}
 								</Badge>
 							))}
 							{todo.tags.length > 2 && (
-								<Badge variant="outline" className="text-xs">
+								<Badge variant="outline" className="bg-slate-50 border border-slate-200 text-slate-700 text-xs">
 									+{todo.tags.length - 2}
 								</Badge>
 							)}

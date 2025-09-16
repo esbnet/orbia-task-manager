@@ -11,6 +11,13 @@ const nextConfig: NextConfig = {
 	poweredByHeader: false,
 	reactStrictMode: true,
 
+	// i18n - Next.js nativo
+	i18n: {
+		locales: ["pt-BR", "en-US", "es-ES"],
+		defaultLocale: "pt-BR",
+		localeDetection: false,
+	},
+
 	// Otimização de imagens
 	images: {
 		formats: ['image/webp', 'image/avif'],

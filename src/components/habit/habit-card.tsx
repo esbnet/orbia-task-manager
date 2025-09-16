@@ -8,7 +8,6 @@ import {
 	CheckCircle,
 	ChevronDown,
 	Edit,
-	Gauge,
 	LoaderCircle,
 	RotateCcw,
 	Tag,
@@ -33,9 +32,16 @@ const priorityColors = {
 };
 
 const statusColors = {
-	"Em Andamento": "border-blue-300 text-blue-600",
-	"Completo": "border-green-300 text-green-600",
-	"Cancelado": "border-gray-300 text-gray-600",
+	"Em Andamento": "bg-blue-50 text-blue-700 border border-blue-200",
+	"Completo": "bg-green-50 text-green-700 border border-green-200",
+	"Cancelado": "bg-gray-50 text-gray-700 border border-gray-200",
+};
+
+const difficultyConfig = {
+	"Trivial": { color: "bg-gray-50 text-gray-700 border border-gray-200", stars: "⭐" },
+	"Fácil": { color: "bg-green-50 text-green-700 border border-green-200", stars: "⭐⭐" },
+	"Médio": { color: "bg-yellow-50 text-yellow-800 border border-yellow-200", stars: "⭐⭐⭐" },
+	"Difícil": { color: "bg-red-50 text-red-700 border border-red-200", stars: "⭐⭐⭐⭐" },
 };
 
 interface HabitCardProps {
@@ -64,6 +70,10 @@ export const HabitCard = memo(function HabitCard({
 	const completeLoading = useButtonLoading();
 	const isOverdue =
 		habit.status === "Em Andamento" && habit.lastCompletedDate && habit.createdAt < new Date();
+
+	const difficultyBadge =
+		difficultyConfig[habit.difficulty as keyof typeof difficultyConfig] ||
+		difficultyConfig["Fácil"];
 
 	const handleStatusChange = (newStatus: Habit["status"]) => {
 		onStatusChange?.(habit.id, newStatus);
@@ -117,6 +127,9 @@ export const HabitCard = memo(function HabitCard({
 								variant="outline"
 								className={statusColors[habit.status]}
 							>
+								{habit.status === "Em Andamento" && <TrendingUp className="w-3 h-3" />}
+								{habit.status === "Completo" && <CheckCircle className="w-3 h-3" />}
+								{habit.status === "Cancelado" && <AlertTriangle className="w-3 h-3" />}
 								{habit.status}
 							</Badge>
 						</div>
@@ -201,10 +214,13 @@ export const HabitCard = memo(function HabitCard({
 
 			<CardContent className="pt-0">
 				<div className="flex justify-between items-center pt-3">
-					<div className="text-gray-500 text-xs">
-						Criado em{" "}
+					<Badge
+						className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs"
+						title="Data de início"
+					>
+						<Calendar className="w-3 h-3" />
 						{format(habit.createdAt, "dd/MM/yyyy", { locale: ptBR })}
-					</div>
+					</Badge>
 					<Button
 						size="sm"
 						variant="ghost"
@@ -234,10 +250,13 @@ export const HabitCard = memo(function HabitCard({
 							)}
 						</div>
 
-						<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm">
-							<span className="flex gap-2" title="dificuldade"><Gauge className="w-4 h-4" />{habit.difficulty}</span>
-							<span>•</span>
-							<span className="flex gap-2" title="ciclo de reinício" ><RotateCcw className="w-4 h-4" /> {habit.reset}</span>
+						<div className="flex items-center gap-2 mb-3 text-sm">
+							<Badge className={`text-xs ${difficultyBadge.color}`} title="Dificuldade">
+								{difficultyBadge.stars} {habit.difficulty}
+							</Badge>
+							<Badge className="bg-purple-50 border border-purple-200 text-purple-700 text-xs" title="Frequência">
+								<RotateCcw className="w-3 h-3" /> {habit.reset}
+							</Badge>
 						</div>
 
 						{habit.tags.length > 0 && (
@@ -246,7 +265,7 @@ export const HabitCard = memo(function HabitCard({
 									<Badge
 										key={tag}
 										variant="secondary"
-										className="text-xs"
+										className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
 									>
 										<Tag className="mr-1 w-3 h-3" />
 										{tag}

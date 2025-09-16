@@ -36,9 +36,9 @@ const priorityColors = {
 };
 
 const statusColors = {
-	IN_PROGRESS: "bg-blue-100 text-blue-800",
-	COMPLETED: "bg-green-100 text-green-800",
-	CANCELLED: "bg-gray-100 text-gray-800",
+	IN_PROGRESS: "bg-blue-50 text-blue-700 border border-blue-200",
+	COMPLETED: "bg-green-50 text-green-700 border border-green-200",
+	CANCELLED: "bg-gray-50 text-gray-700 border border-gray-200",
 };
 
 const categoryIcons = {
@@ -253,7 +253,7 @@ export function GoalCard({
 							<Badge
 								key={tag}
 								variant="secondary"
-								className="text-xs"
+								className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
 							>
 								<Tag className="mr-1 w-3 h-3" />
 								{tag}
@@ -263,10 +263,13 @@ export function GoalCard({
 				)}
 
 				<div className="flex justify-between items-center mt-4 pt-3 border-gray-100 border-t">
-					<div className="text-gray-500 text-xs">
-						Criado em{" "}
+					<Badge
+						className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs"
+						title="Data de início"
+					>
+						<Calendar className="w-3 h-3" />
 						{format(goal.createdAt, "dd/MM/yyyy", { locale: ptBR })}
-					</div>
+					</Badge>
 					<Button
 						size="sm"
 						variant="ghost"

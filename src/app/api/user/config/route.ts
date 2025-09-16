@@ -1,6 +1,7 @@
 import { GetUserConfigUseCase } from "@/application/use-cases/user-config/get-user-config/get-user-config-use-case";
 import { UpdateUserConfigUseCase } from "@/application/use-cases/user-config/update-user-config/update-user-config-use-case";
 import { auth } from "@/auth";
+import { LOCALE_COOKIE } from "@/i18n/shared";
 import { PrismaUserConfigRepository } from "@/infra/database/prisma/prisma-user-config-repository";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -67,7 +68,7 @@ export async function GET() {
  *                 enum: [light, dark, system]
  *               language:
  *                 type: string
- *                 enum: [pt-BR, en-US, es-ES, fr-FR]
+ *                 enum: [pt-BR, en-US, es-ES]
  *               notifications:
  *                 type: boolean
  *               timezone:
@@ -108,7 +109,7 @@ export async function PUT(request: NextRequest) {
 
 		// Validação básica
 		const validThemes = ["light", "dark", "system"];
-		const validLanguages = ["pt-BR", "en-US", "es-ES", "fr-FR"];
+		const validLanguages = ["pt-BR", "en-US", "es-ES"];
 
 		if (theme && !validThemes.includes(theme)) {
 			return NextResponse.json(
@@ -133,7 +134,12 @@ export async function PUT(request: NextRequest) {
 			timezone,
 		});
 
-		return NextResponse.json(result);
+		const res = NextResponse.json(result);
+		// Se o idioma foi enviado e é válido, persistir no cookie de locale
+		if (language && validLanguages.includes(language)) {
+			res.cookies.set(LOCALE_COOKIE, language, { path: "/", sameSite: "lax" });
+		}
+		return res;
 	} catch (error) {
 		console.error("Erro ao atualizar configurações do usuário:", error);
 		return NextResponse.json(

@@ -61,14 +61,13 @@ export function GeneralSettings() {
                             id="language"
                             value={localConfig.language}
                             onChange={(e) =>
-                                setLocalConfig(prev => ({ ...prev, language: e.target.value as "pt-BR" | "en-US" | "es-ES" | "fr-FR" }))
+                                setLocalConfig(prev => ({ ...prev, language: e.target.value as "pt-BR" | "en-US" | "es-ES" }))
                             }
                             className="bg-background p-2 border rounded-md w-full"
                         >
                             <option value="pt-BR">Português (Brasil)</option>
                             <option value="en-US">English (US)</option>
                             <option value="es-ES">Español</option>
-                            <option value="fr-FR">Français</option>
                         </select>
                         <p className="text-muted-foreground text-sm">
                             Idioma da interface da aplicação.
