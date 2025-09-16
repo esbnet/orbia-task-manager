@@ -25,7 +25,7 @@ interface GoalCardProps {
 	goal: Goal;
 	onDelete?: (goalId: string) => void;
 	onEdit?: (goal: Goal) => void;
-	onStatusChange?: (goalId: string, status: Goal["status"]) => void;
+	onStatusChange?: (goalId: string, status: Goal["status"]) => void | Promise<void>;
 }
 
 const priorityColors = {
@@ -102,7 +102,9 @@ export function GoalCard({
 	const handleStatusChange = async (newStatus: Goal["status"]) => {
 		await statusChangeLoading.executeAsync(
 			async () => {
-				onStatusChange?.(goal.id, newStatus);
+				if (onStatusChange) {
+					await onStatusChange(goal.id, newStatus);
+				}
 			},
 			undefined,
 			() => console.error("Erro ao alterar status da meta.")
@@ -111,8 +113,7 @@ export function GoalCard({
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""
-				}`}
+			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""} ${statusChangeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}
 		>
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start gap-2">
@@ -150,7 +151,7 @@ export function GoalCard({
 									onClick={() =>
 										handleStatusChange("COMPLETED")
 									}
-									className="hover:bg-green-50 border-green-200 text-green-600"
+									className="hover:bg-green-100 rounded-full text-green-600 hover:text-green-600"
 									disabled={statusChangeLoading.isLoading}
 								>
 									{statusChangeLoading.isLoading ? (
@@ -165,8 +166,9 @@ export function GoalCard({
 										size="icon"
 										variant="ghost"
 										onClick={() => onEdit(goal)}
+										className="hover:bg-gray-100 rounded-full text-gray-600"
 									>
-										<Edit className="w-4 h-4 text-gray-600" />
+										<Edit className="w-4 h-4" />
 									</Button>
 								)}
 
@@ -175,7 +177,7 @@ export function GoalCard({
 									size="icon"
 									variant="ghost"
 									onClick={() => setIsCancelDialogOpen(true)}
-									className="hover:bg-red-50 border-red-200 text-red-600"
+									className="hover:bg-red-100 rounded-full text-red-600 hover:text-red-600"
 									disabled={statusChangeLoading.isLoading}
 								>
 									{statusChangeLoading.isLoading ? (

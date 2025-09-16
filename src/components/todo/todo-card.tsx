@@ -1,17 +1,17 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
 	Edit,
 	Tag
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Todo } from "../../types";
-import { toast } from "sonner";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 import { useTodoContext } from "@/contexts/todo-context";
+import { useButtonLoading } from "@/hooks/use-button-loading";
+import { toast } from "sonner";
+import type { Todo } from "../../types";
 
 interface TodoCardProps {
 	todo: Todo;
@@ -53,7 +53,7 @@ export function TodoCard({
 	};
 
 	return (
-		<Card className="hover:shadow-md transition-shadow duration-200">
+		<Card className={`hover:shadow-md transition-shadow duration-200 ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start">
 					<div className="flex-1">
@@ -75,7 +75,7 @@ export function TodoCard({
 										variant={"ghost"}
 										onClick={handleComplete}
 										size="icon"
-										className="hover:bg-blue-50 border-blue-200 text-blue-600"
+										className="hover:bg-blue-50 rounded-full text-blue-600 hover:text-blue-600"
 										disabled={completeLoading.isLoading}
 									>
 										{completeLoading.isLoading ? (
@@ -90,8 +90,9 @@ export function TodoCard({
 										onClick={() => onEdit(todo)}
 										variant="ghost"
 										size="icon"
+										className="hover:bg-gray-100 rounded-full text-gray-600"
 									>
-										<Edit className="w-4 h-4 text-gray-600" />
+										<Edit className="w-4 h-4" />
 									</Button>
 								)}
 							</div>

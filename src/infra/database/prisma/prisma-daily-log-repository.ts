@@ -14,12 +14,11 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
 		const log = await prisma.dailyLog.create({
 			data: {
 				dailyId: data.dailyId,
+				periodId: data.periodId,
 				dailyTitle: data.dailyTitle,
 				difficulty: data.difficulty,
 				tags: data.tags,
 				completedAt: data.completedAt,
-				createdAt: new Date(),
-				
 			},
 		});
 		return this.toDomain(log);
@@ -88,6 +87,7 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
 		return {
 			id: log.id,
 			dailyId: log.dailyId,
+			periodId: log.periodId || undefined,
 			dailyTitle: log.dailyTitle,
 			difficulty: log.difficulty,
 			tags: log.tags,

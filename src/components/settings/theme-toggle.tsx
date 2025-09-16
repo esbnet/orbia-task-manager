@@ -2,9 +2,9 @@
 
 import { Moon, Sun } from "lucide-react";
 
-import { Button } from "../ui/button";
-import { useTheme } from "next-themes";
 import { useUserConfig } from "@/hooks/use-user-config";
+import { useTheme } from "next-themes";
+import { Button } from "../ui/button";
 
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme();
@@ -22,6 +22,7 @@ export function ThemeToggle() {
             aria-label="Alternar tema"
             variant="ghost"
             size="icon"
+            className="rounded-full w-8 h-8"
 
         >
             {theme === "dark" ? (

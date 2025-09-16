@@ -1,3 +1,4 @@
+import type { CreateDailyPeriodData, DailyPeriod, UpdateDailyPeriodData } from "../entities/daily-period";
 import type {
 	BaseRepository,
 	CompletableRepository,
@@ -68,4 +69,13 @@ export interface TodoSubtaskRepository
 export interface UserConfigRepository extends BaseRepository<UserConfig> {
 	findByUserId(userId: string): Promise<UserConfig | null>;
 	upsert(userId: string, config: Partial<Omit<UserConfig, "id" | "userId" | "createdAt" | "updatedAt">>): Promise<UserConfig>;
+}
+
+export interface DailyPeriodRepository {
+	findActiveByDailyId(dailyId: string): Promise<DailyPeriod | null>;
+	create(data: CreateDailyPeriodData): Promise<DailyPeriod>;
+	update(id: string, data: UpdateDailyPeriodData): Promise<DailyPeriod>;
+	findById(id: string): Promise<DailyPeriod | null>;
+	findByDailyId(dailyId: string): Promise<DailyPeriod[]>;
+	completeAndFinalize(id: string): Promise<DailyPeriod>;
 }

@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LogOut, Settings, User } from "lucide-react"
 
+import { signOutAction } from "@/actions/sign-out"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { signOutAction } from "@/actions/sign-out"
 
 interface UserAvatarProps {
   user: {
@@ -32,7 +32,7 @@ export function UserAvatar({ user }: UserAvatarProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative rounded-full w-8 h-8">
+        <Button variant="ghost" size="icon" className="relative rounded-full w-8 h-8">
           <Avatar className="w-8 h-8">
             <AvatarImage src={user.image || ""} alt={user.name || ""} />
             <AvatarFallback>{initials}</AvatarFallback>

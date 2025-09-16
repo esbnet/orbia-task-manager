@@ -1,8 +1,7 @@
-import type { DailyLogRepository, DailyRepository } from "@/domain/repositories/all-repository";
+import type { DailyLogRepository, DailyPeriodRepository, DailyRepository } from "@/domain/repositories/all-repository";
 import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 import type { Daily } from "@/domain/entities/daily";
-import type { DailyLog } from "@/domain/entities/daily-log";
 
 // Daily form data interface
 export interface DailyFormData {
@@ -21,8 +20,9 @@ export interface DailyFormData {
 // Daily service implementation
 export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 	constructor(
-		repository: DailyRepository,
-		private dailyLogRepository?: DailyLogRepository
+		protected repository: DailyRepository,
+		private dailyLogRepository: DailyLogRepository,
+		private dailyPeriodRepository: DailyPeriodRepository
 	) {
 		super(repository);
 	}
@@ -43,35 +43,17 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 	}
 
 	// Daily-specific methods
-	async completeDaily(dailyId: string): Promise<{ daily: Daily; log?: DailyLog }> {
+	async completeDaily(dailyId: string): Promise<{ daily: Daily; nextAvailableAt: Date }> {
 		try {
-			// Get current daily
-			const dailies = await this.repository.list();
-			const daily = dailies.find((d) => d.id === dailyId);
-			if (!daily) {
-				throw new Error("Daily not found");
-			}
+			const result = await this.repository.markComplete(dailyId);
 
-			// Mark as completed
-			const completedDaily = await this.update(dailyId, { 
-				lastCompletedDate: new Date().toISOString().split("T")[0]
-			});
+			// Get the next active period's start as nextAvailableAt
+			const nextPeriod = await this.dailyPeriodRepository.findActiveByDailyId(dailyId);
+			const nextAvailableAt = nextPeriod ? nextPeriod.startDate : this.calculateNextPeriodStart(result.repeat.type, new Date(), result.repeat.frequency);
 
-			// Create log if repository is available
-			let log: DailyLog | undefined;
-			if (this.dailyLogRepository) {
-				log = await this.dailyLogRepository.create({
-					dailyId: daily.id,
-					dailyTitle: daily.title,
-					difficulty: daily.difficulty,
-					tags: daily.tags,
-					completedAt: new Date(),
-				});
-			}
-
-			return { daily: completedDaily, log };
+			return { daily: result, nextAvailableAt };
 		} catch (error) {
-			return handleServiceError(error, "completar daily");
+			throw handleServiceError(error, "completar daily");
 		}
 	}
 
@@ -147,6 +129,67 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 		}
 	}
 
+	async getAvailableDailies(userId: string): Promise<{ availableDailies: Daily[]; completedToday: (Daily & { nextAvailableAt: Date })[]; totalDailies: number }> {
+		try {
+			const dailies = await this.repository.findByUserId(userId);
+			const today = new Date();
+			const available: Daily[] = [];
+			const completed: (Daily & { nextAvailableAt: Date })[] = [];
+
+			for (const daily of dailies) {
+				const activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(daily.id);
+				if (activePeriod) {
+					if (activePeriod.isCompleted) {
+						const periodStart = new Date(activePeriod.startDate);
+						if (periodStart.toDateString() === today.toDateString()) {
+							const nextAvailableAt = this.calculateNextPeriodStart(daily.repeat.type, activePeriod.endDate || today, daily.repeat.frequency);
+							completed.push({ ...daily, nextAvailableAt });
+						} else if (today >= activePeriod.endDate!) {
+							available.push(daily);
+						}
+					} else {
+						available.push(daily);
+					}
+				} else {
+					const shouldShow = this.shouldShowToday(daily);
+					if (shouldShow) {
+						available.push(daily);
+					}
+				}
+			}
+
+			return {
+				availableDailies: available,
+				completedToday: completed,
+				totalDailies: dailies.length,
+			};
+		} catch (error) {
+			throw handleServiceError(error, "buscar dailies disponíveis");
+		}
+	}
+
+	private calculateNextPeriodStart(type: string, fromDate: Date, frequency: number): Date {
+		const nextStart = new Date(fromDate);
+		switch (type) {
+			case "Diariamente":
+				nextStart.setDate(nextStart.getDate() + frequency);
+				nextStart.setHours(0, 0, 0, 0);
+				break;
+			case "Semanalmente":
+				nextStart.setDate(nextStart.getDate() + (7 * frequency));
+				break;
+			case "Mensalmente":
+				nextStart.setMonth(nextStart.getMonth() + frequency);
+				break;
+			case "Anualmente":
+				nextStart.setFullYear(nextStart.getFullYear() + frequency);
+				break;
+			default:
+				nextStart.setDate(nextStart.getDate() + frequency);
+		}
+		return nextStart;
+	}
+
 	async reorderDailies(dailyIds: string[]): Promise<void> {
 		try {
 			const dailyRepo = this.repository as DailyRepository;
@@ -165,7 +208,7 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 			}
 
 			const updatedTasks = [...daily.tasks, task];
-			return await this.update(dailyId, { tasks: updatedTasks });
+			return await this.update(dailyId, { tasks: updatedTasks } as Partial<Daily>);
 		} catch (error) {
 			return handleServiceError(error, "adicionar tarefa ao daily");
 		}
@@ -180,7 +223,7 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 			}
 
 			const updatedTasks = daily.tasks.filter((_, index) => index !== taskIndex);
-			return await this.update(dailyId, { tasks: updatedTasks });
+			return await this.update(dailyId, { tasks: updatedTasks } as Partial<Daily>);
 		} catch (error) {
 			return handleServiceError(error, "remover tarefa do daily");
 		}

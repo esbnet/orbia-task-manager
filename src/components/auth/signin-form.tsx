@@ -7,18 +7,14 @@ const googleIcon = '../../google.svg'
 export default function SignInForm() {
     return (
         <div className="flex justify-center items-center min-h-screen">
-            <div className="flex flex-col justify-center items-center space-y-8 bg-amber-100 shadow-xl p-8 py-16 rounded-lg w-full max-w-sm md:max-w-lg">
-                <Logo />
+            <div className="flex flex-col justify-center items-center space-y-8 bg-muted shadow-xl p-8 py-16 rounded-lg w-full max-w-sm md:max-w-lg">
+                <div className='flex w-full text-center'>
+                    <Logo />
+                </div>
 
-                <p className="font-bold text-gray-900 text-2xl text-center">
+                <p className="font-bold text-2xl text-center">
                     Rotina, foco e progresso em um só lugar
                 </p>
-
-                {/* <div className="items-center text-center">
-                    <p className="mt-2 text-gray-600">
-                        Faça login para acessar suas tarefas
-                    </p>
-                </div> */}
 
                 <div className="space-y-4">
                     <form

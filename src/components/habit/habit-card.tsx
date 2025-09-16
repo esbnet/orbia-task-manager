@@ -42,7 +42,7 @@ interface HabitCardProps {
 	habit: Habit;
 	onEdit?: (habit: Habit) => void;
 	onStatusChange?: (habitId: string, status: Habit["status"]) => void;
-	onRegister?: (habitId: string, note?: string) => void;
+	onRegister?: (habitId: string, note?: string) => void | Promise<void>;
 	currentCount?: number;
 	target?: number;
 	todayCount?: number;
@@ -75,7 +75,9 @@ export const HabitCard = memo(function HabitCard({
 		setIsRegistering(true);
 		try {
 			await registerLoading.executeAsync(async () => {
-				onRegister?.(habit.id);
+				if (onRegister) {
+					await onRegister(habit.id);
+				}
 			});
 		} finally {
 			setIsRegistering(false);
@@ -147,7 +149,7 @@ export const HabitCard = memo(function HabitCard({
 									size="icon"
 									variant="ghost"
 									onClick={handleRegister}
-									className="hover:bg-green-100 text-green-600"
+									className="hover:bg-green-100 rounded-full text-green-600 hover:text-green-600"
 									disabled={registerLoading.isLoading || isRegistering}
 								>
 									{(registerLoading.isLoading || isRegistering) ? (
@@ -164,18 +166,19 @@ export const HabitCard = memo(function HabitCard({
 										variant="ghost"
 										onClick={() => onEdit(habit)}
 										disabled={editLoading.isLoading}
+										className="hover:bg-gray-100 rounded-full text-gray-600"
 									>
 										{editLoading.isLoading ? (
 											<div className="border-2 border-t-transparent rounded-full w-4 h-4 text-gray-400 animate-spin" />
 										) : (
-											<Edit className="w-4 h-4 text-gray-600" />
+											<Edit className="w-4 h-4" />
 										)}
 									</Button>
 								)}
 
 								{/* Botão de arquivar hábito */}
 								<Button
-									className="hover:bg-red-100 text-red-600"
+									className="hover:bg-red-100 rounded-full text-red-600 hover:text-red-600"
 									title="Arquivar hábito"
 									size="icon"
 									variant="ghost"
@@ -183,7 +186,7 @@ export const HabitCard = memo(function HabitCard({
 									disabled={completeLoading.isLoading}
 								>
 									{completeLoading.isLoading ? (
-										<LoaderCircle className="w-4 h-4 text-red-600 animate-spin duration-200" />
+										<LoaderCircle className="border-2 border-t-transparent w-4 h-4 text-red-600 animate-spin duration-200" />
 									) : (
 										<Archive className="w-4 h-4" />
 									)}

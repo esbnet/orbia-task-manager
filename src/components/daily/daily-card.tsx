@@ -99,7 +99,7 @@ export function DailyCard({
 								<div className="flex items-center">
 									{!isCompleted && (
 										<Button
-											className="hover:bg-amber-100 text-amber-600"
+											className="hover:bg-amber-100 rounded-full text-amber-600 hover:text-orange-600"
 											title="Concluir"
 											onClick={handleComplete}
 											size="icon"
@@ -116,7 +116,7 @@ export function DailyCard({
 
 									{onEdit && (
 										<Button
-											className="hover:bg-gray-200 text-gray-600"
+											className="hover:bg-gray-100 rounded-full text-gray-600"
 											title="Editar"
 											onClick={() => onEdit(daily)}
 											variant="ghost"
