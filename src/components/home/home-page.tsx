@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useUserConfig } from "@/hooks/use-user-config";
+import { useTranslation } from "@/hooks/use-translation";
 import { useSession } from "next-auth/react";
 import { ClientProviders } from '../providers/client-providers';
 import { TasksOverviewDialog } from './tasks-overview-dialog';
@@ -10,6 +11,7 @@ import { TasksOverviewDialog } from './tasks-overview-dialog';
 export default function HomePage() {
     const { data: session, status } = useSession();
     const { config } = useUserConfig();
+    const { t } = useTranslation();
     const [showTasksDialog, setShowTasksDialog] = useState(false);
 
     useEffect(() => {
@@ -40,7 +42,7 @@ export default function HomePage() {
             <div className="flex shadow-sm border rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
                 <div className="flex justify-between items-center p-4 w-full">
                     <div className="flex-1 font-bold text-4xl md:text-6xl text-center">
-                        Gerenciador de Tarefas
+                        {t("home.title")}
                     </div>
                 </div>
             </div>

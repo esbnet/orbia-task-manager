@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "@/hooks/use-translation";
 
 export function MainNav({
 	className,
 	...props
 }: React.HTMLAttributes<HTMLElement>) {
 	const pathname = usePathname();
+	const { t } = useTranslation();
 
 	return (
 		<nav
@@ -25,7 +27,7 @@ export function MainNav({
 					pathname === "/" && "text-primary",
 				)}
 			>
-				Tarefas
+				{t("navigation.tasks")}
 			</Link>
 			<Link
 				href="/dashboard"
@@ -34,7 +36,7 @@ export function MainNav({
 					pathname === "/analytics" && "text-primary",
 				)}
 			>
-				Desempenho
+				{t("navigation.performance")}
 			</Link>
 			<Link
 				href="/metrics"
@@ -43,7 +45,7 @@ export function MainNav({
 					pathname === "/metrics" && "text-primary",
 				)}
 			>
-				Métricas
+				{t("navigation.metrics")}
 			</Link>
 		</nav>
 	);

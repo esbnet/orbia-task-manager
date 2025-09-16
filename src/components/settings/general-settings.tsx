@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 
 import { useUserConfig } from "@/hooks/use-user-config";
+import { useTranslation } from "@/hooks/use-translation";
 import { toast } from "sonner";
 
 export function GeneralSettings() {
     const { config, updateConfig, isUpdating, updateError } = useUserConfig();
+    const { t } = useTranslation();
     const [localConfig, setLocalConfig] = useState(config);
 
     // Atualizar configuração local quando o config global mudar
@@ -17,9 +19,9 @@ export function GeneralSettings() {
     const handleSave = async () => {
         try {
             await updateConfig(localConfig);
-            toast.success("Configurações salvas com sucesso!");
+            toast.success(t("messages.configSaved"));
         } catch (error) {
-            toast.error("Erro ao salvar configurações");
+            toast.error(t("messages.errorSavingConfig"));
         }
     };
 
@@ -28,15 +30,15 @@ export function GeneralSettings() {
     return (
         <div className="space-y-6">
             <div className="bg-card p-6 border rounded-lg">
-                <h3 className="mb-4 font-semibold text-lg">Configurações Gerais</h3>
+                <h3 className="mb-4 font-semibold text-lg">{t("settings.generalSettings")}</h3>
                 <p className="mb-6 text-muted-foreground">
-                    Gerencie suas preferências pessoais e configurações da aplicação.
+                    {t("settings.managePreferences")}
                 </p>
 
                 <div className="space-y-6">
                     {/* Tema */}
                     <div className="space-y-2">
-                        <label htmlFor="theme" className="font-medium text-sm">Tema</label>
+                        <label htmlFor="theme" className="font-medium text-sm">{t("settings.theme")}</label>
                         <select
                             id="theme"
                             value={localConfig.theme}
@@ -45,18 +47,18 @@ export function GeneralSettings() {
                             }
                             className="bg-background p-2 border rounded-md w-full"
                         >
-                            <option value="light">Claro</option>
-                            <option value="dark">Escuro</option>
-                            <option value="system">Sistema</option>
+                            <option value="light">{t("settings.light")}</option>
+                            <option value="dark">{t("settings.dark")}</option>
+                            <option value="system">{t("settings.system")}</option>
                         </select>
                         <p className="text-muted-foreground text-sm">
-                            Escolha o tema da interface ou deixe que siga as configurações do sistema.
+                            {t("settings.themeDescription")}
                         </p>
                     </div>
 
                     {/* Idioma */}
                     <div className="space-y-2">
-                        <label htmlFor="language" className="font-medium text-sm">Idioma</label>
+                        <label htmlFor="language" className="font-medium text-sm">{t("settings.language")}</label>
                         <select
                             id="language"
                             value={localConfig.language}
@@ -70,13 +72,13 @@ export function GeneralSettings() {
                             <option value="es-ES">Español</option>
                         </select>
                         <p className="text-muted-foreground text-sm">
-                            Idioma da interface da aplicação.
+                            {t("settings.languageDescription")}
                         </p>
                     </div>
 
                     {/* Timezone */}
                     <div className="space-y-2">
-                        <label htmlFor="timezone" className="font-medium text-sm">Fuso Horário</label>
+                        <label htmlFor="timezone" className="font-medium text-sm">{t("settings.timezone")}</label>
                         <select
                             id="timezone"
                             value={localConfig.timezone}
@@ -98,16 +100,16 @@ export function GeneralSettings() {
                             <option value="Asia/Tokyo">Tóquio (GMT+9)</option>
                         </select>
                         <p className="text-muted-foreground text-sm">
-                            Fuso horário para exibição de datas e horários.
+                            {t("settings.timezoneDescription")}
                         </p>
                     </div>
 
                     {/* Notificações */}
                     <div className="flex justify-between items-center">
                         <div className="space-y-0.5">
-                            <label htmlFor="notifications" className="font-medium text-sm">Notificações</label>
+                            <label htmlFor="notifications" className="font-medium text-sm">{t("settings.notifications")}</label>
                             <p className="text-muted-foreground text-sm">
-                                Receber notificações da aplicação.
+                                {t("settings.notificationsDescription")}
                             </p>
                         </div>
                         <input
@@ -128,14 +130,14 @@ export function GeneralSettings() {
                             disabled={!hasChanges || isUpdating}
                             className="bg-primary hover:bg-primary/90 disabled:opacity-50 px-4 py-2 rounded-md min-w-[120px] text-primary-foreground disabled:cursor-not-allowed"
                         >
-                            {isUpdating ? "Salvando..." : "Salvar"}
+                            {isUpdating ? t("common.saving") : t("common.save")}
                         </button>
                     </div>
 
                     {/* Mensagem de erro */}
                     {updateError && (
                         <div className="bg-destructive/10 p-3 rounded-md text-destructive text-sm">
-                            Erro ao salvar configurações: {updateError.message}
+                            {t("settings.errorSavingSettings")} {updateError.message}
                         </div>
                     )}
                 </div>

@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface TaskItem {
     id: string;
@@ -28,6 +29,7 @@ interface TasksOverviewDialogProps {
 }
 
 export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogProps) {
+    const { t } = useTranslation();
     const [tasks, setTasks] = useState<TaskItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -136,10 +138,10 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
 
     const getTaskTypeLabel = (type: string) => {
         switch (type) {
-            case "habit": return "Hábito";
-            case "daily": return "Diária";
-            case "todo": return "Tarefa";
-            case "goal": return "Meta";
+            case "habit": return t("taskTypes.habit");
+            case "daily": return t("taskTypes.daily");
+            case "todo": return t("taskTypes.todo");
+            case "goal": return t("taskTypes.goal");
             default: return type;
         }
     };
@@ -149,15 +151,15 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        Visão Geral das Tarefas
+                        {t("tasks.overview")}
                         {overdueTasks.length > 0 && (
                             <Badge variant="destructive" className="ml-2">
-                                {overdueTasks.length} atrasadas
+                                {overdueTasks.length} {t("tasks.overdue").toLowerCase()}
                             </Badge>
                         )}
                     </DialogTitle>
                     <DialogDescription>
-                        Aqui está um resumo de todas as suas tarefas ativas.
+                        {t("tasks.overviewDescription")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -165,7 +167,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
                     {isLoading ? (
                         <div className="py-8 text-center">
                             <div className="mx-auto mb-2 border-2 border-gray-300 border-t-blue-500 rounded-full w-8 h-8 animate-spin" />
-                            <p>Carregando tarefas...</p>
+                            <p>{t("tasks.loadingTasks")}</p>
                         </div>
                     ) : (
                         <>
@@ -173,7 +175,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
                                 <div>
                                     <h3 className="flex items-center gap-2 mb-3 font-semibold text-red-600">
                                         <AlertTriangle className="w-5 h-5" />
-                                        Tarefas Atrasadas ({overdueTasks.length})
+                                        {t("tasks.overdueTasks")} ({overdueTasks.length})
                                     </h3>
                                     <div className="space-y-2">
                                         {overdueTasks.map((task) => (
@@ -183,7 +185,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
                                                     <p className="font-medium text-red-900">{task.title}</p>
                                                     <p className="text-red-700 text-sm">{getTaskTypeLabel(task.type)}</p>
                                                 </div>
-                                                <Badge variant="destructive">Atrasada</Badge>
+                                                <Badge variant="destructive">{t("tasks.overdue")}</Badge>
                                             </div>
                                         ))}
                                     </div>
@@ -194,7 +196,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
                                 <div>
                                     <h3 className="flex items-center gap-2 mb-3 font-semibold text-blue-600">
                                         <Clock className="w-5 h-5" />
-                                        Tarefas Pendentes ({pendingTasks.length})
+                                        {t("tasks.pendingTasks")} ({pendingTasks.length})
                                     </h3>
                                     <div className="space-y-2">
                                         {pendingTasks.map((task) => (
@@ -204,7 +206,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
                                                     <p className="font-medium text-blue-900">{task.title}</p>
                                                     <p className="text-blue-700 text-sm">{getTaskTypeLabel(task.type)}</p>
                                                 </div>
-                                                <Badge variant="secondary">Pendente</Badge>
+                                                <Badge variant="secondary">{t("tasks.pending")}</Badge>
                                             </div>
                                         ))}
                                     </div>
@@ -214,7 +216,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
                             {tasks.length === 0 && (
                                 <div className="py-8 text-center">
                                     <CheckCircle className="mx-auto mb-4 w-12 h-12 text-green-500" />
-                                    <p className="text-gray-600">Parabéns! Você não tem tarefas ativas no momento.</p>
+                                    <p className="text-gray-600">{t("tasks.noActiveTasks")}</p>
                                 </div>
                             )}
                         </>
@@ -223,7 +225,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
 
                 <div className="flex justify-end">
                     <Button onClick={() => onOpenChange(false)}>
-                        Fechar
+                        {t("common.close")}
                     </Button>
                 </div>
             </DialogContent>

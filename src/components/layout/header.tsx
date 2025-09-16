@@ -2,6 +2,7 @@
 
 import { UserAvatar } from "@/components/auth/user-avatar";
 import { MainNav } from "@/components/layout/main-nav";
+import { LanguageSelector } from "@/components/settings/language-selector";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { useSession } from "next-auth/react";
 import Logo from "../logo";
@@ -40,6 +41,7 @@ export function Header() {
                     </div>
                     <div className="flex justify-center items-center gap-1 p-1 border-1 rounded-full">
                         {user && <UserAvatar user={user} />}
+                        <LanguageSelector />
                         <ThemeToggle />
                     </div>
                 </div>

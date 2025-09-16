@@ -18,6 +18,7 @@
 		"db:studio": "npx prisma studio",
 		"db:reset:dev": "pnpm run db:dev && npx prisma db push --force-reset",
 		"db:reset:prod": "pnpm run db:prod && npx prisma db push --force-reset",
+		"i18n:find": "node scripts/find-hardcoded-strings.js",
 		"postinstall": "prisma generate"
 	},
 	"dependencies": {
