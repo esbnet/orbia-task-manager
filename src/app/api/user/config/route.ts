@@ -68,7 +68,7 @@ export async function GET() {
  *                 enum: [light, dark, system]
  *               language:
  *                 type: string
- *                 enum: [pt-BR, en-US, es-ES]
+ *                 enum: ["pt-BR", "en-US", "es-ES"]
  *               notifications:
  *                 type: boolean
  *               timezone:
@@ -107,7 +107,10 @@ export async function PUT(request: NextRequest) {
 
 		const { theme, language, notifications, timezone } = body;
 
-		// Validação básica
+		/**
+		 * Validação de entrada - idiomas suportados limitados a pt-BR, en-US e es-ES
+		 * para manter consistência com o sistema de i18n implementado
+		 */
 		const validThemes = ["light", "dark", "system"];
 		const validLanguages = ["pt-BR", "en-US", "es-ES"];
 

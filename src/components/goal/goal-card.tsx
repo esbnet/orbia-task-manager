@@ -8,8 +8,7 @@ import {
 	ChevronDown,
 	Edit,
 	Tag,
-	Target,
-	XCircle
+	XCircle,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -25,34 +24,39 @@ interface GoalCardProps {
 	goal: Goal;
 	onDelete?: (goalId: string) => void;
 	onEdit?: (goal: Goal) => void;
-	onStatusChange?: (goalId: string, status: Goal["status"]) => void | Promise<void>;
+	onStatusChange?: (
+		goalId: string,
+		status: Goal["status"],
+	) => void | Promise<void>;
 }
 
-const priorityColors = {
-	LOW: "bg-green-100 text-green-800",
-	MEDIUM: "bg-yellow-100 text-yellow-800",
-	HIGH: "bg-orange-100 text-orange-800",
-	URGENT: "bg-red-100 text-red-800",
+const priorityColors: Record<Goal["priority"], string> = {
+	LOW: "bg-green-100 text-green-800 border border-green-200",
+	MEDIUM: "bg-yellow-100 text-yellow-800 border border-yellow-200",
+	HIGH: "bg-orange-100 text-orange-800 border border-orange-200",
+	URGENT: "bg-red-100 text-red-800 border border-red-200",
 };
 
-const statusColors = {
+const statusColors: Record<Goal["status"], string> = {
 	IN_PROGRESS: "bg-blue-50 text-blue-700 border border-blue-200",
 	COMPLETED: "bg-green-50 text-green-700 border border-green-200",
 	CANCELLED: "bg-gray-50 text-gray-700 border border-gray-200",
 };
 
-const categoryIcons = {
-	PERSONAL: Target,
-	WORK: Target,
-	HEALTH: Target,
-	LEARNING: Target,
+const priorityLabels: Record<Goal["priority"], string> = {
+	LOW: "Baixa",
+	MEDIUM: "Média",
+	HIGH: "Alta",
+	URGENT: "Urgente",
 };
 
-export function GoalCard({
-	goal,
-	onEdit,
-	onStatusChange,
-}: GoalCardProps) {
+const statusLabels: Record<Goal["status"], string> = {
+	IN_PROGRESS: "Em andamento",
+	COMPLETED: "Concluído",
+	CANCELLED: "Cancelado",
+};
+
+export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 	const statusChangeLoading = useButtonLoading();
@@ -60,7 +64,7 @@ export function GoalCard({
 		goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date();
 	const daysUntilTarget = Math.ceil(
 		(new Date(goal.targetDate).getTime() - new Date().getTime()) /
-		(1000 * 60 * 60 * 24),
+			(1000 * 60 * 60 * 24),
 	);
 
 	// Calcular progresso baseado no tempo
@@ -71,9 +75,19 @@ export function GoalCard({
 			const endDate = new Date(goal.targetDate);
 
 			// Verificar se as datas são válidas
-			if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-				console.warn('Datas inválidas para cálculo de progresso:', { createdAt: goal.createdAt, targetDate: goal.targetDate });
-				return { progress: 0, background: "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)" };
+			if (
+				Number.isNaN(startDate.getTime()) ||
+				Number.isNaN(endDate.getTime())
+			) {
+				console.warn("Datas inválidas para cálculo de progresso:", {
+					createdAt: goal.createdAt,
+					targetDate: goal.targetDate,
+				});
+				return {
+					progress: 0,
+					background:
+						"linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)",
+				};
 			}
 
 			const totalTime = endDate.getTime() - startDate.getTime();
@@ -81,19 +95,31 @@ export function GoalCard({
 
 			// Se o tempo total for negativo ou zero, retornar 0%
 			if (totalTime <= 0) {
-				return { progress: 0, background: "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)" };
+				return {
+					progress: 0,
+					background:
+						"linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)",
+				};
 			}
 
 			// Calcular progresso (garantir que fique entre 0 e 100)
-			const progress = Math.min(Math.max((elapsedTime / totalTime) * 100, 0), 100);
+			const progress = Math.min(
+				Math.max((elapsedTime / totalTime) * 100, 0),
+				100,
+			);
 
 			// Gradiente dinâmico verde -> amarelo -> vermelho
-			const background = "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)";
+			const background =
+				"linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)";
 
 			return { progress: Math.round(progress), background };
 		} catch (error) {
-			console.error('Erro ao calcular progresso:', error);
-			return { progress: 0, background: "linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)" };
+			console.error("Erro ao calcular progresso:", error);
+			return {
+				progress: 0,
+				background:
+					"linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%)",
+			};
 		}
 	};
 
@@ -107,7 +133,7 @@ export function GoalCard({
 				}
 			},
 			undefined,
-			() => console.error("Erro ao alterar status da meta.")
+			() => console.error("Erro ao alterar status da meta."),
 		);
 	};
 
@@ -126,18 +152,13 @@ export function GoalCard({
 								variant="outline"
 								className={priorityColors[goal.priority]}
 							>
-								{goal.priority === "HIGH" && "Alta"}
-								{goal.priority === "MEDIUM" && "Média"}
-								{goal.priority === "LOW" && "Baixa"}
-								{goal.priority === "URGENT" && "Urgente"}
+								{priorityLabels[goal.priority]}
 							</Badge>
 							<Badge
 								variant="outline"
 								className={statusColors[goal.status]}
 							>
-								{goal.status === "IN_PROGRESS" && "Em andamento"}
-								{goal.status === "COMPLETED" && "Concluído"}
-								{goal.status === "CANCELLED" && "Cancelado"}
+								{statusLabels[goal.status]}
 							</Badge>
 						</div>
 					</div>
@@ -203,9 +224,13 @@ export function GoalCard({
 					<Calendar className="w-4 h-4" />
 					<span>
 						Meta:{" "}
-						{format(new Date(goal.targetDate), "dd 'de' MMMM 'de' yyyy", {
-							locale: ptBR,
-						})}
+						{format(
+							new Date(goal.targetDate),
+							"dd 'de' MMMM 'de' yyyy",
+							{
+								locale: ptBR,
+							},
+						)}
 					</span>
 					{isOverdue && (
 						<AlertTriangle className="w-4 h-4 text-red-500" />
@@ -237,10 +262,15 @@ export function GoalCard({
 								{/* Marca indicando o ponto atual */}
 								<div
 									className="top-0 bottom-0 absolute flex flex-col justify-center items-center text-center"
-									style={{ left: `${timeProgress.progress}%` }}
+									style={{
+										left: `${timeProgress.progress}%`,
+									}}
 								>
-									<p className="flex justify-center items-center bg-gray-400 rounded-full outline-1 outline-amber-50 w-1 h-1 font-thin text-gray-600 dark:text-gray-200 text-xs" >
-										<span className="-mt-5">{timeProgress.progress}%</span></p>
+									<div className="flex justify-center items-center bg-gray-400 rounded-full outline-1 outline-amber-50 w-1 h-1 font-thin text-gray-600 dark:text-gray-200 text-xs">
+										<span className="-mt-5">
+											{timeProgress.progress}%
+										</span>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -275,7 +305,11 @@ export function GoalCard({
 						variant="ghost"
 						onClick={() => setIsExpanded(!isExpanded)}
 					>
-						{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
+						{isExpanded ? (
+							<ChevronDown className="rotate-180 transition-all duration-200" />
+						) : (
+							<ChevronDown className="rotate-0 transition-all duration-200" />
+						)}
 					</Button>
 				</div>
 

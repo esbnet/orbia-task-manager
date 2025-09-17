@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useTranslation } from "@/hooks/use-translation";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Daily } from "../../types";
@@ -50,6 +51,28 @@ export function DailyCard({
 	const repeatConfig = repeatTypeConfig[daily.repeat?.type as keyof typeof repeatTypeConfig] || repeatTypeConfig["Diariamente"];
 	const RepeatIcon = repeatConfig.icon;
 
+	const { t } = useTranslation();
+
+	const getDifficultyLabel = (difficulty: string) => {
+		switch (difficulty) {
+			case "Trivial": return t("difficulty.trivial");
+			case "Fácil": return t("difficulty.easy");
+			case "Médio": return t("difficulty.medium");
+			case "Difícil": return t("difficulty.hard");
+			default: return difficulty;
+		}
+	};
+
+	const getRepeatLabel = (repeatType: string) => {
+		switch (repeatType) {
+			case "Diariamente": return t("repeat.daily");
+			case "Semanalmente": return t("repeat.weekly");
+			case "Mensalmente": return t("repeat.monthly");
+			case "Anualmente": return t("repeat.yearly");
+			default: return repeatType;
+		}
+	};
+
 	const handleComplete = async () => {
 		if (isCompleting || completeLoading.isLoading) return;
 
@@ -59,10 +82,10 @@ export function DailyCard({
 				await completeLoading.executeAsync(
 					async () => {
 						await onComplete(daily.id);
-						toast.success(`Daily "${daily.title}" completada!`);
+						toast.success(t("messages.taskCompleted"))
 					},
 					undefined,
-					() => toast.error("Erro ao completar daily. Tente novamente.")
+					() => toast.error(t("messages.errorCompletingTask"))
 				);
 			} finally {
 				setIsCompleting(false);
@@ -100,7 +123,7 @@ export function DailyCard({
 									{!isCompleted && (
 										<Button
 											className="hover:bg-amber-100 rounded-full text-amber-600 hover:text-orange-600"
-											title="Concluir"
+											title={t("actions.complete")}
 											onClick={handleComplete}
 											size="icon"
 											variant="ghost"
@@ -117,7 +140,7 @@ export function DailyCard({
 									{onEdit && (
 										<Button
 											className="hover:bg-gray-100 rounded-full text-gray-600"
-											title="Editar"
+											title={t("actions.edit")}
 											onClick={() => onEdit(daily)}
 											variant="ghost"
 											size="icon"
@@ -131,11 +154,11 @@ export function DailyCard({
 
 						<div className="flex items-center gap-2 mb-2">
 							<Badge className={`text-xs ${difficulty.color}`}>
-								{difficulty.stars} {daily.difficulty}
+								{difficulty.stars} {getDifficultyLabel(daily.difficulty)}
 							</Badge>
 							<div className={`flex items-center gap-1 text-sm ${repeatConfig.color}`}>
 								<RepeatIcon className="w-4 h-4" />
-								<span>{daily.repeat?.type}</span>
+								<span>{getRepeatLabel(daily.repeat?.type || "")}</span>
 							</div>
 						</div>
 
@@ -149,7 +172,7 @@ export function DailyCard({
 						{isCompleted && nextAvailableAt && (
 							<div className="flex items-center gap-1 text-gray-500 text-sm">
 								<Clock className="w-4 h-4" />
-								<span>Disponível em {formatNextAvailable(nextAvailableAt)}</span>
+								<span>{t("actions.availableIn")} {formatNextAvailable(nextAvailableAt)}</span>
 							</div>
 						)}
 

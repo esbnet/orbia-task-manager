@@ -1,3 +1,5 @@
+import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
+import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
 import { HttpGoalRepository } from "@/infra/repositories/http/http-goal-repository";
 import { DailyService } from "./daily-service";
 import { GoalService } from "./goal-service";
@@ -50,6 +52,20 @@ class ServiceContainer {
 		return this.repositories.get("daily");
 	}
 
+	private getDailyLogRepository() {
+		if (!this.repositories.has("dailyLog")) {
+			this.repositories.set("dailyLog", new PrismaDailyLogRepository());
+		}
+		return this.repositories.get("dailyLog");
+	}
+
+	private getDailyPeriodRepository() {
+		if (!this.repositories.has("dailyPeriod")) {
+			this.repositories.set("dailyPeriod", new PrismaDailyPeriodRepository());
+		}
+		return this.repositories.get("dailyPeriod");
+	}
+
 	// Service getters with lazy initialization
 	getGoalService(): GoalService {
 		if (!this.services.goalService) {
@@ -74,7 +90,7 @@ class ServiceContainer {
 
 	getDailyService(): DailyService {
 		if (!this.services.dailyService) {
-			this.services.dailyService = new DailyService(this.getDailyRepository());
+			this.services.dailyService = new DailyService(this.getDailyRepository(), this.getDailyLogRepository(), this.getDailyPeriodRepository());
 		}
 		return this.services.dailyService;
 	}

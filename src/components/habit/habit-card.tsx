@@ -37,7 +37,14 @@ const statusColors = {
 	"Cancelado": "bg-gray-50 text-gray-700 border border-gray-200",
 };
 
-const difficultyConfig = {
+type DifficultyLevel = "Trivial" | "Fácil" | "Médio" | "Difícil";
+
+interface DifficultyConfig {
+	color: string;
+	stars: string;
+}
+
+const difficultyConfig: Record<DifficultyLevel, DifficultyConfig> = {
 	"Trivial": { color: "bg-gray-50 text-gray-700 border border-gray-200", stars: "⭐" },
 	"Fácil": { color: "bg-green-50 text-green-700 border border-green-200", stars: "⭐⭐" },
 	"Médio": { color: "bg-yellow-50 text-yellow-800 border border-yellow-200", stars: "⭐⭐⭐" },
@@ -72,7 +79,7 @@ export const HabitCard = memo(function HabitCard({
 		habit.status === "Em Andamento" && habit.lastCompletedDate && habit.createdAt < new Date();
 
 	const difficultyBadge =
-		difficultyConfig[habit.difficulty as keyof typeof difficultyConfig] ||
+		difficultyConfig[habit.difficulty as DifficultyLevel] ||
 		difficultyConfig["Fácil"];
 
 	const handleStatusChange = (newStatus: Habit["status"]) => {

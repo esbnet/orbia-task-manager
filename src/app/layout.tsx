@@ -33,25 +33,47 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const locale = await getRequestLocale();
-	const dict = getDictionary(locale);
+	try {
+		const locale = await getRequestLocale();
+		const dict = getDictionary(locale);
 
-	return (
-		<html lang={locale} suppressHydrationWarning>
-			<body
-				className={`${lobster.className}  ${kodeMono.className} antialiased flex min-h-screen flex-col`}
-			>
-				<I18nProvider locale={locale} dict={dict}>
-					<AuthProvider>
-						<QueryClientProviderWrapper>
-							<ThemeProviderWrapper>
-								<main className="flex-1">{children}</main>
-								<Toaster richColors />
-							</ThemeProviderWrapper>
-						</QueryClientProviderWrapper>
-					</AuthProvider>
-				</I18nProvider>
-			</body>
-		</html>
-	);
+		return (
+			<html lang={locale} suppressHydrationWarning>
+				<body
+					className={`${lobster.className}  ${kodeMono.className} antialiased flex min-h-screen flex-col`}
+				>
+					<I18nProvider locale={locale} dict={dict}>
+						<AuthProvider>
+							<QueryClientProviderWrapper>
+								<ThemeProviderWrapper>
+									<main className="flex-1">{children}</main>
+									<Toaster richColors />
+								</ThemeProviderWrapper>
+							</QueryClientProviderWrapper>
+						</AuthProvider>
+					</I18nProvider>
+				</body>
+			</html>
+		);
+	} catch (error) {
+		const dict = getDictionary("pt-BR");
+		return (
+			<html lang="pt-BR" suppressHydrationWarning>
+				<body
+					className={`${lobster.className}  ${kodeMono.className} antialiased flex min-h-screen flex-col`}
+				>
+					<I18nProvider locale="pt-BR" dict={dict}>
+						<AuthProvider>
+							<QueryClientProviderWrapper>
+								<ThemeProviderWrapper>
+									<main className="flex-1">{children}</main>
+									<Toaster richColors />
+								</ThemeProviderWrapper>
+							</QueryClientProviderWrapper>
+						</AuthProvider>
+					</I18nProvider>
+				</body>
+			</html>
+		);
+	}
 }

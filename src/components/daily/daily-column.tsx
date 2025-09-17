@@ -5,7 +5,7 @@ import { CalendarCheck, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useTranslation } from "@/hooks/use-translation";
 import { toast } from "sonner";
 import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
@@ -34,6 +34,7 @@ export const DailyColumn = () => {
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [dailyToDelete, setDailyToDelete] = useState<Daily | null>(null);
 
+	const { t } = useTranslation()
 
 	// Usar dados do React Query
 	const availableDailies = dailiesData?.availableDailies || [];
@@ -46,7 +47,7 @@ export const DailyColumn = () => {
 		try {
 			await completeDailyMutation(dailyId);
 		} catch (error) {
-			toast.error('Erro ao completar daily. Tente novamente.');
+			toast.error(t("messages.errorCompletingTask"));
 		}
 	}, [completeDailyMutation]);
 
@@ -67,10 +68,10 @@ export const DailyColumn = () => {
 				setEditingDaily(data.daily);
 				setIsFormOpen(true);
 			} else {
-				toast.error('Erro ao carregar dados da diária. Tente novamente.');
+				toast.error(t('messages.errorLoadingData'));
 			}
 		} catch (error) {
-			toast.error('Erro ao carregar dados da diária. Tente novamente.');
+			toast.error(t('messages.errorLoadingData'));
 		}
 	};
 
@@ -85,7 +86,7 @@ export const DailyColumn = () => {
 			await createDailyMutation.mutateAsync(dailyData);
 			setIsFormOpen(false);
 		} catch (error) {
-			toast.error("Erro ao criar daily. Tente novamente.");
+			toast.error(t('messages.errorSaving'));
 		}
 	};
 
@@ -100,7 +101,7 @@ export const DailyColumn = () => {
 			// Se for um daily mock, criar um novo daily real
 			if (editingDaily.id.startsWith('mock-')) {
 				const result = await createDailyMutation.mutateAsync(dailyData);
-				toast.success(`Daily "${dailyData.title}" criada com sucesso!`);
+				toast.success(t('messages.taskCreated'));
 			} else {
 				// Para dailies reais, atualizar normalmente
 				await updateDailyMutation.mutateAsync({
@@ -116,29 +117,9 @@ export const DailyColumn = () => {
 			setIsFormOpen(false);
 			setEditingDaily(null);
 		} catch (error) {
-			toast.error("Erro ao salvar daily. Tente novamente.");
+			toast.error(t('messages.errorSaving'));
 		}
 	};
-
-	// Deletar daily
-	// const handleDeleteDaily = (id: string) => {
-	// 	const daily = availableDailies.find(d => d.id === id);
-	// 	if (daily) {
-	// 		setDailyToDelete({
-	// 			id: daily.id,
-	// 			userId: daily.userId,
-	// 			title: daily.title,
-	// 			observations: daily.observations,
-	// 			difficulty: daily.difficulty as any,
-	// 			repeat: { type: daily.repeatType as any, frequency: daily.repeatFrequency },
-	// 			tags: daily.tags,
-	// 			startDate: new Date(),
-	// 			tasks: [],
-	// 			createdAt: new Date(),
-	// 		});
-	// 		setIsDeleteDialogOpen(true);
-	// 	}
-	// };
 
 	const confirmDeleteDaily = async () => {
 		if (dailyToDelete) {
@@ -163,7 +144,7 @@ export const DailyColumn = () => {
 						<div className="flex items-center gap-2">
 							<CalendarCheck className="w-6 h-6 text-amber-600" />
 							<CardTitle className="font-bold text-amber-900 text-xl">
-								Diárias
+								{t('taskTypes.daily')}
 							</CardTitle>
 						</div>
 						<Button
@@ -172,18 +153,18 @@ export const DailyColumn = () => {
 							className="bg-amber-600 hover:bg-amber-700 text-white"
 						>
 							<Plus className="mr-1 w-4 h-4" />
-							Nova Diária
+							{t('forms.newDaily')}
 						</Button>
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
 					<div className="flex items-center gap-4 text-amber-700 text-sm">
 						<div className="flex items-center gap-1">
-							<span>{availableDailies.length} disponíveis</span>
+							<span>{availableDailies.length} {t('tasks.availableTasks')}</span>
 						</div>
 						{completedDailies.length > 0 && (
 							<div className="flex items-center gap-1">
-								<span>{completedDailies.length} completadas hoje</span>
+								<span>{completedDailies.length} {t('tasks.completedToday')}</span>
 							</div>
 						)}
 					</div>
@@ -195,7 +176,7 @@ export const DailyColumn = () => {
 				<Card className="bg-blue-50 border-blue-200">
 					<CardContent className="py-8 text-center">
 						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
-						<p className="text-blue-600">Carregando diárias...</p>
+						<p className="text-blue-600">{t('tasks.loadingTasks')}</p>
 					</CardContent>
 				</Card>
 			)}
@@ -266,17 +247,17 @@ export const DailyColumn = () => {
 					<CardContent className="py-8 text-center">
 						<CalendarCheck className="mx-auto mb-3 w-12 h-12 text-gray-400" />
 						<h3 className="mb-2 font-medium text-gray-600 text-lg">
-							Nenhuma diária disponível
+							{t("noTasks.noTasksAvailable")}
 						</h3>
 						<p className="mb-4 text-gray-500">
-							Comece criando sua primeira diária para organizar sua rotina
+							{t("noTasks.noTaskAvailableDescription")}
 						</p>
 						<Button
 							onClick={() => setIsFormOpen(true)}
 							className="bg-amber-600 hover:bg-amber-700"
 						>
 							<Plus className="mr-2 w-4 h-4" />
-							Criar Primeira Diária
+							{t("noTasks.createTask")}
 						</Button>
 					</CardContent>
 				</Card>
@@ -288,17 +269,6 @@ export const DailyColumn = () => {
 				onSubmit={editingDaily ? handleEditDaily : handleCreateDaily}
 				onCancel={closeForm}
 				open={isFormOpen}
-			/>
-
-			{/* Delete Confirmation Dialog */}
-			<ConfirmationDialog
-				open={isDeleteDialogOpen}
-				onOpenChange={setIsDeleteDialogOpen}
-				onConfirm={confirmDeleteDaily}
-				title="Remover Daily"
-				description={`Tem certeza que deseja remover a daily "${dailyToDelete?.title}"? Esta ação não pode ser desfeita.`}
-				confirmText="Remover"
-				cancelText="Cancelar"
 			/>
 		</div >
 	);

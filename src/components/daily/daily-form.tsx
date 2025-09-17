@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useDailyContext } from "@/contexts/daily-context";
 import { useTags } from "@/hooks/use-tags";
+import { useTranslation } from "@/hooks/use-translation";
 import type { Daily } from "@/types";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -57,18 +58,19 @@ export function DailyForm({
 }: DailyFormProps) {
 	const { updateDaily } = useDailyContext();
 	const { tagOptions } = useTags();
+	const { t } = useTranslation();
 
 	const [title, setTitle] = useState(daily.title || "");
 	const [observations, setObservations] = useState(daily.observations || "");
 	const [tasks] = useState<string[]>(daily.tasks || []);
 	const [difficulty, setDifficulty] = useState<DailyDifficulty>(
-		daily.difficulty || "Fácil",
+		daily.difficulty || t('difficulty.easy'),
 	);
 	const [startDate, setStartDate] = useState<Date>(
 		daily.startDate || new Date(),
 	);
 	const [repeatType, setRepeatType] = useState<DailyRepeatType>(
-		daily.repeat.type || "Semanalmente",
+		daily.repeat.type || t('repeat.weekly'),
 	);
 	const [repeatFrequency, setRepeatFrequency] = useState<number>(
 		daily.repeat.frequency || 1,
@@ -82,9 +84,9 @@ export function DailyForm({
 	useEffect(() => {
 		setTitle(daily.title || "");
 		setObservations(daily.observations || "");
-		setDifficulty(daily.difficulty || "Fácil");
+		setDifficulty(daily.difficulty || t('difficulty.easy'));
 		setStartDate(daily.startDate || new Date());
-		setRepeatType(daily.repeat?.type || "Semanalmente");
+		setRepeatType(daily.repeat?.type || t('repeat.weekly'));
 		setRepeatFrequency(daily.repeat?.frequency || 1);
 		setTags(daily.tags || []);
 	}, [daily]);
@@ -115,7 +117,7 @@ export function DailyForm({
 						},
 						tags,
 					} as Omit<Daily, "id" | "createdAt">);
-					toast.success("Diária criada com sucesso!");
+					toast.success(t("messages.dailyCreated"));
 					setInternalOpen(false);
 					if (onCancel) onCancel();
 					return;
@@ -124,19 +126,6 @@ export function DailyForm({
 
 			// Para todos os casos (criação e edição), usar a função onSubmit se fornecida
 			if (onSubmit) {
-				// console.log('DailyForm: Chamando onSubmit com dados:', {
-				// 	title,
-				// 	observations,
-				// 	tasks,
-				// 	difficulty,
-				// 	startDate,
-				// 	repeat: {
-				// 		type: repeatType as DailyRepeatType,
-				// 		frequency: repeatFrequency,
-				// 	},
-				// 	tags,
-				// });
-
 				await onSubmit({
 					title,
 					observations,
@@ -151,7 +140,7 @@ export function DailyForm({
 				} as Omit<Daily, "id" | "createdAt">);
 
 				// console.log('DailyForm: onSubmit executado com sucesso');
-				toast.success(daily.id.startsWith('mock-') || !daily.id ? "Diária criada com sucesso!" : "Diária atualizada com sucesso!");
+				toast.success(daily.id.startsWith('mock-') || !daily.id ? t("messages.dailyCreated") : t("messages.dailyUpdated"));
 				setInternalOpen(false);
 				if (onCancel) onCancel();
 				return;
@@ -173,11 +162,11 @@ export function DailyForm({
 				tags,
 			} as Daily);
 
-			toast.success("Hábito atualizado com sucesso!");
+			toast.success(t("messages.dailyUpdated"));
 			setInternalOpen(false);
 			if (onCancel) onCancel();
 		} catch (error) {
-			toast.error(`Erro ao salvar diária: ${error}`);
+			toast.error(`${t("messages.errorSaving")}: ${error}`);
 		} finally {
 			setIsLoading(false);
 		}
@@ -202,9 +191,9 @@ export function DailyForm({
 			>
 				<DialogContent className="flex flex-col gap-4 shadow-xl backdrop-blur-sm backdrop-opacity-0">
 					<DialogHeader className="flex flex-col gap-1">
-						<DialogTitle>Editar</DialogTitle>
+						<DialogTitle>{t("forms.editDaily")}</DialogTitle>
 						<DialogDescription className="text-zinc-400 text-sm">
-							Edite os detalhes da diária
+							{t("forms.editDetails")}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -213,33 +202,33 @@ export function DailyForm({
 						className="flex flex-col gap-4 bg-gray-100/20 p-2 rounded-lg animate-[fadeIn_1s_ease-in-out_forwards]"
 					>
 						<div className="flex flex-col gap-1">
-							<Label>Título</Label>
+							<Label>{t("forms.title")}</Label>
 							<Input
 								value={title}
 								onChange={(e) => setTitle(e.target.value)}
-								placeholder="Nova diária"
+								placeholder={t("forms.newDaily")}
 								required
 							/>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Observação</Label>
+							<Label>{t("forms.observations")}</Label>
 							<Input
 								value={observations}
 								onChange={(e) =>
 									setObservations(e.target.value)
 								}
-								placeholder="Adicionar observações"
+								placeholder={t("forms.addObservations")}
 							/>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Lista de tarefas</Label>
+							<Label>{t("forms.taskList")}</Label>
 							<DailySubtaskList
 								dailyId={daily.id}
 								initialSubtasks={daily.subtasks || []}
 							/>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Dificuldade</Label>
+							<Label>{t("forms.difficulty")}</Label>
 							<Select
 								onValueChange={(value) =>
 									setDifficulty(value as DailyDifficulty)
@@ -248,7 +237,7 @@ export function DailyForm({
 							>
 								<SelectTrigger className="w-full">
 									<SelectValue
-										placeholder="Dificuldade"
+										placeholder={t("forms.difficulty")}
 										className="text-zinc-300"
 									/>
 								</SelectTrigger>
@@ -257,22 +246,22 @@ export function DailyForm({
 									defaultValue={difficulty}
 								>
 									<SelectItem value="Trivial">
-										Trivial ⭐
+										{t("difficulty.trivial")} ⭐
 									</SelectItem>
 									<SelectItem value="Fácil">
-										Fácil ⭐⭐
+										{t("difficulty.easy")} ⭐⭐
 									</SelectItem>
 									<SelectItem value="Média">
-										Média ⭐⭐⭐
+										{t("difficulty.medium")} ⭐⭐⭐
 									</SelectItem>
 									<SelectItem value="Difícil">
-										Difícil ⭐⭐⭐⭐
+										{t("difficulty.hard")} ⭐⭐⭐⭐
 									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Data de início</Label>
+							<Label>{t("forms.startDate")}</Label>
 							<Popover>
 								<PopoverTrigger asChild>
 									<Button
@@ -286,7 +275,7 @@ export function DailyForm({
 												locale: ptBR,
 											})
 										) : (
-											<span>Pick a date</span>
+											<span>{t("common.pickDate")}</span>
 										)}
 									</Button>
 								</PopoverTrigger>
@@ -301,7 +290,7 @@ export function DailyForm({
 							</Popover>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Repetição</Label>
+							<Label>{t("forms.repeat")}</Label>
 							<Select
 								onValueChange={(value) =>
 									setRepeatType(value as DailyRepeatType)
@@ -310,7 +299,7 @@ export function DailyForm({
 							>
 								<SelectTrigger className="w-[180px]">
 									<SelectValue
-										placeholder="Repetição"
+										placeholder={t("forms.repeat")}
 										className="text-zinc-300"
 									/>
 								</SelectTrigger>
@@ -319,22 +308,22 @@ export function DailyForm({
 									defaultValue={repeatType}
 								>
 									<SelectItem value="Diariamente">
-										Diariamente
+										{t("repeat.daily")}
 									</SelectItem>
 									<SelectItem value="Semanalmente">
-										Semanalmente
+										{t("repeat.weekly")}
 									</SelectItem>
 									<SelectItem value="Mensalmente">
-										Mensalmente
+										{t("repeat.monthly")}
 									</SelectItem>
 									<SelectItem value="Anualmente">
-										Anualmente
+										{t("repeat.yearly")}
 									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>A cada</Label>
+							<Label>{t("forms.every")}</Label>
 							<div className="flex items-center gap-2">
 								<Input
 									type="number"
@@ -352,20 +341,20 @@ export function DailyForm({
 									required
 								/>
 								<span>
-									{repeatType === "Diariamente"
-										? "Dia"
-										: repeatType === "Semanalmente"
-											? "Semana"
-											: repeatType === "Mensalmente"
-												? "Mês"
-												: repeatType === "Anualmente"
-													? "Ano"
+									{repeatType === t("repeat.daily")
+										? t("repeat.day")
+										: repeatType === t("repeat.weekly")
+											? t("repeat.week")
+											: repeatType === t("repeat.monthly")
+												? t("repeat.month")
+												: repeatType === t("repeat.yearly")
+													? t("repeat.year")
 													: ""}
 								</span>
 							</div>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Etiquetas</Label>
+							<Label>{t('forms.tags')}</Label>
 							<MultiSelect
 								key={`tags-${tagOptions.length}`}
 								id="tags"

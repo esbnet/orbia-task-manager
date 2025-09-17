@@ -27,6 +27,11 @@ const difficultyConfig = {
 	"Difícil": { color: "bg-red-50 text-red-700 border border-red-200", stars: "⭐⭐⭐⭐" },
 };
 
+const statusConfig = {
+	completed: "bg-green-50 text-green-700 border border-green-200",
+	pending: "bg-blue-50 text-blue-700 border border-blue-200",
+};
+
 export function TodoCard({
 	todo,
 	onEdit,
@@ -104,7 +109,7 @@ export function TodoCard({
 							</Badge>
 
 							<Badge
-								className={`text-xs ${isCompleted ? "bg-green-50 text-green-700 border border-green-200" : "bg-blue-50 text-blue-700 border border-blue-200"}`}
+								className={`text-xs ${statusConfig[isCompleted ? 'completed' : 'pending']}`}
 								title="Status"
 							>
 								<CheckCircle className="w-3 h-3" />

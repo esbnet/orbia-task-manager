@@ -4,17 +4,76 @@
 "use client";
 
 import { useTranslation } from "@/hooks/use-translation";
-// ... outros imports
+import type { Daily, DailyDifficulty } from "@/types";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { useDailyContext } from "@/contexts/daily-context";
+import type { DailyRepeatType } from "@/types/daily";
+import type { Popover, PopoverTrigger, PopoverContent } from "@radix-ui/react-popover";
+import type { SelectTrigger, SelectValue, SelectContent, SelectItem } from "@radix-ui/react-select";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, Calendar, SaveIcon, Trash2 } from "lucide-react";
+import { format } from "path";
+import { title } from "process";
+import { type FormEvent, useState } from "react";
+import type { Select, Button } from "react-day-picker";
+import { toast } from "sonner";
+import { MultiSelect } from "../ui/multi-select";
+import { DailySubtaskList } from "./daily-subtask-list";
+
+interface DailyFormProps {
+  daily: Daily;
+  onSubmit?: (daily: Omit<Daily, "id" | "createdAt">) => Promise<void>;
+  onCancel?: () => void;
+  open?: boolean;
+}
 
 export function DailyForm({ daily, onSubmit, onCancel, open = false }: DailyFormProps) {
     const { t } = useTranslation();
+    function handleOpenChange(open: boolean): void {
+        throw new Error("Function not implemented.");
+    }
+
+    function handleUpdateDaily(event: FormEvent<HTMLFormElement>): void {
+        throw new Error("Function not implemented.");
+    }
+
+    function setTitle(value: string): void {
+        throw new Error("Function not implemented.");
+    }
+
+    function setObservations(value: string): void {
+        throw new Error("Function not implemented.");
+    }
+
+    function setDifficulty(arg0: string) {
+        throw new Error("Function not implemented.");
+    }
+
+    function setStartDate(event: SyntheticEvent<SVGSVGElement, Event>): void {
+        throw new Error("Function not implemented.");
+    }
+
+    function setRepeatType(arg0: string) {
+        throw new Error("Function not implemented.");
+    }
+
+    function setRepeatFrequency(arg0: number): void {
+        throw new Error("Function not implemented.");
+    }
+
+    function setTags(value: string[]): void {
+        throw new Error("Function not implemented.");
+    }
+
     // ... resto do código
 
     // Exemplo de como usar as traduções nos elementos do formulário:
     
     return (
         <>
-            <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+            <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogContent className="flex flex-col gap-4 shadow-xl backdrop-blur-sm backdrop-opacity-0">
                     <DialogHeader className="flex flex-col gap-1">
                         <DialogTitle>{t("forms.editDaily")}</DialogTitle>
