@@ -7,9 +7,10 @@ import { QueryClientProviderWrapper } from "@/components/providers/query-client-
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ThemeProviderWrapper } from "@/components/providers/theme-provider-wrapper";
 import { Toaster } from "@/components/ui/sonner";
+import { PWARegister } from "./pwa-register";
 import { getRequestLocale } from "@/i18n/index";
 import { getDictionary } from "@/i18n/shared";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 const lobster = Lobster({
 	subsets: ["latin"],
@@ -26,6 +27,20 @@ const kodeMono = Kode_Mono({
 export const metadata: Metadata = {
 	title: "Task Manager",
 	description: "Gerenciador de Tarefas",
+	manifest: "/manifest.json",
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "default",
+		title: "Task Manager",
+	},
+};
+
+export const viewport: Viewport = {
+	themeColor: "#000000",
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 1,
+	userScalable: false,
 };
 
 export default async function RootLayout({
@@ -48,6 +63,7 @@ export default async function RootLayout({
 								<ThemeProviderWrapper>
 									<main className="flex-1">{children}</main>
 									<Toaster richColors />
+									<PWARegister />
 								</ThemeProviderWrapper>
 							</QueryClientProviderWrapper>
 						</AuthProvider>
@@ -68,6 +84,7 @@ export default async function RootLayout({
 								<ThemeProviderWrapper>
 									<main className="flex-1">{children}</main>
 									<Toaster richColors />
+									<PWARegister />
 								</ThemeProviderWrapper>
 							</QueryClientProviderWrapper>
 						</AuthProvider>

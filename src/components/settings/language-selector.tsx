@@ -1,10 +1,10 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-import { useUserConfig } from "@/hooks/use-user-config";
+
 import { useTranslation } from "@/hooks/use-translation";
+import { useUserConfig } from "@/hooks/use-user-config";
 import { LOCALE_COOKIE } from "@/i18n/shared";
-import { Languages } from "lucide-react";
 
 const languages = [
   { code: "pt-BR", label: "🇧🇷 PT" },
@@ -28,10 +28,10 @@ export function LanguageSelector() {
 
   return (
     <Select value={locale} onValueChange={handleLanguageChange}>
-      <SelectTrigger className="w-16 h-8 border-0 bg-transparent hover:bg-accent">
-        <div className="flex items-center gap-1">
-          <Languages className="w-3 h-3" />
-          <span className="text-xs font-medium">{currentLanguage?.label.split(' ')[1]}</span>
+      <SelectTrigger className="bg-transparent hover:bg-accent p-1 border-0 w-14 h-6">
+        <div className="flex items-center">
+          {/* <Languages className="w-3 h-3" /> */}
+          <span className="font-medium text-xs">{currentLanguage?.label.split(' ')[1]}</span>
         </div>
       </SelectTrigger>
       <SelectContent align="end">
