@@ -96,8 +96,8 @@ export const TodoColumn = () => {
 	};
 
 	return (
-		<div className="flex flex-col gap-4">
-			<Card className="bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200">
+		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-blue-50/30 to-sky-50/30 dark:from-blue-950/20 dark:to-sky-950/20 rounded-xl border border-blue-100/50 dark:border-blue-800/30">
+			<Card className="bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/50 dark:to-sky-900/50 border-blue-200 dark:border-blue-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">

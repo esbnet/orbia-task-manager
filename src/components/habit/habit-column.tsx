@@ -150,9 +150,9 @@ export function HabitColumn() {
 	};
 
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border border-green-100/50 dark:border-green-800/30">
 			{/* Header */}
-			<Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+			<Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/50 dark:to-blue-900/50 border-green-200 dark:border-green-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">

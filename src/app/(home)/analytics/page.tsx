@@ -2,6 +2,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PerformanceAnalytics } from "@/components/analytics/performance-analytics";
 import { GoalProgressTracker } from "@/components/analytics/goal-progress-tracker";
 import { IndicatorsDashboard } from "@/components/dashboard/indicators-dashboard";
+import { AdvancedInsights } from "@/components/analytics/advanced-insights";
+import { WeeklyReportGenerator } from "@/components/analytics/weekly-report-generator";
+import { TimeTrackingDashboard } from "@/components/analytics/time-tracking-dashboard";
 
 export default function AnalyticsPage() {
   return (
@@ -14,9 +17,12 @@ export default function AnalyticsPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="performance">Desempenho</TabsTrigger>
+          <TabsTrigger value="insights">Insights</TabsTrigger>
+          <TabsTrigger value="time">Tempo</TabsTrigger>
+          <TabsTrigger value="reports">Relatórios</TabsTrigger>
           <TabsTrigger value="goals">Metas</TabsTrigger>
         </TabsList>
 
@@ -26,6 +32,18 @@ export default function AnalyticsPage() {
 
         <TabsContent value="performance" className="space-y-6">
           <PerformanceAnalytics />
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-6">
+          <AdvancedInsights />
+        </TabsContent>
+
+        <TabsContent value="time" className="space-y-6">
+          <TimeTrackingDashboard />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <WeeklyReportGenerator />
         </TabsContent>
 
         <TabsContent value="goals" className="space-y-6">

@@ -125,9 +125,9 @@ export function GoalColumn() {
 	};
 
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-purple-50/30 to-indigo-50/30 dark:from-purple-950/20 dark:to-indigo-950/20 rounded-xl border border-purple-100/50 dark:border-purple-800/30">
 			{/* Header */}
-			<Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+			<Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/50 dark:to-blue-900/50 border-purple-200 dark:border-purple-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
