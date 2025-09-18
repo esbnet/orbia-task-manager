@@ -1,7 +1,7 @@
 {
-  "name": "Task Manager",
-  "short_name": "TaskManager",
-  "description": "Gerenciador de Tarefas com Clean Architecture",
+  "name": "Orbia",
+  "short_name": "Orbia",
+  "description": "Rotina, foco e progresso em um só lugar",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

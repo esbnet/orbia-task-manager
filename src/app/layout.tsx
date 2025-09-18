@@ -1,5 +1,6 @@
 import "./globals.css";
 
+import type { Metadata, Viewport } from "next";
 import { Kode_Mono, Lobster } from "next/font/google";
 
 import { I18nProvider } from "@/components/providers/i18n-provider";
@@ -7,10 +8,9 @@ import { QueryClientProviderWrapper } from "@/components/providers/query-client-
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ThemeProviderWrapper } from "@/components/providers/theme-provider-wrapper";
 import { Toaster } from "@/components/ui/sonner";
-import { PWARegister } from "./pwa-register";
 import { getRequestLocale } from "@/i18n/index";
 import { getDictionary } from "@/i18n/shared";
-import type { Metadata, Viewport } from "next";
+import { PWARegister } from "./pwa-register";
 
 const lobster = Lobster({
 	subsets: ["latin"],
@@ -25,13 +25,13 @@ const kodeMono = Kode_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Task Manager",
-	description: "Gerenciador de Tarefas",
+	title: "Orbia",
+	description: "Rotina, foco e progresso em um só lugar",
 	manifest: "/manifest.json",
 	appleWebApp: {
 		capable: true,
 		statusBarStyle: "default",
-		title: "Task Manager",
+		title: "Orbia",
 	},
 };
 
