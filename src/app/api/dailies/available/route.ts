@@ -56,14 +56,14 @@ export async function GET() {
 				} else {
 					// Verificar se o período mais recente está completado
 					if (latestPeriod.isCompleted) {
-						// Verificar se ainda está no mesmo período (hoje)
+						// Verificar se foi completado hoje (usar updatedAt quando isCompleted = true)
 						const now = new Date();
-						const periodEnd = latestPeriod.endDate || new Date();
+						const completedAt = new Date(latestPeriod.updatedAt);
+						const isCompletedToday = completedAt.toDateString() === now.toDateString();
 
-
-						if (now < periodEnd) {
-							// Ainda no período atual = completada hoje
-							const nextAvailableAt = calculateNextPeriodStart(daily.repeatType, periodEnd);
+						if (isCompletedToday) {
+							// Completada hoje = vai para lista de completadas
+							const nextAvailableAt = calculateNextPeriodStart(daily.repeatType, completedAt);
 
 							completedToday.push({
 								id: daily.id,
@@ -83,7 +83,7 @@ export async function GET() {
 								},
 							});
 						} else {
-							// Período expirou = disponível novamente
+							// Completada em outro dia = disponível novamente
 							availableDailies.push({
 								id: daily.id,
 								title: daily.title,

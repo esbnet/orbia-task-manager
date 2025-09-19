@@ -1,3 +1,5 @@
+"use client";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PerformanceAnalytics } from "@/components/analytics/performance-analytics";
 import { GoalProgressTracker } from "@/components/analytics/goal-progress-tracker";
@@ -5,8 +7,12 @@ import { IndicatorsDashboard } from "@/components/dashboard/indicators-dashboard
 import { AdvancedInsights } from "@/components/analytics/advanced-insights";
 import { WeeklyReportGenerator } from "@/components/analytics/weekly-report-generator";
 import { TimeTrackingDashboard } from "@/components/analytics/time-tracking-dashboard";
+import { useSearchParams } from "next/navigation";
 
 export default function AnalyticsPage() {
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "overview";
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
@@ -16,7 +22,7 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="performance">Desempenho</TabsTrigger>

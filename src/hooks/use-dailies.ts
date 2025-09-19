@@ -93,16 +93,10 @@ export function useCompleteDaily() {
 			throw new Error("Erro ao buscar daily atualizado");
 		},
 		onSuccess: (data, id) => {
-			// Update cache do daily específico
-			if (data) {
-				queryClient.setQueryData(dailyKeys.detail(id), data);
-			}
-
-			// Invalidate especificamente a query de dailies disponíveis primeiro
-			queryClient.invalidateQueries({ queryKey: [...dailyKeys.lists(), "available"] });
-
-			// Depois invalidate todas as outras queries relacionadas a dailies
-			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
+			// Invalidate imediatamente todas as queries de dailies
+			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
+			// Força refetch da query de dailies disponíveis
+			queryClient.refetchQueries({ queryKey: [...dailyKeys.lists(), "available"] });
 		},
 	});
 }

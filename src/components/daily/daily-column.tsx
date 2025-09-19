@@ -137,8 +137,8 @@ export const DailyColumn = () => {
 	};
 
 	return (
-		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-amber-50/30 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/20 rounded-xl border border-amber-100/50 dark:border-amber-800/30">
-			<Card className="bg-gradient-to-r from-amber-50 to-blue-50 dark:from-amber-900/50 dark:to-blue-900/50 border-amber-200 dark:border-amber-700">
+		<div className="flex flex-col gap-4 bg-gradient-to-br from-amber-50/30 dark:from-amber-950/20 to-orange-50/30 dark:to-orange-950/20 p-4 border border-amber-100/50 dark:border-amber-800/30 rounded-xl">
+			<Card className="bg-gradient-to-r from-amber-50 dark:from-amber-900/50 to-blue-50 dark:to-blue-900/50 border-amber-200 dark:border-amber-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
