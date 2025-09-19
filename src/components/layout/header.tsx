@@ -1,9 +1,5 @@
 "use client";
 
-import { UserAvatar } from "@/components/auth/user-avatar";
-import { MainNav } from "@/components/layout/main-nav";
-import { LanguageSelector } from "@/components/settings/language-selector";
-import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { useSession } from "next-auth/react";
 import Logo from "../logo";
 
@@ -32,10 +28,10 @@ export function Header() {
     // }
 
     return (
-        <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur px-2 py-4 border-b w-full">
+        <header className="top-0 z-40 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur px-2 py-4 border-b w-full">
             <div className="flex md:flex-row flex-col justify-between items-center gap-4 m-auto h-fit">
                 <Logo />
-                <div className="flex items-center gap-4">
+                {/* <div className="flex items-center gap-4">
                     <div className="flex justify-center items-center px-4 py-2.5 border-1 rounded-full">
                         <MainNav />
                     </div>
@@ -44,7 +40,7 @@ export function Header() {
                         <LanguageSelector />
                         <ThemeToggle />
                     </div>
-                </div>
+                </div> */}
             </div>
         </header>
     );
