@@ -39,7 +39,7 @@ export function UserAvatar({ user }: UserAvatarProps) {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="font-medium text-sm leading-none">{user.name}</p>
@@ -62,8 +62,8 @@ export function UserAvatar({ user }: UserAvatarProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <form action={signOutAction}>
+        <DropdownMenuItem>
+          <form action={signOutAction} className="w-full">
             <button
               type="submit"
               className="flex items-center w-full"
