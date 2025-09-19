@@ -4,7 +4,7 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Task Manager API',
+      title: 'Orbia - Task Manager API',
       version: '1.0.0',
       description: 'API para gerenciamento de tarefas, hábitos e metas',
     },

@@ -4,8 +4,8 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-	title: "Task Manager",
-	description: "Gerenciador de Tarefas",
+	title: "orbia",
+	description: "Rotina, foco e progresso em um só lugar",
 };
 
 export default async function RootLayout({
