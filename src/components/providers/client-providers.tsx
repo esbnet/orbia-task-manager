@@ -11,24 +11,41 @@ import { TagsProvider } from "@/contexts/tags-context";
 import { TodoProvider } from "@/contexts/todo-context";
 import { TodoSubtaskProvider } from "@/contexts/todo-subtask-context";
 
-export function ClientProviders() {
+interface ClientProvidersProps {
+	columnFilter?: "all" | "habits" | "dailies" | "todos" | "goals";
+}
+
+export function ClientProviders({ columnFilter = "all" }: ClientProvidersProps) {
+	const getGridCols = () => {
+		if (columnFilter === "all") return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+		return "grid-cols-1";
+	};
+
 	return (
 		<TagsProvider>
-			<div className="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-cols-max h-full">
-				<HabitProvider>
-					<HabitColumn />
-				</HabitProvider>
-				<DailyProvider>
-					<DailySubtaskProvider>
-						<DailyColumn />
-					</DailySubtaskProvider>
-				</DailyProvider>
-				<TodoProvider>
-					<TodoSubtaskProvider>
-						<TodoColumn />
-					</TodoSubtaskProvider>
-				</TodoProvider>
-				<GoalColumn />
+			<div className={`gap-4 grid ${getGridCols()} auto-cols-max h-full`}>
+				{(columnFilter === "all" || columnFilter === "habits") && (
+					<HabitProvider>
+						<HabitColumn />
+					</HabitProvider>
+				)}
+				{(columnFilter === "all" || columnFilter === "dailies") && (
+					<DailyProvider>
+						<DailySubtaskProvider>
+							<DailyColumn />
+						</DailySubtaskProvider>
+					</DailyProvider>
+				)}
+				{(columnFilter === "all" || columnFilter === "todos") && (
+					<TodoProvider>
+						<TodoSubtaskProvider>
+							<TodoColumn />
+						</TodoSubtaskProvider>
+					</TodoProvider>
+				)}
+				{(columnFilter === "all" || columnFilter === "goals") && (
+					<GoalColumn />
+				)}
 			</div>
 		</TagsProvider>
 	);

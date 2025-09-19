@@ -8,12 +8,14 @@ import { useSession } from "next-auth/react";
 import { QuickMenu } from '../navigation/quick-menu';
 import { ClientProviders } from '../providers/client-providers';
 import { TasksOverviewDialog } from './tasks-overview-dialog';
+import { ColumnFilter } from '../navigation/column-filter';
 
 export default function HomePage() {
     const { data: session, status } = useSession();
     const { config } = useUserConfig();
     const { t } = useTranslation();
     const [showTasksDialog, setShowTasksDialog] = useState(false);
+    const [columnFilter, setColumnFilter] = useState<"all" | "habits" | "dailies" | "todos" | "goals">("all");
 
     useEffect(() => {
         if (status === "authenticated" && session?.user && config.notifications) {
@@ -50,7 +52,8 @@ export default function HomePage() {
 
             <div className="flex flex-col flex-1 gap-4 shadow-md p-4 border rounded-lg animate-[fadeIn_1s_ease-in-out_forwards]">
                 <QuickMenu />
-                <ClientProviders />
+                <ColumnFilter onFilterChange={setColumnFilter} />
+                <ClientProviders columnFilter={columnFilter} />
             </div>
 
             <TasksOverviewDialog
