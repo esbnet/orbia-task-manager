@@ -2,12 +2,16 @@ import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/crea
 import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo/delete-todo-use-case";
 import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
 import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
+import { TodoInputValidator } from "@/application/dto/todo-dto";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import type { NextRequest } from "next/server";
 
-// Instância única do repositório
-// const todoRepo = new InJsonFileTodoRepository();
+// Instâncias únicas
 const todoRepo = new PrismaTodoRepository();
+const listTodosUseCase = new ListTodosUseCase(todoRepo);
+const createTodoUseCase = new CreateTodoUseCase(todoRepo);
+const updateTodoUseCase = new UpdateTodoUseCase(todoRepo);
+const deleteTodoUseCase = new DeleteTodoUseCase(todoRepo);
 
 /**
  * @swagger
@@ -21,8 +25,7 @@ const todoRepo = new PrismaTodoRepository();
  */
 export async function GET() {
 	try {
-		const useCase = new ListTodosUseCase(todoRepo);
-		const result = await useCase.execute();
+		const result = await listTodosUseCase.execute();
 		return Response.json({ todos: result.todos });
 	} catch (error) {
 		console.error("Erro na API todos:", error);
@@ -68,20 +71,25 @@ export async function GET() {
  *         description: Tarefa criada
  */
 export async function POST(request: NextRequest) {
-	const { userId, title, observations, tasks, difficulty, startDate, tags } =
-		await request.json();
-	const useCase = new CreateTodoUseCase(todoRepo);
-	const result = await useCase.execute({
-		userId,
-		title: title,
-		observations: observations || "",
-		tasks: tasks || ([] as string[]),
-		difficulty: difficulty || "Fácil",
-		startDate: startDate || new Date(),
-		tags: tags || ([] as string[]),
-		createdAt: new Date(),
-	});
-	return Response.json(result, { status: 201 });
+	try {
+		const rawData = await request.json();
+		const validatedInput = TodoInputValidator.validateCreateInput(rawData);
+		
+		const result = await createTodoUseCase.execute({
+			userId: rawData.userId || "", // Will be set by use case
+			title: validatedInput.title,
+			observations: validatedInput.description || "",
+			tasks: [],
+			difficulty: "Fácil", // Default for todos
+			startDate: new Date(),
+			tags: validatedInput.tags,
+			createdAt: new Date(),
+		});
+		return Response.json(result, { status: 201 });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Invalid input";
+		return Response.json({ error: message }, { status: 400 });
+	}
 }
 
 // export async function PUT(request: NextRequest) {
@@ -111,10 +119,16 @@ export async function POST(request: NextRequest) {
  *         description: Tarefa atualizada
  */
 export async function PATCH(request: NextRequest) {
-	const { todo } = await request.json();
-	const useCase = new UpdateTodoUseCase(todoRepo);
-	const updatedTodo = await useCase.execute(todo);
-	return Response.json({ todo: updatedTodo }, { status: 200 });
+	try {
+		const rawData = await request.json();
+		const validatedInput = TodoInputValidator.validateUpdateInput(rawData.todo || rawData);
+		
+		const updatedTodo = await updateTodoUseCase.execute(validatedInput);
+		return Response.json({ todo: updatedTodo }, { status: 200 });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Invalid input";
+		return Response.json({ error: message }, { status: 400 });
+	}
 }
 
 /**
@@ -143,7 +157,6 @@ export async function DELETE(request: NextRequest) {
 		return Response.json({ error: "ID is required" }, { status: 400 });
 	}
 
-	const useCase = new DeleteTodoUseCase(todoRepo);
-	await useCase.execute(id);
+	await deleteTodoUseCase.execute(id);
 	return new Response(null, { status: 204 });
 }

@@ -4,11 +4,11 @@ import { DailyColumn } from "@/components/daily/daily-column";
 import { GoalColumn } from "@/components/goal/goal-column";
 import { HabitColumn } from "@/components/habit/habit-column";
 import { TodoColumn } from "@/components/todo/todo-column";
-import { DailyProvider } from "@/contexts/daily-context";
+import { DailyStateProvider } from "@/contexts/daily-state-context";
+import { TodoStateProvider } from "@/contexts/todo-state-context";
 import { DailySubtaskProvider } from "@/contexts/daily-subtask-context";
 import { HabitProvider } from "@/contexts/habit-context-refactored";
 import { TagsProvider } from "@/contexts/tags-context";
-// TodoProvider removido - usando React Query
 import { TodoSubtaskProvider } from "@/contexts/todo-subtask-context";
 
 interface ClientProvidersProps {
@@ -30,16 +30,18 @@ export function ClientProviders({ columnFilter = "all" }: ClientProvidersProps) 
 					</HabitProvider>
 				)}
 				{(columnFilter === "all" || columnFilter === "dailies") && (
-					<DailyProvider>
+					<DailyStateProvider>
 						<DailySubtaskProvider>
 							<DailyColumn />
 						</DailySubtaskProvider>
-					</DailyProvider>
+					</DailyStateProvider>
 				)}
 				{(columnFilter === "all" || columnFilter === "todos") && (
-					<TodoSubtaskProvider>
-						<TodoColumn />
-					</TodoSubtaskProvider>
+					<TodoStateProvider>
+						<TodoSubtaskProvider>
+							<TodoColumn />
+						</TodoSubtaskProvider>
+					</TodoStateProvider>
 				)}
 				{(columnFilter === "all" || columnFilter === "goals") && (
 					<GoalColumn />

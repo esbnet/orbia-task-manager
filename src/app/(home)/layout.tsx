@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-	title: "orbia",
+	title: "home",
 	description: "Rotina, foco e progresso em um só lugar",
 };
 

@@ -1,9 +1,13 @@
 import { PrismaTodoSubtaskRepository } from "@/infra/database/prisma/prisma-todo-subtask-repository";
+import { VerifyTodoOwnershipUseCase } from "@/application/use-cases/todo-subtask/verify-todo-ownership-use-case";
+import { container } from "@/infra/di/container";
 import { getCurrentUserId } from "@/hooks/use-current-user";
-import { prisma } from "@/infra/database/prisma/prisma-client";
 import type { NextRequest } from "next/server";
 
 const subtaskRepo = new PrismaTodoSubtaskRepository();
+const verifyOwnershipUseCase = new VerifyTodoOwnershipUseCase(
+	container.getTodoRepository()
+);
 
 export async function GET(request: NextRequest) {
 	try {
@@ -19,12 +23,10 @@ export async function GET(request: NextRequest) {
 		const todoId = searchParams.get("todoId");
 
 		if (todoId) {
-			// First verify that the todo belongs to the authenticated user
-			const todo = await prisma.todo.findFirst({
-				where: { id: todoId, userId },
-			});
+			// Verify todo ownership
+			const isOwner = await verifyOwnershipUseCase.execute({ todoId, userId });
 
-			if (!todo) {
+			if (!isOwner) {
 				return Response.json(
 					{ error: "Todo not found or not authorized", subtasks: [] },
 					{ status: 404 },
@@ -58,12 +60,10 @@ export async function POST(request: NextRequest) {
 
 		const { title, todoId, order } = await request.json();
 		
-		// Verify that the todo belongs to the authenticated user
-		const todo = await prisma.todo.findFirst({
-			where: { id: todoId, userId },
-		});
+		// Verify todo ownership
+		const isOwner = await verifyOwnershipUseCase.execute({ todoId, userId });
 
-		if (!todo) {
+		if (!isOwner) {
 			return Response.json(
 				{ error: "Todo not found or not authorized" },
 				{ status: 404 },
@@ -97,12 +97,10 @@ export async function PATCH(request: NextRequest) {
 
 		const { subtask } = await request.json();
 		
-		// Verify that the subtask's todo belongs to the authenticated user
-		const todo = await prisma.todo.findFirst({
-			where: { id: subtask.todoId, userId },
-		});
+		// Verify todo ownership
+		const isOwner = await verifyOwnershipUseCase.execute({ todoId: subtask.todoId, userId });
 
-		if (!todo) {
+		if (!isOwner) {
 			return Response.json(
 				{ error: "Todo not found or not authorized" },
 				{ status: 404 },
@@ -136,11 +134,8 @@ export async function DELETE(request: NextRequest) {
 			return Response.json({ error: "ID is required" }, { status: 400 });
 		}
 
-		// First get the subtask to find its todo
-		const existingSubtask = await prisma.todoSubtask.findUnique({
-			where: { id },
-			select: { todoId: true },
-		});
+		// Get subtask and verify ownership
+		const existingSubtask = await subtaskRepo.findById(id);
 
 		if (!existingSubtask) {
 			return Response.json(
@@ -149,12 +144,10 @@ export async function DELETE(request: NextRequest) {
 			);
 		}
 
-		// Verify that the subtask's todo belongs to the authenticated user
-		const todo = await prisma.todo.findFirst({
-			where: { id: existingSubtask.todoId, userId },
-		});
+		// Verify todo ownership
+		const isOwner = await verifyOwnershipUseCase.execute({ todoId: existingSubtask.todoId, userId });
 
-		if (!todo) {
+		if (!isOwner) {
 			return Response.json(
 				{ error: "Todo not found or not authorized" },
 				{ status: 404 },

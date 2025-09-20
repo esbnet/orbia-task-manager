@@ -28,7 +28,10 @@ export interface DailyRepository
 		TaggableRepository<Daily> {}
 
 // Daily log repository
-export interface DailyLogRepository extends LogRepository<DailyLog> {} // tsnlint-disable-line @typescript-eslint/no-unused-vars
+export interface DailyLogRepository extends LogRepository<DailyLog> {
+  hasLogForDate(dailyId: string, date: string): Promise<boolean>;
+  getLastLogDate(dailyId: string): Promise<Date | null>;
+}
 
 // Daily subtask repository
 export interface DailySubtaskRepository extends SubtaskRepository<DailySubtask> {

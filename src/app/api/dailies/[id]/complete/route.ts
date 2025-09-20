@@ -4,7 +4,13 @@ import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
 import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
-import { DailyService } from "@/services/daily-service";
+import { DailyApplicationService } from "@/application/services/daily-application-service";
+
+// Instâncias únicas
+const dailyRepository = new PrismaDailyRepository();
+const dailyLogRepository = new PrismaDailyLogRepository();
+const dailyPeriodRepository = new PrismaDailyPeriodRepository();
+const dailyApplicationService = new DailyApplicationService(dailyRepository, dailyLogRepository, dailyPeriodRepository);
 
 export async function POST(
 	request: NextRequest,
@@ -18,12 +24,8 @@ export async function POST(
 			return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
 		}
 
-		const dailyRepository = new PrismaDailyRepository();
-		const dailyLogRepository = new PrismaDailyLogRepository();
-		const dailyPeriodRepository = new PrismaDailyPeriodRepository();
-		const dailyService = new DailyService(dailyRepository, dailyLogRepository, dailyPeriodRepository);
 
-		const result = await dailyService.completeDaily(id);
+		const result = await dailyApplicationService.completeDaily(id);
 		console.log('Daily completada:', { id, result });
 
 		return NextResponse.json({

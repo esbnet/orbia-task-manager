@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
 export async function GET() {
   try {
-    // Testar se conseguimos importar o auth
-    const { auth } = await import('@/auth')
     const session = await auth()
     
     return NextResponse.json({

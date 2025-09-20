@@ -1,4 +1,22 @@
-import type { BaseEntity, BaseFormData, EntityService } from "@/contexts/base/entity-context-factory";
+// Base entity interface
+export interface BaseEntity {
+	id: string;
+	createdAt: Date;
+	updatedAt?: Date;
+}
+
+// Base form data interface
+export interface BaseFormData {
+	[key: string]: any;
+}
+
+// Entity service interface
+export interface EntityService<TEntity extends BaseEntity, TFormData extends BaseFormData> {
+	list(): Promise<TEntity[]>;
+	create(data: TFormData): Promise<TEntity>;
+	update(id: string, data: Partial<TEntity>): Promise<TEntity>;
+	delete(id: string): Promise<void>;
+}
 
 // Generic repository interface
 export interface GenericRepository<T extends BaseEntity> {

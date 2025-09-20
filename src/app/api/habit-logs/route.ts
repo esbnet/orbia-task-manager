@@ -2,13 +2,12 @@ import { CompleteHabitUseCase } from "@/application/use-cases/habit/complete-hab
 import { PrismaHabitLogRepository } from "@/infra/database/prisma/prisma-habit-log-repository";
 import type { NextRequest } from "next/server";
 
-// const habitLogRepository = new InJsonFileHabitLogRepository();
 const habitLogRepository = new PrismaHabitLogRepository();
+const completeHabitUseCase = new CompleteHabitUseCase(habitLogRepository);
 
 export async function POST(request: NextRequest) {
 	const { habit } = await request.json();
-	const useCase = new CompleteHabitUseCase(habitLogRepository);
-	const result = await useCase.execute({ habit });
+	const result = await completeHabitUseCase.execute({ habit });
 	return Response.json(result, { status: 201 });
 }
 

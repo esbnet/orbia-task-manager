@@ -32,7 +32,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { useDailyContext } from "@/contexts/daily-context";
+import { useDailyState } from "@/contexts/daily-state-context";
 import { useTags } from "@/hooks/use-tags";
 import { useTranslation } from "@/hooks/use-translation";
 import type { Daily } from "@/types";
@@ -56,7 +56,7 @@ export function DailyForm({
 	onCancel,
 	open = false,
 }: DailyFormProps) {
-	const { updateDaily } = useDailyContext();
+	const { updateDaily } = useDailyState();
 	const { tagOptions } = useTags();
 	const { t } = useTranslation();
 
@@ -391,7 +391,7 @@ export function DailyForm({
 }
 
 function DialogConfirmDelete({ id }: { id: string }) {
-	const { deleteDaily } = useDailyContext();
+	const { deleteDaily } = useDailyState();
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	const onDelete = async () => {
