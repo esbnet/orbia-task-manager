@@ -7,9 +7,8 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { TodoCard } from "./todo-card";
 import { TodoForm } from "./todo-form";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useTodoContext } from "@/contexts/todo-context";
+import { useTodos, useCreateTodo, useDeleteTodo, useCompleteTodo } from "@/hooks/use-todos";
 
 const defaultTodo: Todo = {
 	id: "",
@@ -24,15 +23,20 @@ const defaultTodo: Todo = {
 };
 
 export const TodoColumn = () => {
-	const { todos, addTodo, deleteTodo, isLoading } = useTodoContext();
-	const queryClient = useQueryClient();
+	const { data: todos = [], isLoading } = useTodos();
+	const createTodoMutation = useCreateTodo();
+	const deleteTodoMutation = useDeleteTodo();
+	const completeTodoMutation = useCompleteTodo();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [todoToDelete, setTodoToDelete] = useState<Todo | null>(null);
 
 
-	const inProgressTodos = todos;
+	const today = new Date().toISOString().split("T")[0];
+	const inProgressTodos = todos.filter(
+		(todo) => todo.lastCompletedDate !== today
+	).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 	// Funções de controle do formulário
 	const openEditForm = (todo: Todo) => {
@@ -48,14 +52,9 @@ export const TodoColumn = () => {
 	// Criar novo todo
 	const handleCreateTodo = async (todoData: Omit<Todo, "id" | "createdAt">) => {
 		try {
-			await addTodo(todoData);
+			await createTodoMutation.mutateAsync(todoData);
 			toast.success(`Todo "${todoData.title}" criado com sucesso!`);
 			setIsFormOpen(false);
-
-			// Invalidate cache de tarefas anexadas
-			queryClient.invalidateQueries({ queryKey: ["attached-tasks"] });
-			// Invalidate cache de tarefas ativas para atualizar lista no formulário de metas
-			queryClient.invalidateQueries({ queryKey: ["active-tasks"] });
 		} catch (error) {
 			toast.error("Erro ao criar todo. Tente novamente.");
 		}
@@ -75,17 +74,28 @@ export const TodoColumn = () => {
 
 	// Deletar todo
 	const handleDeleteTodo = (id: string) => {
-		const todo = todos.find(t => t.id === id);
+		const todo = inProgressTodos.find(t => t.id === id);
 		if (todo) {
 			setTodoToDelete(todo);
 			setIsDeleteDialogOpen(true);
 		}
 	};
 
+	// Completar todo
+	const handleCompleteTodo = async (id: string) => {
+		try {
+			await completeTodoMutation.mutateAsync(id);
+			const todo = inProgressTodos.find(t => t.id === id);
+			toast.success(`Todo "${todo?.title}" concluído com sucesso!`);
+		} catch (error) {
+			toast.error("Erro ao completar todo. Tente novamente.");
+		}
+	};
+
 	const confirmDeleteTodo = async () => {
 		if (todoToDelete) {
 			try {
-				await deleteTodo(todoToDelete.id);
+				await deleteTodoMutation.mutateAsync(todoToDelete.id);
 				toast.success(`Todo "${todoToDelete.title}" removido com sucesso!`);
 				setIsDeleteDialogOpen(false);
 				setTodoToDelete(null);
@@ -142,6 +152,8 @@ export const TodoColumn = () => {
 							key={todo.id}
 							todo={todo}
 							onEdit={openEditForm}
+							onComplete={handleCompleteTodo}
+							onDelete={handleDeleteTodo}
 						/>
 					))
 				) : (

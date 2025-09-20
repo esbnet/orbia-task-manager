@@ -26,8 +26,8 @@ export async function GET() {
 				subtasks: {
 					orderBy: { order: "asc" },
 				},
-				periods: {
-					orderBy: { createdAt: "desc" },
+				logs: {
+					orderBy: { completedAt: "desc" },
 				},
 			},
 		});
@@ -38,11 +38,29 @@ export async function GET() {
 			const completedToday = [];
 
 			for (const daily of rawDailies) {
-				// Buscar o período mais recente (primeiro na lista ordenada por createdAt desc)
-				const latestPeriod = daily.periods[0];
+				// Verificar se existe log de conclusão hoje
+				const today = new Date().toISOString().split('T')[0];
+				const hasLogToday = daily.logs.some(log => {
+					const logDate = new Date(log.completedAt).toISOString().split('T')[0];
+					return logDate === today;
+				});
 
-				if (!latestPeriod) {
-					// Sem períodos = disponível para completar
+				if (hasLogToday) {
+					// Tem log hoje = completada hoje
+					const nextAvailableAt = calculateNextPeriodStart(daily.repeatType, new Date());
+					completedToday.push({
+						id: daily.id,
+						title: daily.title,
+						observations: daily.observations,
+						difficulty: daily.difficulty,
+						repeatType: daily.repeatType,
+						repeatFrequency: daily.repeatFrequency,
+						tags: daily.tags,
+						isAvailable: false,
+						nextAvailableAt,
+					});
+				} else {
+					// Não tem log hoje = disponível
 					availableDailies.push({
 						id: daily.id,
 						title: daily.title,
@@ -53,67 +71,6 @@ export async function GET() {
 						tags: daily.tags,
 						isAvailable: true,
 					});
-				} else {
-					// Verificar se o período mais recente está completado
-					if (latestPeriod.isCompleted) {
-						// Verificar se foi completado hoje (usar updatedAt quando isCompleted = true)
-						const now = new Date();
-						const completedAt = new Date(latestPeriod.updatedAt);
-						const isCompletedToday = completedAt.toDateString() === now.toDateString();
-
-						if (isCompletedToday) {
-							// Completada hoje = vai para lista de completadas
-							const nextAvailableAt = calculateNextPeriodStart(daily.repeatType, completedAt);
-
-							completedToday.push({
-								id: daily.id,
-								title: daily.title,
-								observations: daily.observations,
-								difficulty: daily.difficulty,
-								repeatType: daily.repeatType,
-								repeatFrequency: daily.repeatFrequency,
-								tags: daily.tags,
-								isAvailable: false,
-								nextAvailableAt,
-								currentPeriod: {
-									id: latestPeriod.id,
-									startDate: latestPeriod.startDate,
-									endDate: latestPeriod.endDate,
-									isCompleted: latestPeriod.isCompleted,
-								},
-							});
-						} else {
-							// Completada em outro dia = disponível novamente
-							availableDailies.push({
-								id: daily.id,
-								title: daily.title,
-								observations: daily.observations,
-								difficulty: daily.difficulty,
-								repeatType: daily.repeatType,
-								repeatFrequency: daily.repeatFrequency,
-								tags: daily.tags,
-								isAvailable: true,
-							});
-						}
-					} else {
-						// Período não completado = disponível
-						availableDailies.push({
-							id: daily.id,
-							title: daily.title,
-							observations: daily.observations,
-							difficulty: daily.difficulty,
-							repeatType: daily.repeatType,
-							repeatFrequency: daily.repeatFrequency,
-							tags: daily.tags,
-							isAvailable: true,
-							currentPeriod: {
-								id: latestPeriod.id,
-								startDate: latestPeriod.startDate,
-								endDate: latestPeriod.endDate,
-								isCompleted: latestPeriod.isCompleted,
-							},
-						});
-					}
 				}
 			}
 

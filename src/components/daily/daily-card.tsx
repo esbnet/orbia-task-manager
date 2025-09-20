@@ -82,10 +82,11 @@ export function DailyCard({
 				await completeLoading.executeAsync(
 					async () => {
 						await onComplete(daily.id);
-						toast.success(t("messages.taskCompleted"))
+						// Usar mensagem fixa para evitar problemas de tradução
+						toast.success(`Tarefa "${daily.title}" concluída com sucesso!`);
 					},
 					undefined,
-					() => toast.error(t("messages.errorCompletingTask"))
+					() => toast.error("Erro ao completar tarefa. Tente novamente.")
 				);
 			} finally {
 				setIsCompleting(false);

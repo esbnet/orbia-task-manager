@@ -8,7 +8,7 @@ import { DailyProvider } from "@/contexts/daily-context";
 import { DailySubtaskProvider } from "@/contexts/daily-subtask-context";
 import { HabitProvider } from "@/contexts/habit-context-refactored";
 import { TagsProvider } from "@/contexts/tags-context";
-import { TodoProvider } from "@/contexts/todo-context";
+// TodoProvider removido - usando React Query
 import { TodoSubtaskProvider } from "@/contexts/todo-subtask-context";
 
 interface ClientProvidersProps {
@@ -37,11 +37,9 @@ export function ClientProviders({ columnFilter = "all" }: ClientProvidersProps) 
 					</DailyProvider>
 				)}
 				{(columnFilter === "all" || columnFilter === "todos") && (
-					<TodoProvider>
-						<TodoSubtaskProvider>
-							<TodoColumn />
-						</TodoSubtaskProvider>
-					</TodoProvider>
+					<TodoSubtaskProvider>
+						<TodoColumn />
+					</TodoSubtaskProvider>
 				)}
 				{(columnFilter === "all" || columnFilter === "goals") && (
 					<GoalColumn />

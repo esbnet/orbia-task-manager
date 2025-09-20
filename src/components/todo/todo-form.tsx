@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTodoContext } from "@/contexts/todo-context";
+import { useUpdateTodo, useDeleteTodo } from "@/hooks/use-todos";
 import { useTags } from "@/hooks/use-tags";
 import type { TodoDifficulty } from "@/types/todo";
 import { ptBR } from "date-fns/locale";
@@ -55,7 +55,8 @@ export function TodoForm({
 	onCancel,
 	open = false,
 }: TodoFormProps) {
-	const { updateTodo } = useTodoContext();
+	const updateTodoMutation = useUpdateTodo();
+	const deleteTodoMutation = useDeleteTodo();
 	const { tagOptions } = useTags();
 
 	const [title, setTitle] = useState(todo.title || "");
@@ -114,14 +115,16 @@ export function TodoForm({
 				return;
 			}
 
-			await updateTodo({
-				...todo,
-				title,
-				observations: observations || "",
-				difficulty: difficulty,
-				startDate: startDate || new Date(),
-				tags: tags || [],
-			} as Todo);
+			await updateTodoMutation.mutateAsync({
+				id: todo.id,
+				data: {
+					title,
+					observations: observations || "",
+					difficulty: difficulty,
+					startDate: startDate || new Date(),
+					tags: tags || [],
+				}
+			});
 
 			toast.success("Tarefa atualizada com sucesso!");
 			setInternalOpen(false);
@@ -294,14 +297,14 @@ export function TodoForm({
 }
 
 function DialogConfirmDelete({ id }: { id: string }) {
-	const { deleteTodo } = useTodoContext();
+	const deleteTodoMutation = useDeleteTodo();
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	const onDelete = async () => {
 		if (isDeleting) return;
 		setIsDeleting(true);
 		try {
-			await deleteTodo(id);
+			await deleteTodoMutation.mutateAsync(id);
 			toast.success("Tarefa excluída com sucesso!");
 		} finally {
 			setIsDeleting(false);

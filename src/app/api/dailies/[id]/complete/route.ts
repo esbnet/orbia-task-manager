@@ -24,6 +24,7 @@ export async function POST(
 		const dailyService = new DailyService(dailyRepository, dailyLogRepository, dailyPeriodRepository);
 
 		const result = await dailyService.completeDaily(id);
+		console.log('Daily completada:', { id, result });
 
 		return NextResponse.json({
 			success: true,

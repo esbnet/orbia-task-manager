@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/hooks/use-translation";
 import { useUserConfig } from "@/hooks/use-user-config";
 import { useSession } from "next-auth/react";
+import { ColumnFilter } from '../navigation/column-filter';
 import { QuickMenu } from '../navigation/quick-menu';
 import { ClientProviders } from '../providers/client-providers';
 import { TasksOverviewDialog } from './tasks-overview-dialog';
-import { ColumnFilter } from '../navigation/column-filter';
 
 export default function HomePage() {
     const { data: session, status } = useSession();
@@ -41,9 +41,9 @@ export default function HomePage() {
     };
 
     return (
-        <main className="relative flex flex-col gap-4 mx-auto border-0 lg:max-w-[80vw] min-h-screen">
-            <div className="flex shadow-sm border rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
-                <div className="flex justify-between items-center p-4 w-full">
+        <main className="relative flex flex-col gap-4 mx-auto p-4 lg:max-w-[80vw] min-h-screen">
+            <div className="flex shadow-sm rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
+                <div className="flex justify-between items-center w-full">
                     <div className="flex-1 font-bold text-4xl md:text-6xl text-center">
                         {t("home.title")}
                     </div>

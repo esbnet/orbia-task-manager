@@ -17,6 +17,7 @@ interface TodoCardProps {
 	todo: Todo;
 	onEdit?: (todo: Todo) => void;
 	onComplete?: (id: string) => Promise<void>;
+	onDelete?: (id: string) => void;
 	isCompleted?: boolean;
 }
 
@@ -36,25 +37,23 @@ export function TodoCard({
 	todo,
 	onEdit,
 	onComplete,
+	onDelete,
 	isCompleted = false
 }: TodoCardProps) {
-	const { completeTodo } = useTodoContext();
+	// Removido useTodoContext
 	const completeLoading = useButtonLoading();
 	const difficulty = difficultyConfig[todo.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 
 	const handleComplete = async () => {
-		await completeLoading.executeAsync(
-			async () => {
-				if (onComplete) {
+		if (onComplete) {
+			await completeLoading.executeAsync(
+				async () => {
 					await onComplete(todo.id);
-				} else {
-					await completeTodo(todo);
-					toast.success(`Afazer "${todo.title}" concluído!`);
-				}
-			},
-			undefined,
-			() => toast.error("Erro ao completar afazer. Tente novamente.")
-		);
+				},
+				undefined,
+				() => toast.error("Erro ao completar afazer. Tente novamente.")
+			);
+		}
 	};
 
 	return (

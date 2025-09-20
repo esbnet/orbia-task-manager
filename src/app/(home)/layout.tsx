@@ -1,4 +1,5 @@
 import { HeaderWrapper } from "@/components/layout/header-wrapper";
+import { UserWidget } from "@/components/navigation/user-widget";
 import { getCurrentUserId } from "@/hooks/use-current-user";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -25,6 +26,8 @@ export default async function RootLayout({
 		<>
 			<HeaderWrapper />
 			<main className="flex-1">
+				<UserWidget />
+
 				{children}
 			</main>
 		</>
