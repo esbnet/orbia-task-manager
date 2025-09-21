@@ -3,7 +3,6 @@ import type { Todo } from "@/domain/entities/todo";
 export interface CreateTodoInput {
   title: string;
   description?: string;
-  priority: Todo["priority"];
   tags: string[];
 }
 
@@ -11,7 +10,6 @@ export interface UpdateTodoInput {
   id: string;
   title?: string;
   description?: string;
-  priority?: Todo["priority"];
   tags?: string[];
   isCompleted?: boolean;
 }
@@ -34,11 +32,6 @@ export class TodoInputValidator {
       throw new Error('Description must be less than 1000 characters');
     }
 
-    const validPriorities = ['Baixa', 'Média', 'Alta'];
-    if (!input.priority || !validPriorities.includes(input.priority)) {
-      throw new Error('Priority must be one of: Baixa, Média, Alta');
-    }
-
     if (!Array.isArray(input.tags)) {
       throw new Error('Tags must be an array');
     }
@@ -51,7 +44,6 @@ export class TodoInputValidator {
     return {
       title: input.title.trim(),
       description: input.description?.trim(),
-      priority: input.priority,
       tags: sanitizedTags,
     };
   }
@@ -81,14 +73,6 @@ export class TodoInputValidator {
         throw new Error('Description must be less than 1000 characters');
       }
       validated.description = input.description.trim();
-    }
-
-    if (input.priority !== undefined) {
-      const validPriorities = ['Baixa', 'Média', 'Alta'];
-      if (!validPriorities.includes(input.priority)) {
-        throw new Error('Priority must be one of: Baixa, Média, Alta');
-      }
-      validated.priority = input.priority;
     }
 
     if (input.tags !== undefined) {

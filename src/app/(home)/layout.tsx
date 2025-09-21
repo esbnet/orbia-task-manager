@@ -5,10 +5,18 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-	title: "home",
+	title: {
+		template: '%s | Orbia',
+		default: 'Orbia', // a default is required when creating a template
+	},
 	description: "Rotina, foco e progresso em um só lugar",
+	manifest: "/manifest.json",
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "default",
+		title: "Orbia",
+	},
 };
-
 export default async function RootLayout({
 	children,
 }: Readonly<{

@@ -1,13 +1,13 @@
-'use client';
+export const metadata: Metadata = {
+    title: "API Doc",
+    description: "Análise detalhada do seu desempenho e progresso"
+};
 
-import 'swagger-ui-react/swagger-ui.css';
+import type { Metadata } from "next";
+import DocsPage from "./docs-page";
 
-import SwaggerUI from 'swagger-ui-react';
-
-export default function DocsPage() {
+export default function Page() {
     return (
-        <div className="h-screen">
-            <SwaggerUI url="/api/docs" />
-        </div>
-    );
+        <DocsPage />
+    )
 }

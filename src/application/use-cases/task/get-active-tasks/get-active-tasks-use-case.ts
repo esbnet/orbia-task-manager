@@ -1,6 +1,4 @@
-import type { HabitRepository } from "@/domain/repositories/habit-repository";
-import type { DailyRepository } from "@/domain/repositories/daily-repository";
-import type { TodoRepository } from "@/domain/repositories/todo-repository";
+import type { HabitRepository, DailyRepository, TodoRepository } from "@/domain/repositories/all-repository";
 
 export interface ActiveTask {
   id: string;

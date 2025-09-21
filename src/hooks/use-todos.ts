@@ -55,12 +55,12 @@ export function useUpdateTodo() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Todo> }): Promise<Todo> => {
-      const response = await fetch(`/api/todos/${id}`, {
+      const response = await fetch("/api/todos", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, id }),
       });
 
       if (!response.ok) {
@@ -72,7 +72,7 @@ export function useUpdateTodo() {
     },
     onSuccess: (data, { id }) => {
       queryClient.setQueryData(todoKeys.detail(id), data);
-      queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: todoKeys.all });
     },
   });
 }
@@ -82,7 +82,7 @@ export function useDeleteTodo() {
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const response = await fetch(`/api/todos/${id}`, {
+      const response = await fetch(`/api/todos?id=${id}`, {
         method: "DELETE",
       });
 

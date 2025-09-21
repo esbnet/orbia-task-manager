@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCreateHabit, useDeleteHabit, useHabits, useUpdateHabit } from "@/hooks/use-habits";
+import { useAvailableHabits, useCreateHabit, useDeleteHabit, useUpdateHabit } from "@/hooks/use-habits";
 import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
 import { useCallback, useState } from "react";
 
@@ -14,7 +14,7 @@ import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
 
 export function HabitColumn() {
-	const { data: habits = [], isLoading } = useHabits();
+	const { data: habitsData, isLoading } = useAvailableHabits();
 	const createHabitMutation = useCreateHabit();
 	const updateHabitMutation = useUpdateHabit();
 	const deleteHabitMutation = useDeleteHabit();
@@ -25,13 +25,10 @@ export function HabitColumn() {
 	const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
 	const [habitStats, setHabitStats] = useState<Record<string, Habit>>({});
 
-	const inProgressHabits = habits.filter(
-		(habit: Habit) => habit.status === "Em Andamento",
-	);
-	const completedHabits = habits.filter((habit: Habit) => habit.status === "Completo");
-	const cancelledHabits = habits.filter(
-		(habit: Habit) => habit.status === "Cancelado",
-	);
+	// Usar dados do React Query
+	const availableHabits = habitsData?.availableHabits || [];
+	const completedInCurrentPeriod = habitsData?.completedInCurrentPeriod || [];
+	const totalHabits = habitsData?.totalHabits || 0;
 
 	// Função para carregar estatísticas de um hábito específico
 	const loadHabitStats = useCallback(async (habitId: string) => {
@@ -97,7 +94,8 @@ export function HabitColumn() {
 		habitId: string,
 		status: Habit["status"],
 	) => {
-		const habit = habits.find((h) => h.id === habitId);
+		const habit = availableHabits.find((h) => h.id === habitId) || 
+						 completedInCurrentPeriod.find((h) => h.id === habitId);
 		if (habit) {
 			try {
 				await updateHabitMutation.mutateAsync({
@@ -138,7 +136,7 @@ export function HabitColumn() {
 			}
 
 			const result = await response.json();
-			const habit = habits.find(h => h.id === habitId);
+			const habit = availableHabits.find(h => h.id === habitId);
 
 			toast.success(`Hábito "${habit?.title}" registrado! Total: ${result.currentCount}`);
 
@@ -176,11 +174,7 @@ export function HabitColumn() {
 					<div className="flex items-center gap-4 text-green-700 text-sm">
 						<div className="flex items-center gap-1">
 							<TrendingUp className="w-4 h-4" />
-							<span>{inProgressHabits.length} em andamento</span>
-						</div>
-						<div className="flex items-center gap-1">
-							<AlertTriangle className="w-4 h-4" />
-							<span>{cancelledHabits.length} cancelados</span>
+							<span>{availableHabits.length} hábitos ativos</span>
 						</div>
 					</div>
 				</CardContent>
@@ -198,63 +192,28 @@ export function HabitColumn() {
 
 			{/* Habits List */}
 			<div className="space-y-4">
-				{!isLoading && inProgressHabits.length > 0 && (
-					<div>
-						<h3 className="flex items-center gap-1 mb-2 font-semibold text-green-600 text-sm">
-							<Dumbbell className="w-4 h-4" />
-							Em Andamento
-						</h3>
-						<div className="space-y-3">
-							{inProgressHabits.map((habit) => {
-								const stats = habitStats[habit.id];
-								return (
-									<HabitCard
-										key={habit.id}
-										habit={habit}
-										onEdit={openEditForm}
-										onStatusChange={handleStatusChange}
-										onRegister={handleRegisterHabit}
-										currentCount={stats?.currentPeriod?.period.count || 0}
-										target={stats?.currentPeriod?.period.target}
-										todayCount={stats?.todayEntries || 0}
-									/>
-								);
-							})}
-						</div>
-					</div>
-				)}
-
-				{!isLoading && completedHabits.length > 0 && (
-					<div>
-						<h3 className="flex items-center gap-1 mb-2 font-semibold text-green-600 text-sm">
-							<TrendingUp className="w-4 h-4" />
-							Concluídos
-						</h3>
-						<div className="space-y-3">
-							{completedHabits.slice(0, 3).map((habit) => (
+				{!isLoading && availableHabits.length > 0 && (
+					<div className="space-y-3">
+						{availableHabits.map((habit) => {
+							const stats = habitStats?.[habit.id];
+							return (
 								<HabitCard
 									key={habit.id}
 									habit={habit}
 									onEdit={openEditForm}
 									onStatusChange={handleStatusChange}
+									onRegister={handleRegisterHabit}
+									currentCount={stats?.currentPeriod?.period.count || 0}
+									target={stats?.currentPeriod?.period.target}
+									todayCount={stats?.todayEntries || 0}
 								/>
-							))}
-							{completedHabits.length > 3 && (
-								<div className="py-2 text-center">
-									<Badge
-										variant="outline"
-										className="text-gray-600"
-									>
-										+{completedHabits.length - 3} hábitos
-										concluídos
-									</Badge>
-								</div>
-							)}
-						</div>
-					</div>
+							);
+						})}
+				</div>
 				)}
 
-				{!isLoading && habits.length === 0 && (
+
+				{!isLoading && totalHabits === 0 && (
 					<Card className="bg-gray-50 border-gray-300 border-dashed">
 						<CardContent className="py-8 text-center">
 							<Dumbbell className="mx-auto mb-3 w-12 h-12 text-gray-400" />

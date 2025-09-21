@@ -112,8 +112,21 @@ export async function POST(request: NextRequest) {
  *           schema:
  *             type: object
  *             properties:
- *               todo:
- *                 type: object
+ *               id:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               observations:
+ *                 type: string
+ *               difficulty:
+ *                 type: string
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *     responses:
  *       200:
  *         description: Tarefa atualizada
@@ -121,9 +134,29 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
 	try {
 		const rawData = await request.json();
-		const validatedInput = TodoInputValidator.validateUpdateInput(rawData.todo || rawData);
 		
-		const updatedTodo = await updateTodoUseCase.execute(validatedInput);
+		// Mapear observations para description para o validador
+		const dataForValidation = {
+			...rawData,
+			description: rawData.observations
+		};
+		
+		const validatedInput = TodoInputValidator.validateUpdateInput(dataForValidation);
+		
+		// Mapear de volta description para observations
+		const todoData = {
+			id: validatedInput.id,
+			title: validatedInput.title || rawData.title || "",
+			observations: validatedInput.description || "",
+			userId: rawData.userId || "temp-dev-user",
+			tasks: rawData.tasks || [],
+			difficulty: rawData.difficulty || "Fácil",
+			startDate: rawData.startDate ? new Date(rawData.startDate) : new Date(),
+			tags: validatedInput.tags || [],
+			createdAt: rawData.createdAt ? new Date(rawData.createdAt) : new Date()
+		};
+		
+		const updatedTodo = await updateTodoUseCase.execute(todoData);
 		return Response.json({ todo: updatedTodo }, { status: 200 });
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Invalid input";
@@ -143,11 +176,14 @@ export async function PATCH(request: NextRequest) {
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID da tarefa a ser deletada
  *     responses:
  *       204:
- *         description: Tarefa deletada
+ *         description: Tarefa deletada com sucesso
  *       400:
  *         description: ID obrigatório
+ *       404:
+ *         description: Tarefa não encontrada
  */
 export async function DELETE(request: NextRequest) {
 	const url = new URL(request.url);

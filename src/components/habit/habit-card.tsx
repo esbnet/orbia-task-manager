@@ -59,6 +59,7 @@ interface HabitCardProps {
 	currentCount?: number;
 	target?: number;
 	todayCount?: number;
+	nextAvailableAt?: Date;
 }
 
 export const HabitCard = memo(function HabitCard({
@@ -68,6 +69,7 @@ export const HabitCard = memo(function HabitCard({
 	onRegister,
 	currentCount = 0,
 	todayCount = 0,
+	nextAvailableAt,
 }: HabitCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isRegistering, setIsRegistering] = useState(false);
@@ -141,7 +143,7 @@ export const HabitCard = memo(function HabitCard({
 							</Badge>
 						</div>
 
-						{/* Estatísticas do período atual - Temporariamente simplificado */}
+						{/* Estatísticas do período atual */}
 						{(currentCount > 0 || todayCount > 0) && (
 							<div className="flex items-center gap-4 mt-2 text-gray-600 text-sm">
 								{currentCount > 0 && (
@@ -156,6 +158,14 @@ export const HabitCard = memo(function HabitCard({
 										<span>Hoje: {todayCount}</span>
 									</div>
 								)}
+							</div>
+						)}
+
+						{/* Próximo período disponível */}
+						{nextAvailableAt && (
+							<div className="flex items-center gap-1 mt-2 text-orange-600 text-sm">
+								<RotateCcw className="w-4 h-4" />
+								<span>Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
 							</div>
 						)}
 					</div>

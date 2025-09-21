@@ -52,8 +52,8 @@ export function TodoSubtaskProvider({
 			});
 			return result.subtask;
 		} catch (error) {
-			ErrorHandler.logError(error, "TodoSubtaskContext.createSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("TodoSubtaskContext.createSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao criar subtarefa");
 		}
 	};
 
@@ -64,8 +64,8 @@ export function TodoSubtaskProvider({
 			const result = await updateUseCase.execute({ subtask });
 			return result.subtask;
 		} catch (error) {
-			ErrorHandler.logError(error, "TodoSubtaskContext.updateSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("TodoSubtaskContext.updateSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao atualizar subtarefa");
 		}
 	};
 
@@ -73,8 +73,8 @@ export function TodoSubtaskProvider({
 		try {
 			await deleteUseCase.execute({ id });
 		} catch (error) {
-			ErrorHandler.logError(error, "TodoSubtaskContext.deleteSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("TodoSubtaskContext.deleteSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");
 		}
 	};
 

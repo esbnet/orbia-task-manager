@@ -10,6 +10,7 @@ export const habitKeys = {
 	list: (filters: Record<string, unknown>) => [...habitKeys.lists(), filters] as const,
 	details: () => [...habitKeys.all, "detail"] as const,
 	detail: (id: string) => [...habitKeys.details(), id] as const,
+	available: () => [...habitKeys.all, "available"] as const,
 };
 
 // Hook para buscar todos os hábitos
@@ -43,6 +44,26 @@ export function useHabit(id: string) {
 		},
 		enabled: !!id,
 		staleTime: 5 * 60 * 1000, // 5 minutos
+	});
+}
+
+// Hook para buscar hábitos disponíveis
+export function useAvailableHabits() {
+	return useQuery({
+		queryKey: habitKeys.available(),
+		queryFn: async (): Promise<{ availableHabits: Habit[]; completedInCurrentPeriod: Array<Habit & { nextAvailableAt: Date }>; totalHabits: number }> => {
+			const response = await fetch("/api/habits/available");
+			if (!response.ok) {
+				throw new Error("Erro ao buscar hábitos disponíveis");
+			}
+			const data = await response.json();
+			return {
+				availableHabits: data.availableHabits || [],
+				completedInCurrentPeriod: data.completedInCurrentPeriod || [],
+				totalHabits: data.totalHabits || 0
+			};
+		},
+		staleTime: 1 * 60 * 1000, // 1 minuto
 	});
 }
 
@@ -200,6 +221,7 @@ export function useRegisterHabit() {
 			// Invalidate queries relacionadas ao hábito para atualizar estatísticas
 			queryClient.invalidateQueries({ queryKey: habitKeys.detail(variables.id) });
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
 		},
 	});
 }

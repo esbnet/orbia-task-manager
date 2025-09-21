@@ -26,7 +26,10 @@ const kodeMono = Kode_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Orbia",
+	title: {
+		template: '%s | Orbia',
+		default: 'Orbia', // a default is required when creating a template
+	},
 	description: "Rotina, foco e progresso em um só lugar",
 	manifest: "/manifest.json",
 	appleWebApp: {

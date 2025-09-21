@@ -1,6 +1,6 @@
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoRepository } from "@/domain/repositories/all-repository";
-import type { TodoHttpAdapter } from "@/infrastructure/adapters/http/todo-http-adapter";
+import type { TodoHttpAdapter } from "@/infra/adapters/http/todo-http-adapter";
 
 export class TodoRepositoryImpl implements TodoRepository {
   constructor(private httpAdapter: TodoHttpAdapter) {}

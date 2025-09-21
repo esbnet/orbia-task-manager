@@ -17,7 +17,7 @@ export async function DELETE(
 		
 		return Response.json({
 			success: true,
-			message: result.message,
+			message: "Daily deletado com sucesso",
 		}, { status: 200 });
 		
 	} catch (error) {

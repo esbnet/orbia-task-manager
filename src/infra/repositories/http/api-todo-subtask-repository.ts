@@ -10,24 +10,36 @@ export class ApiTodoSubtaskRepository implements TodoSubtaskRepository {
 	constructor(httpClient?: HttpClient) {
 		this.httpClient = httpClient || new FetchHttpClient();
 	}
-	findByParentId(parentId: string): Promise<TodoSubtask[]> {
-		throw new Error("Method not implemented." + parentId);
+	async findByParentId(parentId: string): Promise<TodoSubtask[]> {
+		return this.listByTodoId(parentId);
 	}
-	deleteByParentId(parentId: string): Promise<void> {
-		throw new Error("Method not implemented." + parentId);
+
+	async deleteByParentId(parentId: string): Promise<void> {
+		await this.httpClient.delete(`${this.baseUrl}/by-todo/${parentId}`);
 	}
-	reorderByParentId(parentId: string, ids: string[]): Promise<void> {
-		throw new Error("Method not implemented." + parentId + ids);
+
+	async reorderByParentId(parentId: string, ids: string[]): Promise<void> {
+		await this.httpClient.patch(`${this.baseUrl}/reorder/${parentId}`, { ids });
 	}
-	findById(id: string): Promise<TodoSubtask | null> {
-		throw new Error("Method not implemented." + id);
+
+	async findById(id: string): Promise<TodoSubtask | null> {
+		const json = await this.httpClient.get<{ subtask: TodoSubtask | null }>(
+			`${this.baseUrl}/${id}`
+		);
+		return json.subtask;
 	}
-	
-	list(): Promise<TodoSubtask[]> {
-		throw new Error("Method not implemented.");
+
+	async list(): Promise<TodoSubtask[]> {
+		const json = await this.httpClient.get<{ subtasks: TodoSubtask[] }>(this.baseUrl);
+		return json.subtasks;
 	}
-	toggleComplete(id: string): Promise<TodoSubtask> {
-		throw new Error("Method not implemented." + id);
+
+	async toggleComplete(id: string): Promise<TodoSubtask> {
+		const json = await this.httpClient.patch<{ subtask: TodoSubtask }>(
+			`${this.baseUrl}/${id}/toggle`,
+			{}
+		);
+		return json.subtask;
 	}
 
 	async listByTodoId(todoId: string): Promise<TodoSubtask[]> {

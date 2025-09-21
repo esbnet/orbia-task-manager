@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Daily } from '@/domain/entities/daily';
 import type { DailyPeriod } from '@/domain/entities/daily-period';
-import { DailyService } from '@/services/daily-service';
+import { DailyService } from '@/infra/services/daily-service';
 
 describe('DailyService - Testes de Reativação de Períodos', () => {
   let dailyService: DailyService;

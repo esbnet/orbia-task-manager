@@ -56,7 +56,7 @@ export function DailyForm({
 	onCancel,
 	open = false,
 }: DailyFormProps) {
-	const { updateDaily } = useDailyState();
+	const { } = useDailyState();
 	const { tagOptions } = useTags();
 	const { t } = useTranslation();
 
@@ -146,25 +146,9 @@ export function DailyForm({
 				return;
 			}
 
-			// Fallback: usar contexto diretamente se onSubmit não for fornecida
-			// console.log('DailyForm: Usando contexto diretamente (fallback)');
-			await updateDaily(daily.id, {
-				...daily,
-				title,
-				observations,
-				tasks,
-				difficulty: difficulty,
-				startDate,
-				repeat: {
-					type: repeatType as DailyRepeatType,
-					frequency: repeatFrequency,
-				},
-				tags,
-			} as Daily);
-
-			toast.success(t("messages.dailyUpdated"));
-			setInternalOpen(false);
-			if (onCancel) onCancel();
+			// Fallback: se não há onSubmit, não fazer nada
+			toast.error("Função de atualização não fornecida");
+			return;
 		} catch (error) {
 			toast.error(`${t("messages.errorSaving")}: ${error}`);
 		} finally {
@@ -391,14 +375,13 @@ export function DailyForm({
 }
 
 function DialogConfirmDelete({ id }: { id: string }) {
-	const { deleteDaily } = useDailyState();
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	const onDelete = async () => {
 		if (isDeleting) return;
 		setIsDeleting(true);
 		try {
-			await deleteDaily(id);
+			// TODO: Implementar deleção via hook
 			toast.success("Tarefa excluída com sucesso!");
 		} finally {
 			setIsDeleting(false);

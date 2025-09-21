@@ -49,7 +49,7 @@ export const DailyColumnRefactored = () => {
 	// Aplicar filtros do context
 	const filteredAvailable = availableDailies.filter(daily => {
 		if (filterDifficulty && daily.difficulty !== filterDifficulty) return false;
-		if (filterRepeatType && daily.repeatType !== filterRepeatType) return false;
+		if (filterRepeatType && daily.repeat.type !== filterRepeatType) return false;
 		return true;
 	});
 

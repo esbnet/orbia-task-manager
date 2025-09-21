@@ -75,23 +75,12 @@ export function TodoForm({
 
 	// Resetar campos quando o todo prop mudar
 	useEffect(() => {
-		// Se o todo tem ID, é uma edição, senão é criação
-		if (todo.id) {
-			// Modo edição: preencher com dados do todo
-			setTitle(todo.title || "");
-			setObservations(todo.observations || "");
-			setDifficult(todo.difficulty || "Fácil");
-			setStartDate(todo.startDate || new Date());
-			setTags(todo.tags || []);
-		} else {
-			// Modo criação: limpar todos os campos
-			setTitle("");
-			setObservations("");
-			setDifficult("Fácil");
-			setStartDate(new Date());
-			setTags([]);
-		}
-	}, [todo.id, todo.title, todo.observations, todo.difficulty, todo.startDate, todo.tags]);
+		setTitle(todo.title || "");
+		setObservations(todo.observations || "");
+		setDifficult(todo.difficulty || "Fácil");
+		setStartDate(todo.startDate || new Date());
+		setTags(todo.tags || []);
+	}, [todo]);
 
 	async function handleUpdateTodo(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -115,7 +104,7 @@ export function TodoForm({
 				return;
 			}
 
-			await updateTodoMutation.mutateAsync({
+			const updatedTodo = await updateTodoMutation.mutateAsync({
 				id: todo.id,
 				data: {
 					title,
@@ -189,10 +178,17 @@ export function TodoForm({
 							<Label className="font-bold">
 								Lista de tarefas
 							</Label>
-							<TodoSubtaskList
-								todoId={todo.id}
-								initialSubtasks={todo.subtasks || []}
-							/>
+							{todo.id && (
+								<TodoSubtaskList
+									todoId={todo.id}
+									initialSubtasks={todo.subtasks || []}
+								/>
+							)}
+							{!todo.id && (
+								<div className="text-sm text-gray-500 p-2 border border-dashed rounded">
+									Salve a tarefa primeiro para adicionar subtarefas
+								</div>
+							)}
 						</div>
 						<div className="flex flex-col gap-1">
 							<Label className="font-bold" htmlFor="tags">

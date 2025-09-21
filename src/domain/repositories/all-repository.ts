@@ -1,4 +1,5 @@
 import type { CreateDailyPeriodData, DailyPeriod, UpdateDailyPeriodData } from "../entities/daily-period";
+import type { CreateHabitPeriodData, HabitPeriod, UpdateHabitPeriodData } from "../entities/habit-period";
 import type {
 	BaseRepository,
 	CompletableRepository,
@@ -81,4 +82,15 @@ export interface DailyPeriodRepository {
 	findById(id: string): Promise<DailyPeriod | null>;
 	findByDailyId(dailyId: string): Promise<DailyPeriod[]>;
 	completeAndFinalize(id: string): Promise<DailyPeriod>;
+}
+
+export interface HabitPeriodRepository {
+	findActiveByHabitId(habitId: string): Promise<HabitPeriod | null>;
+	findByHabitId(habitId: string): Promise<HabitPeriod[]>;
+	findById(id: string): Promise<HabitPeriod | null>;
+	create(data: CreateHabitPeriodData): Promise<HabitPeriod>;
+	update(id: string, data: UpdateHabitPeriodData): Promise<HabitPeriod>;
+	finalizePeriod(id: string): Promise<HabitPeriod>;
+	incrementCount(id: string): Promise<HabitPeriod>;
+	findPeriodsToFinalize(): Promise<HabitPeriod[]>;
 }

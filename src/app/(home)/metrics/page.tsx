@@ -1,6 +1,12 @@
 import { auth } from "@/auth";
 import { MetricsDashboard } from "@/components/metrics/metrics-dashboard";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+    title: "Métricas",
+    description: "Métricas e insights sobre seu progresso"
+};
 
 export default async function MetricsPage() {
     const session = await auth();

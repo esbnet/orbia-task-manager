@@ -43,8 +43,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 			});
 			return result.subtask;
 		} catch (error) {
-			ErrorHandler.logError(error, "DailySubtaskContext.createSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("DailySubtaskContext.createSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao criar subtarefa");
 		}
 	};
 
@@ -56,8 +56,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 
 			return result.subtask;
 		} catch (error) {
-			ErrorHandler.logError(error, "DailySubtaskContext.updateSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("DailySubtaskContext.updateSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao atualizar subtarefa");
 		}
 	};
 
@@ -65,8 +65,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		try {
 			await deleteUseCase.execute({ id });
 		} catch (error) {
-			ErrorHandler.logError(error, "DailySubtaskContext.deleteSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("DailySubtaskContext.deleteSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");
 		}
 	};
 
