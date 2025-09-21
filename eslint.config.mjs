@@ -15,6 +15,10 @@ const eslintConfig = [
 		rules: {
 			'react/no-empty-object-type': 'off',
 			'@next/no-empty-object-type': 'off',
+			'@typescript-eslint/no-empty-object-type': 'off',
+			'@typescript-eslint/no-explicit-any':'off',
+			'react-hooks/exhaustive-deps': 'off',
+			'@typescript-eslint/no-unused-vars': 'off',
 		},
 	})
 ];

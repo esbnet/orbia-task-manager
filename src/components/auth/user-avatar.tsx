@@ -9,10 +9,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LogOut, Settings, User } from "lucide-react"
 
+import { signOutAction } from "@/actions/sign-out"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { signOut } from "@/auth"
 
 interface UserAvatarProps {
   user: {
@@ -33,14 +32,14 @@ export function UserAvatar({ user }: UserAvatarProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative rounded-full w-8 h-8">
+        <Button variant="ghost" size="icon" className="relative rounded-full w-8 h-8">
           <Avatar className="w-8 h-8">
             <AvatarImage src={user.image || ""} alt={user.name || ""} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="font-medium text-sm leading-none">{user.name}</p>
@@ -62,18 +61,14 @@ export function UserAvatar({ user }: UserAvatarProps) {
             <span>Configurações</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem className="p-3">
-          <ThemeToggle />
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <form
-            action={async () => {
-              "use server"
-              await signOut()
-            }}
-          >
-            <button type="submit" className="flex items-center w-full">
+        <DropdownMenuItem>
+          <form action={signOutAction} className="w-full">
+            <button
+              type="submit"
+              className="flex items-center w-full"
+              onClick={() => localStorage.removeItem("tasksOverviewDialogShown")}
+            >
               <LogOut className="mr-2 w-4 h-4" />
               <span>Sair</span>
             </button>

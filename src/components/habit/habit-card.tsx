@@ -1,60 +1,315 @@
-import { Checkbox } from "@/components/ui/checkbox";
-import { GripVertical } from "lucide-react";
-import type { Habit } from "../../types";
-import { toast } from "sonner";
-import { useHabitContext } from "@/contexts/habit-context";
+"use client";
 
-type Props = {
-	habit: Habit;
-	dragHandleProps?: any;
-	onEditClick?: () => void;
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	AlertTriangle,
+	Archive,
+	Calendar,
+	CheckCircle,
+	ChevronDown,
+	Edit,
+	LoaderCircle,
+	RotateCcw,
+	Tag,
+	TrendingUp
+} from "lucide-react";
+import { memo, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import type { Habit } from "@/domain/entities/habit";
+import { useButtonLoading } from "@/hooks/use-button-loading";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+
+const priorityColors = {
+	"Baixa": "border-gray-300 text-gray-600",
+	"Média": "border-blue-300 text-blue-600",
+	"Alta": "border-orange-300 text-orange-600",
+	"Urgente": "border-red-300 text-red-600",
 };
 
-export function HabitCard({ habit, dragHandleProps, onEditClick }: Props) {
-	return (
-		<HabitItem
-			habit={habit}
-			dragHandleProps={dragHandleProps}
-			onEditClick={onEditClick}
-		/>
-	);
+const statusColors = {
+	"Em Andamento": "bg-blue-50 text-blue-700 border border-blue-200",
+	"Completo": "bg-green-50 text-green-700 border border-green-200",
+	"Cancelado": "bg-gray-50 text-gray-700 border border-gray-200",
+};
+
+type DifficultyLevel = "Trivial" | "Fácil" | "Médio" | "Difícil";
+
+interface DifficultyConfig {
+	color: string;
+	stars: string;
 }
 
-function HabitItem({ habit, dragHandleProps, onEditClick }: Props) {
-	const { completeHabit } = useHabitContext();
+const difficultyConfig: Record<DifficultyLevel, DifficultyConfig> = {
+	"Trivial": { color: "bg-gray-50 text-gray-700 border border-gray-200", stars: "⭐" },
+	"Fácil": { color: "bg-green-50 text-green-700 border border-green-200", stars: "⭐⭐" },
+	"Médio": { color: "bg-yellow-50 text-yellow-800 border border-yellow-200", stars: "⭐⭐⭐" },
+	"Difícil": { color: "bg-red-50 text-red-700 border border-red-200", stars: "⭐⭐⭐⭐" },
+};
 
-	const onComplete = async (checked: boolean) => {
-		if (checked) {
-			await completeHabit(habit);
-			toast.success(`Hábito "${habit.title}" concluído!`);
+interface HabitCardProps {
+	habit: Habit;
+	onEdit?: (habit: Habit) => void;
+	onStatusChange?: (habitId: string, status: Habit["status"]) => void;
+	onRegister?: (habitId: string, note?: string) => void | Promise<void>;
+	currentCount?: number;
+	target?: number;
+	todayCount?: number;
+	nextAvailableAt?: Date;
+}
+
+export const HabitCard = memo(function HabitCard({
+	habit,
+	onEdit,
+	onStatusChange,
+	onRegister,
+	currentCount = 0,
+	todayCount = 0,
+	nextAvailableAt,
+}: HabitCardProps) {
+	const [isExpanded, setIsExpanded] = useState(false);
+	const [isRegistering, setIsRegistering] = useState(false);
+	const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+	const registerLoading = useButtonLoading();
+	const editLoading = useButtonLoading();
+	const completeLoading = useButtonLoading();
+	const isOverdue =
+		habit.status === "Em Andamento" && habit.lastCompletedDate && habit.createdAt < new Date();
+
+	const difficultyBadge =
+		difficultyConfig[habit.difficulty as DifficultyLevel] ||
+		difficultyConfig["Fácil"];
+
+	const handleStatusChange = (newStatus: Habit["status"]) => {
+		onStatusChange?.(habit.id, newStatus);
+	};
+
+	const handleRegister = async () => {
+		if (isRegistering || registerLoading.isLoading) return;
+
+		setIsRegistering(true);
+		try {
+			await registerLoading.executeAsync(async () => {
+				if (onRegister) {
+					await onRegister(habit.id);
+				}
+			});
+		} finally {
+			setIsRegistering(false);
+		}
+	};
+
+	const handleComplete = async () => {
+		try {
+			await completeLoading.executeAsync(async () => {
+				onStatusChange?.(habit.id, "Completo");
+				toast.success(`Hábito "${habit.title}" arquivado com sucesso!`);
+			});
+		} catch (error) {
+			toast.error("Erro ao arquivar hábito. Tente novamente.");
 		}
 	};
 
 	return (
-		<div className="flex justify-between items-center gap-2 bg-background/30 shadow-sm hover:shadow-md p-1 border-green-300 border-l-4 rounded-sm transition-all duration-200 ease-in-out" >
-			<div
-				className="hover:bg-background/10 py-2 rounded-sm cursor-grab"
-				{...dragHandleProps}
-				title="Arraste para mover a tarefa"
-			>
-				<GripVertical size={16} className="text-foreground" />
-			</div>
-			<div className="flex justify-between items-center gap-1 w-full">
-				<div className="flex items-center gap-2">
-					<Checkbox
-						onCheckedChange={onComplete}
-						className="hover:bg-foreground/10 border-foreground/30 focus-visible:ring-0 focus-visible:ring-offset-0 w-5 h-5 focus-visible:bg-accent-foreground hover:cursor-pointer"
-						onClick={(e) => e.stopPropagation()}
-					/>
-					<span
-						className="overflow-hidden text-foreground/60 hover:text-foreground/80 line-clamp-1 hyphens-auto cursor-pointer"
-						onClick={onEditClick}
-						title={habit.title}
-					>
-						{habit.title}
-					</span>
+		<Card
+			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""
+				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
+		>
+			<CardHeader >
+				<div className="flex justify-between items-start">
+					<div className="flex-1">
+						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+							{habit.title}
+						</CardTitle>
+						<div className="flex items-center gap-2 mt-2">
+							<Badge
+								variant="outline"
+								className={priorityColors[habit.priority]}
+							>
+								{habit.priority}
+							</Badge>
+							<Badge
+								variant="outline"
+								className={statusColors[habit.status]}
+							>
+								{habit.status === "Em Andamento" && <TrendingUp className="w-3 h-3" />}
+								{habit.status === "Completo" && <CheckCircle className="w-3 h-3" />}
+								{habit.status === "Cancelado" && <AlertTriangle className="w-3 h-3" />}
+								{habit.status}
+							</Badge>
+						</div>
+
+						{/* Estatísticas do período atual */}
+						{(currentCount > 0 || todayCount > 0) && (
+							<div className="flex items-center gap-4 mt-2 text-gray-600 text-sm">
+								{currentCount > 0 && (
+									<div className="flex items-center gap-1">
+										<TrendingUp className="w-4 h-4" />
+										<span>Registros: {currentCount}</span>
+									</div>
+								)}
+								{todayCount > 0 && (
+									<div className="flex items-center gap-1">
+										<Calendar className="w-4 h-4" />
+										<span>Hoje: {todayCount}</span>
+									</div>
+								)}
+							</div>
+						)}
+
+						{/* Próximo período disponível */}
+						{nextAvailableAt && (
+							<div className="flex items-center gap-1 mt-2 text-orange-600 text-sm">
+								<RotateCcw className="w-4 h-4" />
+								<span>Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+							</div>
+						)}
+					</div>
+
+					<div className="flex items-center">
+						{habit.status === "Em Andamento" && (
+							<>
+								{/* Botão principal de registro */}
+								<Button
+									title="Registrar ocorrência"
+									size="icon"
+									variant="ghost"
+									onClick={handleRegister}
+									className="hover:bg-green-100 rounded-full text-green-600 hover:text-green-600"
+									disabled={registerLoading.isLoading || isRegistering}
+								>
+									{(registerLoading.isLoading || isRegistering) ? (
+										<LoaderCircle className="w-4 h-4 animate-spin duration-200" />
+									) : (
+										<CheckCircle className="w-4 h-4" />
+									)}
+								</Button>
+
+								{onEdit && (
+									<Button
+										title="Editar"
+										size="icon"
+										variant="ghost"
+										onClick={() => onEdit(habit)}
+										disabled={editLoading.isLoading}
+										className="hover:bg-gray-100 rounded-full text-gray-600"
+									>
+										{editLoading.isLoading ? (
+											<div className="border-2 border-t-transparent rounded-full w-4 h-4 text-gray-400 animate-spin" />
+										) : (
+											<Edit className="w-4 h-4" />
+										)}
+									</Button>
+								)}
+
+								{/* Botão de arquivar hábito */}
+								<Button
+									className="hover:bg-red-100 rounded-full text-red-600 hover:text-red-600"
+									title="Arquivar hábito"
+									size="icon"
+									variant="ghost"
+									onClick={() => setIsCompleteDialogOpen(true)}
+									disabled={completeLoading.isLoading}
+								>
+									{completeLoading.isLoading ? (
+										<LoaderCircle className="border-2 border-t-transparent w-4 h-4 text-red-600 animate-spin duration-200" />
+									) : (
+										<Archive className="w-4 h-4" />
+									)}
+								</Button>
+							</>
+						)}
+
+
+					</div>
 				</div>
-			</div>
-		</div>
+			</CardHeader>
+
+			<CardContent className="pt-0">
+				<div className="flex justify-between items-center pt-3">
+					<Badge
+						className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs"
+						title="Data de início"
+					>
+						<Calendar className="w-3 h-3" />
+						{format(habit.createdAt, "dd/MM/yyyy", { locale: ptBR })}
+					</Badge>
+					<Button
+						size="sm"
+						variant="ghost"
+						onClick={() => setIsExpanded(!isExpanded)}
+					>
+						{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
+					</Button>
+				</div>
+
+				{isExpanded && (
+					<div className="mt-3 pt-3 border-gray-100 border-t">
+						{habit.observations && (
+							<p className="mb-3 text-gray-600 dark:text-gray-400">
+								{habit.observations}
+							</p>
+						)}
+
+						<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm" title="data de criação">
+							<Calendar className="w-4 h-4" />
+							<span>
+								{format(habit.createdAt, "dd 'de' MMMM 'de' yyyy", {
+									locale: ptBR,
+								})}
+							</span>
+							{isOverdue && (
+								<AlertTriangle className="w-4 h-4 text-red-500" />
+							)}
+						</div>
+
+						<div className="flex items-center gap-2 mb-3 text-sm">
+							<Badge className={`text-xs ${difficultyBadge.color}`} title="Dificuldade">
+								{difficultyBadge.stars} {habit.difficulty}
+							</Badge>
+							<Badge className="bg-purple-50 border border-purple-200 text-purple-700 text-xs" title="Frequência">
+								<RotateCcw className="w-3 h-3" /> {habit.reset}
+							</Badge>
+						</div>
+
+						{habit.tags.length > 0 && (
+							<div className="flex flex-wrap gap-1 my-3">
+								{habit.tags.map((tag) => (
+									<Badge
+										key={tag}
+										variant="secondary"
+										className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
+									>
+										<Tag className="mr-1 w-3 h-3" />
+										{tag}
+									</Badge>
+								))}
+							</div>
+						)}
+						<div className="text-gray-600 dark:text-gray-400 text-sm">
+							<strong>Última atualização:</strong>{" "}
+							{format(habit.updatedAt, "dd/MM/yyyy 'às' HH:mm", {
+								locale: ptBR,
+							})}
+						</div>
+					</div>
+				)}
+			</CardContent>
+
+			<ConfirmationDialog
+				open={isCompleteDialogOpen}
+				onOpenChange={setIsCompleteDialogOpen}
+				title="Arquivar Hábito"
+				description={`Tem certeza que deseja arquivar o hábito "${habit.title}" definitivamente? Esta ação não pode ser desfeita.`}
+				confirmText="Arquivar"
+				cancelText="Cancelar"
+				onConfirm={handleComplete}
+				variant="destructive"
+			/>
+		</Card>
 	);
-}
+});

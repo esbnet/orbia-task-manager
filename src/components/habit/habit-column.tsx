@@ -1,113 +1,264 @@
-import { useHabitContext } from "@/contexts/habit-context";
-import type { Habit } from "@/types";
-import { DndContext, type DragEndEvent, closestCenter } from "@dnd-kit/core";
-import {
-	SortableContext,
-	arrayMove,
-	useSortable,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { InfoIcon } from "lucide-react";
-import { Loading } from "../ui/loading";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import AddHabitForm from "./add-habit";
+"use client";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAvailableHabits, useCreateHabit, useDeleteHabit, useUpdateHabit } from "@/hooks/use-habits";
+import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
+import { useCallback, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import type { Habit } from "@/domain/entities/habit";
+import { toast } from "sonner";
+import { Badge } from "../ui/badge";
+import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
 
 export function HabitColumn() {
-	return (
-		<div
-			className="flex flex-col flex-1 gap-4 p-2 border rounded-lg overflow-hidden animate-[slideUp_1s_ease-in-out_forwards]"
-		>
+	const { data: habitsData, isLoading } = useAvailableHabits();
+	const createHabitMutation = useCreateHabit();
+	const updateHabitMutation = useUpdateHabit();
+	const deleteHabitMutation = useDeleteHabit();
 
-			<h2 className="relative bg-background/30 p-2 border rounded-lg font-semibold text-foreground text-2xl text-center">
-				Hábitos
-				<Tooltip >
-					<TooltipTrigger asChild className="top-1 right-1 absolute">
-						<InfoIcon className="w-4 h-4 text-muted-foreground/50" />
-					</TooltipTrigger>
-					<TooltipContent className="w-32">
-						<span className="text-muted-foreground text-xs">Hábitos não tem prazo especifico. Você pode marcá-los até várias vezes ao dia.</span>
-					</TooltipContent>
-				</Tooltip>
-			</h2>
+	const [isFormOpen, setIsFormOpen] = useState(false);
+	const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
+	const [habitStats, setHabitStats] = useState<Record<string, Habit>>({});
 
-			<AddHabitForm />
+	// Usar dados do React Query
+	const availableHabits = habitsData?.availableHabits || [];
+	const completedInCurrentPeriod = habitsData?.completedInCurrentPeriod || [];
+	const totalHabits = habitsData?.totalHabits || 0;
 
-			<Habits />
-		</div>
-	);
-};
+	// Função para carregar estatísticas de um hábito específico
+	const loadHabitStats = useCallback(async (habitId: string) => {
+		try {
+			const response = await fetch(`/api/habits/${habitId}/stats`);
+			if (response.ok) {
+				const stats = await response.json();
+				setHabitStats(prev => ({
+					...prev,
+					[habitId]: stats,
+				}));
+			}
+		} catch (error) {
+		}
+	}, []);
 
-const Habits = () => {
-	const { habits, isLoading, reorderHabits } = useHabitContext();
+	const handleCreateHabit = async (habitData: any) => {
+		try {
+			// Adicionar userId se não estiver presente
+			const dataWithUserId = {
+				...habitData,
+				userId: habitData.userId, // TODO: Get from auth context
+			};
+			await createHabitMutation.mutateAsync(dataWithUserId);
+			toast.success(`Hábito "${habitData.title}" criado com sucesso!`);
+			setIsFormOpen(false);
+		} catch (error) {
+			toast.error("Erro ao criar hábito. Tente novamente.");
+		}
+	};
 
-	if (isLoading) {
-		return <Loading text="Carregando hábitos..." size="lg" />;
-	}
+	const handleEditHabit = async (habitData: any) => {
+		if (editingHabit) {
+			try {
+				await updateHabitMutation.mutateAsync({
+					id: editingHabit.id,
+					data: habitData
+				});
+				toast.success(`Hábito "${habitData.title}" atualizado com sucesso!`);
+				setEditingHabit(null);
+				setIsFormOpen(false);
+			} catch (error) {
+				toast.error("Erro ao atualizar hábito. Tente novamente.");
+			}
+		}
+	};
 
-	if (habits.length === 0) {
-		return (
-			<div className="flex flex-1 justify-center items-center font-lg text-muted-foreground text-center">
-				Nenhum hábito ativo...
-			</div>
-		);
-	}
+	const confirmDeleteHabit = async () => {
+		if (habitToDelete) {
+			try {
+				await deleteHabitMutation.mutateAsync(habitToDelete.id);
+				toast.success(`Hábito "${habitToDelete.title}" excluído com sucesso!`);
+				setHabitToDelete(null);
+				setIsDeleteDialogOpen(false);
+			} catch (error) {
+				toast.error("Erro ao excluir hábito. Tente novamente.");
+				setIsDeleteDialogOpen(false);
+			}
+		}
+	};
 
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
+	const handleStatusChange = async (
+		habitId: string,
+		status: Habit["status"],
+	) => {
+		const habit = availableHabits.find((h) => h.id === habitId) || 
+						 completedInCurrentPeriod.find((h) => h.id === habitId);
+		if (habit) {
+			try {
+				await updateHabitMutation.mutateAsync({
+					id: habitId,
+					data: { status }
+				});
+				const statusText = status === "Completo" ? "concluído" :
+					status === "Cancelado" ? "cancelado" : "atualizado";
+				toast.success(`Hábito "${habit.title}" ${statusText}!`);
+			} catch (error) {
+				toast.error("Erro ao atualizar status do hábito. Tente novamente.");
+			}
+		}
+	};
 
-		if (!over || active.id === over.id) return;
+	const openEditForm = (habit: Habit) => {
+		setEditingHabit(habit);
+		setIsFormOpen(true);
+	};
 
-		const oldIndex = habits.findIndex((habit) => habit.id === active.id);
-		const newIndex = habits.findIndex((habit) => habit.id === over.id);
+	const closeForm = () => {
+		setIsFormOpen(false);
+		setEditingHabit(null);
+	};
 
-		const reorderedHabits = arrayMove(habits, oldIndex, newIndex);
-		reorderHabits(reorderedHabits);
+	const handleRegisterHabit = async (habitId: string, note?: string,) => {
+		try {
+			const response = await fetch(`/api/habits/${habitId}/register`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ note }),
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to register habit');
+			}
+
+			const result = await response.json();
+			const habit = availableHabits.find(h => h.id === habitId);
+
+			toast.success(`Hábito "${habit?.title}" registrado! Total: ${result.currentCount}`);
+
+			// Carregar estatísticas atualizadas
+			await loadHabitStats(habitId);
+		} catch (error) {
+			toast.error('Erro ao registrar hábito. Tente novamente.');
+		}
 	};
 
 	return (
-		<DndContext
-			collisionDetection={closestCenter}
-			onDragEnd={handleDragEnd}
-		>
-			<SortableContext
-				items={habits.map((h) => h.id)}
-				strategy={verticalListSortingStrategy}
-			>
-				<div className="flex flex-col gap-2">
-					{habits.map((habit: Habit) => {
-						return (
-							<SortableHabitItem key={habit.id} habit={habit} />
-						);
-					})}
+		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border border-green-100/50 dark:border-green-800/30">
+			{/* Header */}
+			<Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/50 dark:to-blue-900/50 border-green-200 dark:border-green-700">
+				<CardHeader className="pb-3">
+					<div className="flex justify-between items-center">
+						<div className="flex items-center gap-2">
+							<Dumbbell className="w-6 h-6 text-green-600" />
+							<CardTitle className="font-bold text-green-900 text-xl">
+								Hábitos
+							</CardTitle>
+						</div>
+						<Button
+							onClick={() => setIsFormOpen(true)}
+							size="sm"
+							className="bg-green-600 hover:bg-green-700 text-white"
+
+						>
+							<Plus className="mr-1 w-4 h-4" />
+							Novo Hábito
+						</Button>
+					</div>
+				</CardHeader>
+				<CardContent className="pt-0">
+					<div className="flex items-center gap-4 text-green-700 text-sm">
+						<div className="flex items-center gap-1">
+							<TrendingUp className="w-4 h-4" />
+							<span>{availableHabits.length} hábitos ativos</span>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+
+			{/* Loading State */}
+			{isLoading && (
+				<Card className="bg-blue-50 border-blue-200">
+					<CardContent className="py-8 text-center">
+						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<p className="text-blue-600">Carregando hábitos...</p>
+					</CardContent>
+				</Card>
+			)}
+
+			{/* Habits List */}
+			<div className="space-y-4">
+				{!isLoading && availableHabits.length > 0 && (
+					<div className="space-y-3">
+						{availableHabits.map((habit) => {
+							const stats = habitStats?.[habit.id];
+							return (
+								<HabitCard
+									key={habit.id}
+									habit={habit}
+									onEdit={openEditForm}
+									onStatusChange={handleStatusChange}
+									onRegister={handleRegisterHabit}
+									currentCount={stats?.currentPeriod?.period.count || 0}
+									target={stats?.currentPeriod?.period.target}
+									todayCount={stats?.todayEntries || 0}
+								/>
+							);
+						})}
 				</div>
-			</SortableContext>
-		</DndContext>
-	);
-};
+				)}
 
-const SortableHabitItem = ({ habit }: { habit: Habit }) => {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-		isDragging,
-	} = useSortable({
-		id: habit.id,
-	});
 
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-		opacity: isDragging ? 0.5 : 1,
-	};
+				{!isLoading && totalHabits === 0 && (
+					<Card className="bg-gray-50 border-gray-300 border-dashed">
+						<CardContent className="py-8 text-center">
+							<Dumbbell className="mx-auto mb-3 w-12 h-12 text-gray-400" />
+							<h3 className="mb-2 font-medium text-gray-600 text-lg">
+								Nenhum hábito definido
+							</h3>
+							<p className="mb-4 text-gray-500">
+								Comece criando seu primeiro hábito para organizar
+								sua rotina
+							</p>
+							<Button
+								onClick={() => setIsFormOpen(true)}
+								className="bg-green-600 hover:bg-green-700"
+							>
+								<Plus className="mr-2 w-4 h-4" />
+								Criar Primeiro Hábito
+							</Button>
+						</CardContent>
+					</Card>
+				)}
+			</div>
 
-	return (
-		<div ref={setNodeRef} style={style} {...attributes}>
-			<HabitForm habit={habit} dragHandleProps={listeners} />
+			{/* Habit Form Modal */}
+			<HabitForm
+				habit={editingHabit}
+				onSubmit={editingHabit ? handleEditHabit : handleCreateHabit}
+				onCancel={closeForm}
+				open={isFormOpen}
+			/>
+
+			{/* Delete Confirmation Dialog */}
+			<ConfirmationDialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setIsDeleteDialogOpen}
+				title="Confirmar Exclusão"
+				description={
+					habitToDelete
+						? `Tem certeza que deseja excluir o hábito "${habitToDelete.title}"? Esta ação não pode ser desfeita.`
+						: "Tem certeza que deseja excluir este hábito?"
+				}
+				confirmText="Excluir"
+				cancelText="Cancelar"
+				onConfirm={confirmDeleteHabit}
+				variant="destructive"
+			/>
 		</div>
 	);
-};
+}

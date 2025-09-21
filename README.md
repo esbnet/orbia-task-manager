@@ -1,12 +1,19 @@
-# 📋 Task Manager - Clean Architecture
+# 🌟 Orbia - Task Manager com Clean Architecture
 
-> Uma aplicação completa de gerenciamento de tarefas implementada com **Clean Architecture** e princípios **SOLID**, demonstrando boas práticas de desenvolvimento de software.
+> Uma aplicação completa de gerenciamento de tarefas, hábitos e rotina diária implementada com **Clean Architecture** e princípios **SOLID**, demonstrando boas práticas de desenvolvimento de software.
 
-![Tela da aplicação](./src/assets/tela.jpeg)
+![Tela da aplicação](./src/assets/tela.png)
 
 ## 🎯 Sobre o Projeto
 
-Este projeto é uma aplicação **full-stack** desenvolvida para demonstrar a implementação prática da **Clean Architecture** em um contexto real. Apesar da simplicidade do domínio (gerenciamento de tarefas), a aplicação implementa uma arquitetura robusta e escalável.
+**Orbia** é uma aplicação **full-stack** de produtividade pessoal que combina gerenciamento de tarefas, tracking de hábitos e organização da rotina diária. Desenvolvida para demonstrar a implementação prática da **Clean Architecture** em um contexto real, oferece uma arquitetura robusta e escalável.
+
+### 🎆 Diferenciais
+- **Arquitetura Limpa**: Implementação completa dos princípios SOLID
+- **PWA Ready**: Funciona offline e pode ser instalada como app
+- **Responsivo**: Interface adaptada para desktop e mobile
+- **Analytics**: Dashboard com métricas e insights de produtividade
+- **Organização Avançada**: Ferramentas de foco e estimativa de tempo
 
 ### ✨ Funcionalidades
 
@@ -26,16 +33,30 @@ Este projeto é uma aplicação **full-stack** desenvolvida para demonstrar a im
 
 #### 🔄 **Hábitos (Habits)**
 - ✅ Criar hábitos recorrentes
-- ✅ Sistema de reset (diário, semanal, mensal)
-- ✅ Tracking de progresso
+- ✅ Sistema de reset de progresso (diário, semanal, mensal)
+- ✅ Tracking contínuo sem ocultar hábitos
 - ✅ Níveis de dificuldade
-- ✅ Histórico de conclusões
+- ✅ Histórico de períodos e conclusões
+- ✅ Métricas de consistência
 
 #### 🏷️ **Sistema de Tags**
 - ✅ Criação e gerenciamento de tags
 - ✅ Cores personalizadas
 - ✅ Associação com tarefas
 - ✅ Filtros por categoria
+
+#### 📈 **Analytics & Insights**
+- ✅ Dashboard de indicadores
+- ✅ Análise de desempenho
+- ✅ Relatórios semanais
+- ✅ Tracking de tempo
+- ✅ Metas e progresso
+
+#### 🎯 **Ferramentas de Organização**
+- ✅ Organizador de tarefas
+- ✅ Modo foco
+- ✅ Estimador de tempo
+- ✅ Configurações personalizadas
 
 ## 🏗️ Arquitetura
 
@@ -47,19 +68,27 @@ Este projeto é uma aplicação **full-stack** desenvolvida para demonstrar a im
 │   ├── entities/        # Entidades de negócio
 │   ├── repositories/    # Interfaces dos repositórios
 │   └── value-objects/   # Objetos de valor
-├── 🔧 use-cases/        # Camada de Aplicação
-│   ├── daily/          # Casos de uso para Daily
-│   ├── todo/           # Casos de uso para Todo
-│   ├── habit/          # Casos de uso para Habit
-│   └── tag/            # Casos de uso para Tag
+├── 🔧 application/     # Camada de Aplicação
+│   ├── use-cases/      # Casos de uso
+│   │   ├── daily/      # Daily tasks
+│   │   ├── todo/       # Todos
+│   │   ├── habit/      # Hábitos
+│   │   └── tag/        # Tags
+│   └── dto/            # Data Transfer Objects
 ├── 🔌 infra/           # Camada de Infraestrutura
-│   ├── repositories/   # Implementações dos repositórios
-│   │   ├── database/   # Repositórios Prisma
-│   │   └── backend/    # Repositórios API
-│   └── services/       # Serviços de infraestrutura
-├── 🖥️ app/             # Camada de Apresentação
-│   └── api/            # Endpoints da API
-└── ⚛️ components/       # Componentes React
+│   ├── database/       # Repositórios Prisma
+│   ├── repositories/   # Repositórios HTTP
+│   └── services/       # Serviços externos
+├── 🖥️ app/             # Next.js App Router
+│   ├── api/            # API Routes
+│   ├── (home)/         # Páginas principais
+│   └── auth/           # Autenticação
+├── ⚛️ components/       # Componentes React
+│   ├── ui/             # Componentes base
+│   ├── analytics/      # Dashboards
+│   └── organization/   # Ferramentas
+├── 🔗 contexts/        # React Context
+└── 🎯 hooks/           # Custom Hooks
 ```
 
 ### 🎯 Princípios SOLID Aplicados
@@ -78,7 +107,10 @@ Este projeto é uma aplicação **full-stack** desenvolvida para demonstrar a im
 - **Tailwind CSS** - Estilização utilitária
 - **Shadcn/ui** - Componentes acessíveis e customizáveis
 - **React Hook Form** - Gerenciamento de formulários
+- **TanStack Query** - Gerenciamento de estado servidor
 - **Date-fns** - Manipulação de datas
+- **Recharts** - Gráficos e visualizações
+- **PWA** - Progressive Web App
 
 ### Backend
 - **Next.js API Routes** - Endpoints serverless
@@ -148,6 +180,17 @@ POST   /api/todo-logs          # Registrar conclusão de todo
 POST   /api/habit-logs         # Registrar conclusão de hábito
 ```
 
+### 📚 Documentação da API
+
+A documentação completa da API está disponível via Swagger:
+
+```http
+GET /docs                   # Interface Swagger UI
+GET /api/docs              # Especificação OpenAPI JSON
+```
+
+Acesse `http://localhost:3000/docs` para explorar todos os endpoints interativamente.
+
 ## 🚀 Setup e Implantação
 
 ### Pré-requisitos
@@ -158,8 +201,8 @@ POST   /api/habit-logs         # Registrar conclusão de hábito
 ### 1️⃣ Clonagem e Instalação
 ```bash
 # Clonar repositório
-git clone https://github.com/esbnet/task-manager-clean-arch-example.git
-cd task-manager-clean-arch-example
+git clone https://github.com/esbnet/orbia-task-manager.git
+cd orbia-task-manager
 
 # Instalar dependências
 npm install
@@ -312,10 +355,8 @@ npm run db:push:dev
 npm run db:push:prod
 ```
 
-Copy
 🎯 Benefícios:
 ✅ Consistência: PostgreSQL em ambos ambientes
 ✅ Recursos avançados: Arrays, JSON, etc. em desenvolvimento
 ✅ Paridade: Mesmo comportamento local e produção
 ✅ Alternância fácil: Scripts automatizados
-

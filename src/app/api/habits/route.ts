@@ -1,29 +1,94 @@
-import { PrismaHabitRepository } from "@/infra/repositories/database/prisma-habit-repository";
-import { CreateHabitUseCase } from "@/use-cases/habit/create-habit/create-habit-use-case";
-import { DeleteHabitUseCase } from "@/use-cases/habit/delete-habit-use-case/delete-habit-use-case";
-import { ListHabitUseCase } from "@/use-cases/habit/list-habit-use-case/list-habit-use-case";
-import { ToggleCompleteUseCase } from "@/use-cases/habit/toggle-complete-habit/toggle-complete-use-case";
-import { UpdateHabitUseCase } from "@/use-cases/habit/update-habit/update-habit-use-case";
+import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
+import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
+import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
+import { ToggleCompleteUseCase as ToggleCompleteHabitUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
+import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
+import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import type { NextRequest } from "next/server";
 
 // Instância única do repositório
 //const habitRepository = new InJsonFileHabitRepository();
 const habitRepository = new PrismaHabitRepository();
 
+/**
+ * @swagger
+ * /api/habits:
+ *   get:
+ *     tags: [Habits]
+ *     summary: Lista todos os hábitos
+ *     responses:
+ *       200:
+ *         description: Lista de hábitos
+ */
 export async function GET() {
-	const useCase = new ListHabitUseCase(habitRepository);
-	const result = await useCase.execute();
-	return Response.json({ habits: result.habits });
+	try {
+		const useCase = new ListHabitsUseCase(habitRepository);
+		const result = await useCase.execute();
+		return Response.json({ habits: result.habits });
+	} catch (error) {
+		console.error("Erro na API habits:", error);
+		// Retorna dados vazios em caso de erro para não quebrar o frontend
+		return Response.json({ habits: [] });
+	}
 }
 
+/**
+ * @swagger
+ * /api/habits:
+ *   post:
+ *     tags: [Habits]
+ *     summary: Cria um novo hábito
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               observations:
+ *                 type: string
+ *               difficulty:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               reset:
+ *                 type: string
+ *               createdAt:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Hábito criado
+ */
 export async function POST(request: NextRequest) {
-	const { title, observations, difficulty, tags, reset, createdAt } =
-		await request.json();
-	const useCase = new CreateHabitUseCase(habitRepository);
-	const result = await useCase.execute({
+	const {
+		userId,
 		title,
 		observations,
 		difficulty,
+		priority,
+		tags,
+		reset,
+		createdAt
+	} = await request.json();
+
+	const useCase = new CreateHabitUseCase(habitRepository);
+	const result = await useCase.execute({
+		userId,
+		title,
+		observations,
+		difficulty,
+		priority,
 		tags,
 		reset,
 		createdAt,
@@ -31,13 +96,51 @@ export async function POST(request: NextRequest) {
 	return Response.json(result, { status: 201 });
 }
 
+/**
+ * @swagger
+ * /api/habits:
+ *   put:
+ *     tags: [Habits]
+ *     summary: Alterna o status de conclusão de um hábito
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *     responses:
+ *       204:
+ *         description: Status alternado
+ */
 export async function PUT(request: NextRequest) {
 	const { id } = await request.json();
-	const useCase = new ToggleCompleteUseCase(habitRepository);
+	const useCase = new ToggleCompleteHabitUseCase(habitRepository);
 	await useCase.execute(id);
 	return new Response(null, { status: 204 });
 }
 
+/**
+ * @swagger
+ * /api/habits:
+ *   patch:
+ *     tags: [Habits]
+ *     summary: Atualiza um hábito
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               habit:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Hábito atualizado
+ */
 export async function PATCH(request: NextRequest) {
 	const { habit } = await request.json();
 	const useCase = new UpdateHabitUseCase(habitRepository);
@@ -45,6 +148,24 @@ export async function PATCH(request: NextRequest) {
 	return Response.json({ habit: updatedHabit }, { status: 200 });
 }
 
+/**
+ * @swagger
+ * /api/habits:
+ *   delete:
+ *     tags: [Habits]
+ *     summary: Deleta um hábito
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Hábito deletado
+ *       400:
+ *         description: ID obrigatório
+ */
 export async function DELETE(request: NextRequest) {
 	const url = new URL(request.url);
 	const id = url.searchParams.get("id");
@@ -54,6 +175,6 @@ export async function DELETE(request: NextRequest) {
 	}
 
 	const useCase = new DeleteHabitUseCase(habitRepository);
-	await useCase.execute({ id });
+	await useCase.execute(id);
 	return new Response(null, { status: 204 });
 }

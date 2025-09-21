@@ -58,7 +58,7 @@ const multiSelectVariants = cva(
  */
 interface MultiSelectProps
 	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-		VariantProps<typeof multiSelectVariants> {
+	VariantProps<typeof multiSelectVariants> {
 	/**
 	 * An array of option objects to be displayed in the multi-select component.
 	 * Each option object has a label, value, and an optional icon.
@@ -119,6 +119,12 @@ interface MultiSelectProps
 	 * Optional, can be used to add custom styles.
 	 */
 	className?: string;
+
+	/**
+	 * Callback function triggered when user wants to create a new tag.
+	 * Receives the tag name to create.
+	 */
+	onCreateTag?: (tagName: string) => Promise<void>;
 }
 
 export const MultiSelect = React.forwardRef<

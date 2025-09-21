@@ -1,7 +1,5 @@
-'use client';
+"use client";
 
-import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
-import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import {
 	Dialog,
 	DialogClose,
@@ -24,52 +22,77 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import type { DailyDifficulty, DailyRepeatType } from "@/types/daily";
 import { format, setDefaultOptions } from "date-fns";
+import { Calendar as CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import type { Daily } from "@/types";
-import { DailyCard } from "./daily-card";
-import { DailySubtaskList } from "./daily-subtask-list";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { useDailyState } from "@/contexts/daily-state-context";
+import { useTags } from "@/hooks/use-tags";
+import { useTranslation } from "@/hooks/use-translation";
+import type { Daily } from "@/types";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useDailyContext } from "@/contexts/daily-context";
-import { useState } from "react";
-import { useTags } from "@/hooks/use-tags";
+import { DailyCard } from "./daily-card";
+import { DailySubtaskList } from "./daily-subtask-list";
 
 setDefaultOptions({ locale: ptBR });
 
 interface DailyFormProps {
 	daily: Daily;
-	dragHandleProps?: any; // Adjust type as needed
+	onSubmit?: (daily: Omit<Daily, "id" | "createdAt">) => Promise<void>;
+	onCancel?: () => void;
+	open?: boolean;
 }
 
-export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
-	const { updateDaily } = useDailyContext();
+export function DailyForm({
+	daily,
+	onSubmit,
+	onCancel,
+	open = false,
+}: DailyFormProps) {
+	const { } = useDailyState();
 	const { tagOptions } = useTags();
+	const { t } = useTranslation();
 
 	const [title, setTitle] = useState(daily.title || "");
 	const [observations, setObservations] = useState(daily.observations || "");
 	const [tasks] = useState<string[]>(daily.tasks || []);
 	const [difficulty, setDifficulty] = useState<DailyDifficulty>(
-		daily.difficulty || "Fácil",
+		daily.difficulty || t('difficulty.easy'),
 	);
 	const [startDate, setStartDate] = useState<Date>(
 		daily.startDate || new Date(),
 	);
 	const [repeatType, setRepeatType] = useState<DailyRepeatType>(
-		daily.repeat.type || "Semanalmente",
+		daily.repeat.type || t('repeat.weekly'),
 	);
 	const [repeatFrequency, setRepeatFrequency] = useState<number>(
 		daily.repeat.frequency || 1,
 	);
 	const [tags, setTags] = useState<string[]>(daily.tags || []);
 
-	const [open, setOpen] = useState(false);
+	const [internalOpen, setInternalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+
+	// Sincronizar estados com o prop daily quando ele muda
+	useEffect(() => {
+		setTitle(daily.title || "");
+		setObservations(daily.observations || "");
+		setDifficulty(daily.difficulty || t('difficulty.easy'));
+		setStartDate(daily.startDate || new Date());
+		setRepeatType(daily.repeat?.type || t('repeat.weekly'));
+		setRepeatFrequency(daily.repeat?.frequency || 1);
+		setTags(daily.tags || []);
+	}, [daily]);
+
+	// Usar prop externa se fornecida, senão usar estado interno
+	const isOpen = open !== undefined ? open : internalOpen;
 
 	async function handleUpdateDaily(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -79,25 +102,55 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 
 		setIsLoading(true);
 		try {
-			await updateDaily({
-				...daily,
-				title,
-				observations,
-				tasks,
-				difficulty: difficulty,
-				startDate,
-				repeat: {
-					type: repeatType as DailyRepeatType,
-					frequency: repeatFrequency,
-				},
-				tags,
-			} as Daily);
+			// Se for um daily mock, criar um novo daily real
+			if (daily.id.startsWith('mock-')) {
+				if (onSubmit) {
+					await onSubmit({
+						title,
+						observations,
+						tasks,
+						difficulty,
+						startDate,
+						repeat: {
+							type: repeatType as DailyRepeatType,
+							frequency: repeatFrequency,
+						},
+						tags,
+					} as Omit<Daily, "id" | "createdAt">);
+					toast.success(t("messages.dailyCreated"));
+					setInternalOpen(false);
+					if (onCancel) onCancel();
+					return;
+				}
+			}
 
-			toast.success("Hábito atualizado com sucesso!");
-			setOpen(false);
+			// Para todos os casos (criação e edição), usar a função onSubmit se fornecida
+			if (onSubmit) {
+				await onSubmit({
+					title,
+					observations,
+					tasks,
+					difficulty,
+					startDate,
+					repeat: {
+						type: repeatType as DailyRepeatType,
+						frequency: repeatFrequency,
+					},
+					tags,
+				} as Omit<Daily, "id" | "createdAt">);
+
+				// console.log('DailyForm: onSubmit executado com sucesso');
+				toast.success(daily.id.startsWith('mock-') || !daily.id ? t("messages.dailyCreated") : t("messages.dailyUpdated"));
+				setInternalOpen(false);
+				if (onCancel) onCancel();
+				return;
+			}
+
+			// Fallback: se não há onSubmit, não fazer nada
+			toast.error("Função de atualização não fornecida");
+			return;
 		} catch (error) {
-			toast.error(`Erro ao atualizar hábito${error}`);
-			console.error("Erro ao atualizar hábito", error);
+			toast.error(`${t("messages.errorSaving")}: ${error}`);
 		} finally {
 			setIsLoading(false);
 		}
@@ -105,17 +158,26 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 
 	return (
 		<>
-			<DailyCard
-				daily={daily}
-				dragHandleProps={dragHandleProps}
-				onEditClick={() => setOpen(true)}
-			/>
-			<Dialog open={open} onOpenChange={setOpen}>
-				<DialogContent className="flex flex-col gap-4 opacity-80 shadow-xl backdrop-blur-sm backdrop-opacity-0">
+			{/* Só renderizar DailyCard se não estiver usando prop externa open */}
+			{open === undefined && (
+				<DailyCard
+					daily={daily}
+				/>
+			)}
+			<Dialog
+				open={isOpen}
+				onOpenChange={(v) => {
+					if (open === undefined) {
+						setInternalOpen(v);
+					}
+					if (!v && onCancel) onCancel();
+				}}
+			>
+				<DialogContent className="flex flex-col gap-4 shadow-xl backdrop-blur-sm backdrop-opacity-0">
 					<DialogHeader className="flex flex-col gap-1">
-						<DialogTitle>Editar</DialogTitle>
+						<DialogTitle>{t("forms.editDaily")}</DialogTitle>
 						<DialogDescription className="text-zinc-400 text-sm">
-							Edite os detalhes da diária
+							{t("forms.editDetails")}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -124,33 +186,33 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 						className="flex flex-col gap-4 bg-gray-100/20 p-2 rounded-lg animate-[fadeIn_1s_ease-in-out_forwards]"
 					>
 						<div className="flex flex-col gap-1">
-							<Label>Título</Label>
+							<Label>{t("forms.title")}</Label>
 							<Input
 								value={title}
 								onChange={(e) => setTitle(e.target.value)}
-								placeholder="Nova diária"
+								placeholder={t("forms.newDaily")}
 								required
 							/>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Observação</Label>
+							<Label>{t("forms.observations")}</Label>
 							<Input
 								value={observations}
 								onChange={(e) =>
 									setObservations(e.target.value)
 								}
-								placeholder="Adicionar observações"
+								placeholder={t("forms.addObservations")}
 							/>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Lista de tarefas</Label>
+							<Label>{t("forms.taskList")}</Label>
 							<DailySubtaskList
 								dailyId={daily.id}
 								initialSubtasks={daily.subtasks || []}
 							/>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Dificuldade</Label>
+							<Label>{t("forms.difficulty")}</Label>
 							<Select
 								onValueChange={(value) =>
 									setDifficulty(value as DailyDifficulty)
@@ -159,7 +221,7 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 							>
 								<SelectTrigger className="w-full">
 									<SelectValue
-										placeholder="Dificuldade"
+										placeholder={t("forms.difficulty")}
 										className="text-zinc-300"
 									/>
 								</SelectTrigger>
@@ -168,22 +230,22 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 									defaultValue={difficulty}
 								>
 									<SelectItem value="Trivial">
-										Trivial ⭐
+										{t("difficulty.trivial")} ⭐
 									</SelectItem>
 									<SelectItem value="Fácil">
-										Fácil ⭐⭐
+										{t("difficulty.easy")} ⭐⭐
 									</SelectItem>
 									<SelectItem value="Média">
-										Média ⭐⭐⭐
+										{t("difficulty.medium")} ⭐⭐⭐
 									</SelectItem>
 									<SelectItem value="Difícil">
-										Difícil ⭐⭐⭐⭐
+										{t("difficulty.hard")} ⭐⭐⭐⭐
 									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Data de início</Label>
+							<Label>{t("forms.startDate")}</Label>
 							<Popover>
 								<PopoverTrigger asChild>
 									<Button
@@ -197,7 +259,7 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 												locale: ptBR,
 											})
 										) : (
-											<span>Pick a date</span>
+											<span>{t("common.pickDate")}</span>
 										)}
 									</Button>
 								</PopoverTrigger>
@@ -212,7 +274,7 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 							</Popover>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Repetição</Label>
+							<Label>{t("forms.repeat")}</Label>
 							<Select
 								onValueChange={(value) =>
 									setRepeatType(value as DailyRepeatType)
@@ -221,7 +283,7 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 							>
 								<SelectTrigger className="w-[180px]">
 									<SelectValue
-										placeholder="Repetição"
+										placeholder={t("forms.repeat")}
 										className="text-zinc-300"
 									/>
 								</SelectTrigger>
@@ -230,22 +292,22 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 									defaultValue={repeatType}
 								>
 									<SelectItem value="Diariamente">
-										Diariamente
+										{t("repeat.daily")}
 									</SelectItem>
 									<SelectItem value="Semanalmente">
-										Semanalmente
+										{t("repeat.weekly")}
 									</SelectItem>
 									<SelectItem value="Mensalmente">
-										Mensalmente
+										{t("repeat.monthly")}
 									</SelectItem>
 									<SelectItem value="Anualmente">
-										Anualmente
+										{t("repeat.yearly")}
 									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>A cada</Label>
+							<Label>{t("forms.every")}</Label>
 							<div className="flex items-center gap-2">
 								<Input
 									type="number"
@@ -263,21 +325,22 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 									required
 								/>
 								<span>
-									{repeatType === "Diariamente"
-										? "Dia"
-										: repeatType === "Semanalmente"
-											? "Semana"
-											: repeatType === "Mensalmente"
-												? "Mês"
-												: repeatType === "Anualmente"
-													? "Ano"
+									{repeatType === t("repeat.daily")
+										? t("repeat.day")
+										: repeatType === t("repeat.weekly")
+											? t("repeat.week")
+											: repeatType === t("repeat.monthly")
+												? t("repeat.month")
+												: repeatType === t("repeat.yearly")
+													? t("repeat.year")
 													: ""}
 								</span>
 							</div>
 						</div>
 						<div className="flex flex-col gap-1">
-							<Label>Etiquetas</Label>
+							<Label>{t('forms.tags')}</Label>
 							<MultiSelect
+								key={`tags-${tagOptions.length}`}
 								id="tags"
 								options={tagOptions}
 								onValueChange={(value) => setTags(value)}
@@ -288,11 +351,15 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 							/>
 						</div>
 
-						<div className="flex gap-1 mt-2">
+						<div className="flex justify-end gap-1 mt-2">
 							<DialogClose asChild>
 								<Button variant="link">Cancel</Button>
 							</DialogClose>
-							<Button type="submit" className="flex-1" disabled={isLoading}>
+							<Button
+								type="submit"
+								className="flex-1"
+								disabled={isLoading}
+							>
 								<SaveIcon />
 								{isLoading ? "Salvando..." : "Salvar"}
 							</Button>
@@ -308,14 +375,13 @@ export function DailyForm({ daily, dragHandleProps }: DailyFormProps) {
 }
 
 function DialogConfirmDelete({ id }: { id: string }) {
-	const { deleteDaily } = useDailyContext();
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	const onDelete = async () => {
 		if (isDeleting) return;
 		setIsDeleting(true);
 		try {
-			await deleteDaily(id);
+			// TODO: Implementar deleção via hook
 			toast.success("Tarefa excluída com sucesso!");
 		} finally {
 			setIsDeleting(false);

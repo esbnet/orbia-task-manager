@@ -13,15 +13,20 @@ model Habit {
     title             String
     observations      String   @default("")
     difficulty        String
+    status            String   @default("Em Andamento")
+    priority          String   @default("Média")
     tags              String[]
     reset             String
     order             Int      @default(0)
     lastCompletedDate String?
     userId            String
     createdAt         DateTime @default(now())
+    updatedAt         DateTime @default(now()) @updatedAt
 
-    user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-    logs HabitLog[]
+    user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    logs        HabitLog[]
+    HabitPeriod HabitPeriod[]
+    HabitEntry  HabitEntry[]
 
     @@map("habits")
 }
@@ -37,6 +42,38 @@ model HabitLog {
     habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
     @@map("habit_logs")
+}
+
+model HabitPeriod {
+    id         String    @id @default(cuid())
+    habitId    String
+    periodType String // "Diariamente", "Semanalmente", "Mensalmente"
+    startDate  DateTime
+    endDate    DateTime?
+    count      Int       @default(0)
+    target     Int? // Meta opcional para o período
+    isActive   Boolean   @default(true)
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+
+    habit      Habit        @relation(fields: [habitId], references: [id], onDelete: Cascade)
+    HabitEntry HabitEntry[]
+
+    @@map("habit_periods")
+}
+
+model HabitEntry {
+    id        String   @id @default(cuid())
+    habitId   String
+    periodId  String
+    timestamp DateTime @default(now())
+    note      String? // Nota opcional do usuário
+    createdAt DateTime @default(now())
+
+    habit  Habit       @relation(fields: [habitId], references: [id], onDelete: Cascade)
+    period HabitPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+    @@map("habit_entries")
 }
 
 model Daily {
@@ -57,8 +94,9 @@ model Daily {
     user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
     logs     DailyLog[]
     subtasks DailySubtask[]
+    periods  DailyPeriod[]
 
-    @@map("dailys")
+    @@map("dailies")
 }
 
 model DailySubtask {
@@ -74,9 +112,26 @@ model DailySubtask {
     @@map("daily_subtasks")
 }
 
+model DailyPeriod {
+    id          String    @id @default(cuid())
+    dailyId     String
+    periodType  String // "Diariamente", "Semanalmente", "Mensalmente"
+    startDate   DateTime
+    endDate     DateTime?
+    isCompleted Boolean   @default(false)
+    isActive    Boolean   @default(true)
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    daily Daily @relation(fields: [dailyId], references: [id], onDelete: Cascade)
+
+    @@map("daily_periods")
+}
+
 model DailyLog {
     id          String   @id @default(cuid())
     dailyId     String
+    periodId    String? // Referência ao período
     dailyTitle  String
     difficulty  String
     tags        String[]
@@ -178,10 +233,10 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
+    id            String      @id @default(cuid())
     name          String?
-    email         String?   @unique
-    emailVerified DateTime? @map("email_verified")
+    email         String?     @unique
+    emailVerified DateTime?   @map("email_verified")
     image         String?
     accounts      Account[]
     sessions      Session[]
@@ -189,8 +244,25 @@ model User {
     dailies       Daily[]
     todos         Todo[]
     tags          Tag[]
+    goals         Goal[]
+    config        UserConfig?
 
     @@map("users")
+}
+
+model UserConfig {
+    id            String   @id @default(cuid())
+    userId        String   @unique
+    theme         String   @default("light") // "light", "dark", "system"
+    language      String   @default("pt-BR") // idioma do usuário
+    notifications Boolean  @default(true) // notificações habilitadas
+    timezone      String   @default("America/Sao_Paulo")
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("user_configs")
 }
 
 model VerificationToken {
@@ -200,4 +272,53 @@ model VerificationToken {
 
     @@unique([identifier, token])
     @@map("verification_tokens")
+}
+
+model Goal {
+    id          String   @id @default(cuid())
+    title       String
+    description String   @default("")
+    targetDate  DateTime
+    status      String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CANCELLED
+    priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+    tags        String[]
+    userId      String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    milestones GoalMilestone[]
+    goalTasks  GoalTask[]
+
+    @@map("goals")
+}
+
+model GoalMilestone {
+    id          String    @id @default(cuid())
+    title       String
+    description String    @default("")
+    targetDate  DateTime
+    completed   Boolean   @default(false)
+    completedAt DateTime?
+    order       Int       @default(0)
+    goalId      String
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+    @@map("goal_milestones")
+}
+
+model GoalTask {
+    id        String   @id @default(cuid())
+    goalId    String
+    taskId    String
+    taskType  String // "habit", "daily", "todo"
+    createdAt DateTime @default(now())
+
+    goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+    @@unique([goalId, taskId, taskType])
+    @@map("goal_tasks")
 }

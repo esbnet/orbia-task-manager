@@ -1,113 +1,275 @@
-import { useDailyContext } from "@/contexts/daily-context";
-import type { Daily } from "@/types";
-import { DndContext, type DragEndEvent, closestCenter } from "@dnd-kit/core";
-import {
-	SortableContext,
-	arrayMove,
-	useSortable,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { InfoIcon } from "lucide-react";
-import { Loading } from "../ui/loading";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import AddDaily from "./add-daily";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
+import type { Daily, DailyDifficulty } from "@/types/daily";
+import { CalendarCheck, Plus } from "lucide-react";
+import { useCallback, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/use-translation";
+import { toast } from "sonner";
+import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
 
+const defaultDaily: Daily = {
+	id: "",
+	userId: "",
+	title: "",
+	observations: "",
+	tasks: [],
+	difficulty: "Fácil" as DailyDifficulty,
+	startDate: new Date(),
+	repeat: { type: "Diariamente", frequency: 1 },
+	tags: [],
+	createdAt: new Date(),
+};
+
 export const DailyColumn = () => {
-	return (
-		<div
-			className="flex flex-col flex-1 gap-4 p-2 border rounded-lg overflow-hidden animate-[slideUp_1s_ease-in-out_forwards]"
-		>
+	const createDailyMutation = useCreateDaily();
+	const updateDailyMutation = useUpdateDaily();
+	const deleteDailyMutation = useDeleteDaily();
+	const { data: dailiesData, isLoading, } = useAvailableDailies();
 
-			<h2 className="relative bg-background/30 p-2 border rounded-lg font-semibold text-foreground text-2xl text-center">
-				Diárias
-				<Tooltip >
-					<TooltipTrigger asChild className="top-1 right-1 absolute">
-						<InfoIcon className="w-4 h-4 text-muted-foreground/50" />
-					</TooltipTrigger>
-					<TooltipContent className="w-32">
-						<span className="text-muted-foreground text-xs">As Diárias são repetidas em intervalos regulares. Escolha o cronograma que for mais adequado para você!</span>
-					</TooltipContent>
-				</Tooltip>
-			</h2>
+	const [isFormOpen, setIsFormOpen] = useState(false);
+	const [editingDaily, setEditingDaily] = useState<Daily | null>(null);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [dailyToDelete, setDailyToDelete] = useState<Daily | null>(null);
 
-			<AddDaily />
+	const { t } = useTranslation()
 
-			<Daily />
-		</div>
-	);
-};
+	// Usar dados do React Query
+	const availableDailies = dailiesData?.availableDailies || [];
+	const completedDailies = dailiesData?.completedToday || [];
 
-const Daily = () => {
-	const { daily, isLoading, reorderDaily } = useDailyContext();
+	// Completar daily - usando React Query
+	const { mutateAsync: completeDailyMutation } = useCompleteDaily();
 
-	if (isLoading) {
-		return <Loading text="Carregando diárias..." size="lg" />;
-	}
+	const handleCompleteDaily = useCallback(async (dailyId: string) => {
+		try {
+			await completeDailyMutation(dailyId);
+		} catch (error) {
+			toast.error(t("messages.errorCompletingTask"));
+		}
+	}, [completeDailyMutation]);
 
-	if (daily.length === 0) {
-		return (
-			<div className="flex flex-1 justify-center items-center font-lg text-muted-foreground">
-				Nenhuma tarefa diária ativa...{" "}
-			</div>
-		);
-	}
+	// Funções de controle do formulário
+	const openEditForm = async (daily: Daily) => {
+		// Se for um daily mock, usar os dados diretamente
+		if (daily.id.startsWith('mock-')) {
+			setEditingDaily(daily);
+			setIsFormOpen(true);
+			return;
+		}
 
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
+		try {
+			// Buscar dados completos da daily para edição
+			const response = await fetch(`/api/daily/${daily.id}`);
+			if (response.ok) {
+				const data = await response.json();
+				setEditingDaily(data.daily);
+				setIsFormOpen(true);
+			} else {
+				toast.error(t('messages.errorLoadingData'));
+			}
+		} catch (error) {
+			toast.error(t('messages.errorLoadingData'));
+		}
+	};
 
-		if (!over || active.id === over.id) return;
+	const closeForm = () => {
+		setIsFormOpen(false);
+		setEditingDaily(null);
+	};
 
-		const oldIndex = daily.findIndex((daily) => daily.id === active.id);
-		const newIndex = daily.findIndex((daily) => daily.id === over.id);
+	// Criar nova daily
+	const handleCreateDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
+		try {
+			await createDailyMutation.mutateAsync(dailyData);
+			setIsFormOpen(false);
+		} catch (error) {
+			toast.error(t('messages.errorSaving'));
+		}
+	};
 
-		const reorderedDaily = arrayMove(daily, oldIndex, newIndex);
-		reorderDaily(reorderedDaily);
+	// Editar daily existente
+	const handleEditDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
+		if (!editingDaily) {
+			console.log('handleEditDaily: Nenhum daily sendo editado');
+			return;
+		}
+
+		try {
+			// Se for um daily mock, criar um novo daily real
+			if (editingDaily.id.startsWith('mock-')) {
+				const result = await createDailyMutation.mutateAsync(dailyData);
+				toast.success(t('messages.taskCreated'));
+			} else {
+				// Para dailies reais, atualizar normalmente
+				await updateDailyMutation.mutateAsync({
+					id: editingDaily.id,
+					data: {
+						...editingDaily,
+						...dailyData,
+					}
+				});
+			}
+
+			// console.log('handleEditDaily: Fechando formulário');
+			setIsFormOpen(false);
+			setEditingDaily(null);
+		} catch (error) {
+			toast.error(t('messages.errorSaving'));
+		}
+	};
+
+	const confirmDeleteDaily = async () => {
+		if (dailyToDelete) {
+			try {
+				// Chamar deleteDaily do React Query
+				await deleteDailyMutation.mutateAsync(dailyToDelete.id);
+				toast.success(`Daily "${dailyToDelete.title}" removida com sucesso!`);
+				setIsDeleteDialogOpen(false);
+				setDailyToDelete(null);
+				// A lista será automaticamente atualizada pelo React Query
+			} catch (error) {
+				toast.error("Erro ao remover daily. Tente novamente.");
+			}
+		}
 	};
 
 	return (
-		<DndContext
-			collisionDetection={closestCenter}
-			onDragEnd={handleDragEnd}
-		>
-			<SortableContext
-				items={daily.map((d) => d.id)}
-				strategy={verticalListSortingStrategy}
-			>
-				<div className="flex flex-col gap-2">
-					{daily.map((daily: Daily) => {
-						return (
-							<SortableDailyItem key={daily.id} daily={daily} />
-						);
-					})}
+		<div className="flex flex-col gap-4 bg-gradient-to-br from-amber-50/30 dark:from-amber-950/20 to-orange-50/30 dark:to-orange-950/20 p-4 border border-amber-100/50 dark:border-amber-800/30 rounded-xl">
+			<Card className="bg-gradient-to-r from-amber-50 dark:from-amber-900/50 to-blue-50 dark:to-blue-900/50 border-amber-200 dark:border-amber-700">
+				<CardHeader className="pb-3">
+					<div className="flex justify-between items-center">
+						<div className="flex items-center gap-2">
+							<CalendarCheck className="w-6 h-6 text-amber-600" />
+							<CardTitle className="font-bold text-amber-900 text-xl">
+								{t('taskTypes.daily')}
+							</CardTitle>
+						</div>
+						<Button
+							onClick={() => setIsFormOpen(true)}
+							size="sm"
+							className="bg-amber-600 hover:bg-amber-700 text-white"
+						>
+							<Plus className="mr-1 w-4 h-4" />
+							{t('forms.newDaily')}
+						</Button>
+					</div>
+				</CardHeader>
+				<CardContent className="pt-0">
+					<div className="flex items-center gap-4 text-amber-700 text-sm">
+						<div className="flex items-center gap-1">
+							<span>{availableDailies.length} {t('tasks.availableTasks')}</span>
+						</div>
+						{completedDailies.length > 0 && (
+							<div className="flex items-center gap-1">
+								<span>{completedDailies.length} {t('tasks.completedToday')}</span>
+							</div>
+						)}
+					</div>
+				</CardContent>
+			</Card>
+
+			{/* Loading State */}
+			{isLoading && (
+				<Card className="bg-blue-50 border-blue-200">
+					<CardContent className="py-8 text-center">
+						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<p className="text-blue-600">{t('tasks.loadingTasks')}</p>
+					</CardContent>
+				</Card>
+			)}
+
+			{/* Dailies Disponíveis */}
+			{!isLoading && availableDailies.length > 0 && (
+				<div className="space-y-4">
+					<h3 className="font-semibold text-amber-800">Disponíveis</h3>
+					{availableDailies.map((daily: Daily) => (
+						<DailyCard
+							key={daily.id}
+							daily={{
+								id: daily.id,
+								userId: daily.userId,
+								title: daily.title,
+								observations: daily.observations,
+								difficulty: daily.difficulty as "Fácil",
+								repeat: {
+									type: (daily as any).repeatType as 'Diariamente',
+									frequency: (daily as any).repeatFrequency
+								},
+								tags: daily.tags,
+								startDate: new Date(),
+								tasks: daily.tasks || [],
+								createdAt: new Date(),
+							}}
+							onComplete={handleCompleteDaily}
+							onEdit={openEditForm}
+							isCompleted={false}
+						/>
+					))}
 				</div>
-			</SortableContext>
-		</DndContext>
-	);
-};
+			)}
 
-const SortableDailyItem = ({ daily }: { daily: Daily }) => {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-		isDragging,
-	} = useSortable({
-		id: daily.id,
-	});
+			{/* Dailies Completadas Hoje */}
+			{!isLoading && completedDailies.length > 0 && (
+				<div className="space-y-4">
+					<h3 className="font-semibold text-green-800">Completadas Hoje</h3>
+					{completedDailies.map((daily: Daily) => (
+						<DailyCard
+							key={daily.id}
+							daily={{
+								id: daily.id,
+								userId: daily.userId,
+								title: daily.title,
+								observations: daily.observations,
+								difficulty: daily.difficulty as "Fácil",
+								repeat: {
+									type: (daily as any).repeatType as 'Diariamente',
+									frequency: (daily as any).repeatFrequency
+								},
+								tags: daily.tags,
+								startDate: new Date(),
+								tasks: daily.tasks || [],
+								createdAt: new Date(),
+							}}
+							onComplete={handleCompleteDaily}
+							isCompleted={true}
+							nextAvailableAt={undefined}
+						/>
+					))}
+				</div>
+			)}
 
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-		opacity: isDragging ? 0.5 : 1,
-	};
+			{/* Estado vazio */}
+			{!isLoading && availableDailies.length === 0 && completedDailies.length === 0 && (
+				<Card className="bg-gray-50 border-gray-300 border-dashed">
+					<CardContent className="py-8 text-center">
+						<CalendarCheck className="mx-auto mb-3 w-12 h-12 text-gray-400" />
+						<h3 className="mb-2 font-medium text-gray-600 text-lg">
+							{t("noTasks.noTasksAvailable")}
+						</h3>
+						<p className="mb-4 text-gray-500">
+							{t("noTasks.noTaskAvailableDescription")}
+						</p>
+						<Button
+							onClick={() => setIsFormOpen(true)}
+							className="bg-amber-600 hover:bg-amber-700"
+						>
+							<Plus className="mr-2 w-4 h-4" />
+							{t("noTasks.createTask")}
+						</Button>
+					</CardContent>
+				</Card>
+			)}
 
-	return (
-		<div ref={setNodeRef} style={style} {...attributes}>
-			<DailyForm daily={daily} dragHandleProps={listeners} />
-		</div>
+			{/* Daily Form Modal */}
+			<DailyForm
+				daily={editingDaily || defaultDaily}
+				onSubmit={editingDaily ? handleEditDaily : handleCreateDaily}
+				onCancel={closeForm}
+				open={isFormOpen}
+			/>
+		</div >
 	);
 };

@@ -10,6 +10,7 @@ export interface Todo {
 	tags: string[];
 	createdAt: Date;
 	order?: number;
+	userId: string;
 	lastCompletedDate?: string;
 	subtasks?: TodoSubtask[];
 }

@@ -1,18 +1,23 @@
-import { InJsonFileTodoRepository } from "@/infra/repositories/frontend/json-file-todo-repository";
-import type { CreateTodoInput } from "@/use-cases/todo/create-todo/create-todo-dto";
-import { CreateTodoUseCase } from "@/use-cases/todo/create-todo/create-todo-use-case";
+import type { CreateTodoInput } from "@/application/use-cases/todo/create-todo/create-todo-dto";
+import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
+import { InMemoryTodoRepository } from "@/infra/repositories/memory/in-memory-todo-repository";
 
-describe("shold be able to create a todo", () => {
+describe("should be able to create a todo", () => {
 	let useCase: CreateTodoUseCase;
-	let todoRepository: InJsonFileTodoRepository;
+	let todoRepository: InMemoryTodoRepository;
 
 	beforeEach(() => {
-		todoRepository = new InJsonFileTodoRepository();
+		todoRepository = new InMemoryTodoRepository();
 		useCase = new CreateTodoUseCase(todoRepository);
+	});
+
+	afterEach(() => {
+		todoRepository.clear();
 	});
 
 	it("deve criar uma tarefa", async () => {
 		const inputTodo: CreateTodoInput = {
+			userId: "test-user-123",
 			title: "Tarefa 1",
 			observations: "",
 			tasks: ["Tarefa 1", "Tarefa 2"],
@@ -31,6 +36,7 @@ describe("shold be able to create a todo", () => {
 
 	it("deve criar uma tarefa com categoria e prioridade padrão", async () => {
 		const inputTodo: CreateTodoInput = {
+			userId: "test-user-456",
 			title: "Tarefa 2",
 			observations: "Observações",
 			tasks: ["Tarefa 1", "Tarefa 2"],

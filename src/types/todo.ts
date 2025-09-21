@@ -2,6 +2,7 @@ export type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
 
 export interface Todo {
 	id: string;
+	userId: string;
 	title: string;
 	observations: string;
 	tasks: string[];

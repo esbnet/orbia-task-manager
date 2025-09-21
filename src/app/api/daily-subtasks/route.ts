@@ -1,4 +1,4 @@
-import { PrismaDailySubtaskRepository } from "@/infra/repositories/database/prisma-daily-subtask-repository";
+import { PrismaDailySubtaskRepository } from "@/infra/database/prisma/prisma-daily-subtask-repository";
 import type { NextRequest } from "next/server";
 
 const subtaskRepo = new PrismaDailySubtaskRepository();
@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
 		});
 		return Response.json({ subtask }, { status: 201 });
 	} catch (error) {
-		console.error("Error creating subtask:", error);
 		return Response.json(
 			{ error: "Failed to create subtask" },
 			{ status: 500 },

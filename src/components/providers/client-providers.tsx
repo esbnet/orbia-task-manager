@@ -1,33 +1,52 @@
-"use client"
+"use client";
 
 import { DailyColumn } from "@/components/daily/daily-column";
+import { GoalColumn } from "@/components/goal/goal-column";
 import { HabitColumn } from "@/components/habit/habit-column";
 import { TodoColumn } from "@/components/todo/todo-column";
-import { DailyProvider } from "@/contexts/daily-context";
+import { DailyStateProvider } from "@/contexts/daily-state-context";
+import { TodoStateProvider } from "@/contexts/todo-state-context";
 import { DailySubtaskProvider } from "@/contexts/daily-subtask-context";
-import { HabitProvider } from "@/contexts/habit-context";
+import { HabitProvider } from "@/contexts/habit-context-refactored";
 import { TagsProvider } from "@/contexts/tags-context";
-import { TodoProvider } from "@/contexts/todo-context";
 import { TodoSubtaskProvider } from "@/contexts/todo-subtask-context";
 
-export function ClientProviders() {
-  return (
-    <TagsProvider>
-      <div className="gap-4 grid grid-cols-1 md:grid-cols-3 h-full">
-        <HabitProvider>
-          <HabitColumn />
-        </HabitProvider>
-        <DailyProvider>
-          <DailySubtaskProvider>
-            <DailyColumn />
-          </DailySubtaskProvider>
-        </DailyProvider>
-        <TodoProvider>
-          <TodoSubtaskProvider>
-            <TodoColumn />
-          </TodoSubtaskProvider>
-        </TodoProvider>
-      </div>
-    </TagsProvider>
-  )
+interface ClientProvidersProps {
+	columnFilter?: "all" | "habits" | "dailies" | "todos" | "goals";
+}
+
+export function ClientProviders({ columnFilter = "all" }: ClientProvidersProps) {
+	const getGridCols = () => {
+		if (columnFilter === "all") return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+		return "grid-cols-1";
+	};
+
+	return (
+		<TagsProvider>
+			<div className={`gap-4 grid ${getGridCols()} auto-cols-max h-full`}>
+				{(columnFilter === "all" || columnFilter === "habits") && (
+					<HabitProvider>
+						<HabitColumn />
+					</HabitProvider>
+				)}
+				{(columnFilter === "all" || columnFilter === "dailies") && (
+					<DailyStateProvider>
+						<DailySubtaskProvider>
+							<DailyColumn />
+						</DailySubtaskProvider>
+					</DailyStateProvider>
+				)}
+				{(columnFilter === "all" || columnFilter === "todos") && (
+					<TodoStateProvider>
+						<TodoSubtaskProvider>
+							<TodoColumn />
+						</TodoSubtaskProvider>
+					</TodoStateProvider>
+				)}
+				{(columnFilter === "all" || columnFilter === "goals") && (
+					<GoalColumn />
+				)}
+			</div>
+		</TagsProvider>
+	);
 }

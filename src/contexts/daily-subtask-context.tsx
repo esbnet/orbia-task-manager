@@ -1,12 +1,12 @@
 "use client";
 
+import { CreateDailySubtaskUseCase } from "@/application/use-cases/daily-subtask/create-daily-subtask/create-daily-subtask-use-case";
+import { DeleteDailySubtaskUseCase } from "@/application/use-cases/daily-subtask/delete-daily-subtask/delete-daily-subtask-use-case";
+import { UpdateDailySubtaskUseCase } from "@/application/use-cases/daily-subtask/update-daily-subtask/update-daily-subtask-use-case";
 import { TaskTitle } from "@/domain/value-objects/task-title";
-import { ApiDailySubtaskRepository } from "@/infra/repositories/backend/api-daily-subtask-repository";
+import { ApiDailySubtaskRepository } from "@/infra/repositories/http/api-daily-subtask-repository";
 import { ErrorHandler } from "@/infra/services/error-handler";
 import type { DailySubtask } from "@/types";
-import { CreateDailySubtaskUseCase } from "@/use-cases/daily-subtask/create-daily-subtask/create-daily-subtask-use-case";
-import { DeleteDailySubtaskUseCase } from "@/use-cases/daily-subtask/delete-daily-subtask/delete-daily-subtask-use-case";
-import { UpdateDailySubtaskUseCase } from "@/use-cases/daily-subtask/update-daily-subtask/update-daily-subtask-use-case";
 import { type ReactNode, createContext, useContext } from "react";
 
 interface DailySubtaskContextType {
@@ -23,10 +23,10 @@ const DailySubtaskContext = createContext<DailySubtaskContextType | undefined>(
 	undefined,
 );
 
-const repository = new ApiDailySubtaskRepository();
-const createUseCase = new CreateDailySubtaskUseCase(repository);
-const updateUseCase = new UpdateDailySubtaskUseCase(repository);
-const deleteUseCase = new DeleteDailySubtaskUseCase(repository);
+const dailySubtaskRepository = new ApiDailySubtaskRepository();
+const createUseCase = new CreateDailySubtaskUseCase(dailySubtaskRepository);
+const updateUseCase = new UpdateDailySubtaskUseCase(dailySubtaskRepository);
+const deleteUseCase = new DeleteDailySubtaskUseCase(dailySubtaskRepository);
 
 export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 	const createSubtask = async (
@@ -43,8 +43,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 			});
 			return result.subtask;
 		} catch (error) {
-			ErrorHandler.logError(error, "DailySubtaskContext.createSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("DailySubtaskContext.createSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao criar subtarefa");
 		}
 	};
 
@@ -56,8 +56,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 
 			return result.subtask;
 		} catch (error) {
-			ErrorHandler.logError(error, "DailySubtaskContext.updateSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("DailySubtaskContext.updateSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao atualizar subtarefa");
 		}
 	};
 
@@ -65,8 +65,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		try {
 			await deleteUseCase.execute({ id });
 		} catch (error) {
-			ErrorHandler.logError(error, "DailySubtaskContext.deleteSubtask");
-			throw new Error(ErrorHandler.handle(error));
+			console.error("DailySubtaskContext.deleteSubtask:", error);
+			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");
 		}
 	};
 

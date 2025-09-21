@@ -1,3 +1,15 @@
+import type { CreateDailyPeriodData, DailyPeriod, UpdateDailyPeriodData } from "../entities/daily-period";
+import type { CreateHabitPeriodData, HabitPeriod, UpdateHabitPeriodData } from "../entities/habit-period";
+import type {
+	BaseRepository,
+	CompletableRepository,
+	LogRepository,
+	OrderableRepository,
+	SubtaskRepository,
+	TaggableRepository,
+	UserOwnedRepository,
+} from "./base-repository";
+
 import type { Daily } from "../entities/daily";
 import type { DailyLog } from "../entities/daily-log";
 import type { DailySubtask } from "../entities/daily-subtask";
@@ -7,26 +19,78 @@ import type { Tag } from "../entities/tag";
 import type { Todo } from "../entities/todo";
 import type { TodoLog } from "../entities/todo-log";
 import type { TodoSubtask } from "../entities/todo-subtask";
-import type { GenericRepository } from "./generic-repository";
+import type { UserConfig } from "../entities/user-config";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DailyRepository extends GenericRepository<Daily> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DailyLogRepository extends GenericRepository<DailyLog> {}
-export interface DailySubtaskRepository
-	extends GenericRepository<DailySubtask> {
+// Daily repository with user ownership, completion, ordering, and tagging
+export interface DailyRepository
+	extends UserOwnedRepository<Daily>,
+		CompletableRepository<Daily>,
+		OrderableRepository<Daily>,
+		TaggableRepository<Daily> {}
+
+// Daily log repository
+export interface DailyLogRepository extends LogRepository<DailyLog> {
+  hasLogForDate(dailyId: string, date: string): Promise<boolean>;
+  getLastLogDate(dailyId: string): Promise<Date | null>;
+}
+
+// Daily subtask repository
+export interface DailySubtaskRepository extends SubtaskRepository<DailySubtask> {
 	listByDailyId(dailyId: string): Promise<DailySubtask[]>;
 }
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface HabitRepository extends GenericRepository<Habit> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface HabitLogRepository extends GenericRepository<HabitLog> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TagRepository extends GenericRepository<Tag> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TodoRepository extends GenericRepository<Todo> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TodoLogRepository extends GenericRepository<TodoLog> {}
-export interface TodoSubtaskRepository extends GenericRepository<TodoSubtask> {
+
+// Habit repository with user ownership, completion, ordering, and tagging
+export interface HabitRepository
+	extends UserOwnedRepository<Habit>,
+		CompletableRepository<Habit>,
+		OrderableRepository<Habit>,
+		TaggableRepository<Habit> {}
+
+// Habit log repository
+export interface HabitLogRepository extends LogRepository<HabitLog> {} // tslint-disable-line @typescript-eslint/no-unused-vars
+
+// Tag repository with user ownership
+export interface TagRepository extends UserOwnedRepository<Tag> {} // tslint-disable-line @typescript-eslint/no-unused-vars
+
+// Todo repository with user ownership, completion, ordering, and tagging
+export interface TodoRepository
+	extends UserOwnedRepository<Todo>,
+		CompletableRepository<Todo>,
+		OrderableRepository<Todo>,
+		TaggableRepository<Todo> {}
+
+// Todo log repository
+export interface TodoLogRepository extends LogRepository<TodoLog> {} // tslint-disable-line @typescript-eslint/no-unused-vars
+
+// Todo subtask repository
+export interface TodoSubtaskRepository
+	extends SubtaskRepository<TodoSubtask>,
+		OrderableRepository<TodoSubtask> {
 	listByTodoId(todoId: string): Promise<TodoSubtask[]>;
+}
+
+// User config repository
+export interface UserConfigRepository extends BaseRepository<UserConfig> {
+	findByUserId(userId: string): Promise<UserConfig | null>;
+	upsert(userId: string, config: Partial<Omit<UserConfig, "id" | "userId" | "createdAt" | "updatedAt">>): Promise<UserConfig>;
+}
+
+export interface DailyPeriodRepository {
+	findActiveByDailyId(dailyId: string): Promise<DailyPeriod | null>;
+	create(data: CreateDailyPeriodData): Promise<DailyPeriod>;
+	update(id: string, data: UpdateDailyPeriodData): Promise<DailyPeriod>;
+	findById(id: string): Promise<DailyPeriod | null>;
+	findByDailyId(dailyId: string): Promise<DailyPeriod[]>;
+	completeAndFinalize(id: string): Promise<DailyPeriod>;
+}
+
+export interface HabitPeriodRepository {
+	findActiveByHabitId(habitId: string): Promise<HabitPeriod | null>;
+	findByHabitId(habitId: string): Promise<HabitPeriod[]>;
+	findById(id: string): Promise<HabitPeriod | null>;
+	create(data: CreateHabitPeriodData): Promise<HabitPeriod>;
+	update(id: string, data: UpdateHabitPeriodData): Promise<HabitPeriod>;
+	finalizePeriod(id: string): Promise<HabitPeriod>;
+	incrementCount(id: string): Promise<HabitPeriod>;
+	findPeriodsToFinalize(): Promise<HabitPeriod[]>;
 }
