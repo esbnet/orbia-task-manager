@@ -3,13 +3,23 @@ import { cache } from "react"
 
 // ✅ Para uso em Server Components e API Routes APENAS
 export const getCurrentUser = cache(async () => {
-  const session = await auth()
-  return session?.user
+  try {
+    const session = await auth()
+    return session?.user
+  } catch (error) {
+    console.error('Erro na autenticação:', error)
+    return null
+  }
 })
 
 export const getCurrentUserId = cache(async () => {
-  const user = await getCurrentUser()
-  return user?.id
+  try {
+    const user = await getCurrentUser()
+    return user?.id
+  } catch (error) {
+    console.error('Erro ao obter usuário atual:', error)
+    return null
+  }
 })
 
 // 🚨 TEMPORÁRIO: Versão sem autenticação para desenvolvimento

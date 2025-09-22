@@ -1,6 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { GeneralSettings } from "@/components/settings/general-settings";
 import { TagsSettings } from "@/components/settings/tags-settings";
 import { TagsProvider } from "@/contexts/tags-context";
@@ -14,13 +15,13 @@ export const metadata: Metadata = {
 export default function SettingsPage() {
 	return (
 		<TagsProvider>
-			<div className="mx-auto p-6 container">
+			<div className="mx-auto p-6">
 				<h1 className="mb-6 font-bold text-3xl">Configurações</h1>
 
-				<Tabs defaultValue="tags" className="w-full">
+				<Tabs defaultValue="general" className="w-full">
 					<TabsList className="grid grid-cols-4 w-full">
-						<TabsTrigger value="tags">Tags</TabsTrigger>
 						<TabsTrigger value="general">Geral</TabsTrigger>
+						<TabsTrigger value="tags">Tags</TabsTrigger>
 						<TabsTrigger value="notifications">
 							Notificações
 						</TabsTrigger>

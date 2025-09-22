@@ -1,18 +1,19 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PerformanceAnalytics } from "@/components/analytics/performance-analytics";
-import { GoalProgressTracker } from "@/components/analytics/goal-progress-tracker";
-import { IndicatorsDashboard } from "@/components/dashboard/indicators-dashboard";
+
 import { AdvancedInsights } from "@/components/analytics/advanced-insights";
-import { WeeklyReportGenerator } from "@/components/analytics/weekly-report-generator";
+import { GoalProgressTracker } from "@/components/analytics/goal-progress-tracker";
+import { PerformanceAnalytics } from "@/components/analytics/performance-analytics";
 import { TimeTrackingDashboard } from "@/components/analytics/time-tracking-dashboard";
-import { useSearchParams } from "next/navigation";
+import { WeeklyReportGenerator } from "@/components/analytics/weekly-report-generator";
+import { IndicatorsDashboard } from "@/components/dashboard/indicators-dashboard";
 import type { Metadata } from "next";
+import { useSearchParams } from "next/navigation";
 
 export const metadata: Metadata = {
-	title: "Analytics - Orbia",
-	description: "Análise detalhada do seu desempenho e progresso"
+  title: "Analytics",
+  description: "Análise detalhada do seu desempenho e progresso"
 };
 
 export default function AnalyticsPage() {
@@ -20,16 +21,16 @@ export default function AnalyticsPage() {
   const defaultTab = searchParams.get("tab") || "overview";
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6 mx-auto p-6">
       <div>
-        <h1 className="text-3xl font-bold">Analytics & Insights</h1>
+        <h1 className="font-bold text-3xl">Analytics & Insights</h1>
         <p className="text-muted-foreground">
           Análise detalhada do seu desempenho e progresso
         </p>
       </div>
 
       <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="performance">Desempenho</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
