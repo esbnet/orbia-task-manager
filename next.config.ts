@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
 	experimental: {
 		optimizeCss: true,
 		scrollRestoration: true,
+		optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'date-fns'],
+		turbo: {
+			memoryLimit: 512,
+		},
+		optimizeServerReact: true,
 	},
 
 	webpack: (config: any) => {

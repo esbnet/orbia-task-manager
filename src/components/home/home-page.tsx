@@ -42,7 +42,7 @@ export default function HomePage() {
 
     return (
         <main className="relative flex flex-col gap-4 mx-auto p-4 min-h-screen">
-            <div className="flex shadow-sm p-4 rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
+            <div className="flex shadow-sm p-4 border rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
                 <div className="flex justify-between items-center w-full">
                     <div className="flex-1 font-bold text-4xl md:text-6xl text-center">
                         {t("home.title")}

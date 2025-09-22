@@ -19,6 +19,8 @@
 		"db:reset:dev": "pnpm run db:dev && npx prisma db push --force-reset",
 		"db:reset:prod": "pnpm run db:prod && npx prisma db push --force-reset",
 		"i18n:find": "node scripts/find-hardcoded-strings.js",
+		"analyze": "node scripts/analyze-bundle.js",
+		"analyze:bundle": "ANALYZE=true npm run build",
 		"postinstall": "prisma generate"
 	},
 	"dependencies": {

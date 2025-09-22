@@ -20,7 +20,9 @@ export function useTodos() {
       const data = await response.json();
       return data.todos || [];
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
+    refetchOnWindowFocus: false,
   });
 }
 

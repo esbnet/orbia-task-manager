@@ -63,7 +63,7 @@ const dictionaries: Record<Locale, Dict> = {
             metrics: "Métricas",
         },
         home: {
-            title: "Gerenciador de Tarefas",
+            title: "Dashboard",
         },
         tasks: {
             overview: "Visão Geral das Tarefas",
@@ -199,7 +199,7 @@ const dictionaries: Record<Locale, Dict> = {
             metrics: "Metrics",
         },
         home: {
-            title: "Task Manager",
+            title: "Dashboard",
         },
         tasks: {
             overview: "Tasks Overview",
@@ -334,7 +334,7 @@ const dictionaries: Record<Locale, Dict> = {
             metrics: "Métricas",
         },
         home: {
-            title: "Gestor de Tareas",
+            title: "Panel",
         },
         tasks: {
             overview: "Resumen de Tareas",

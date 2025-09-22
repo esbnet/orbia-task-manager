@@ -4,17 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { AdvancedInsights } from "@/components/analytics/advanced-insights";
 import { GoalProgressTracker } from "@/components/analytics/goal-progress-tracker";
+import { IndicatorsDashboard } from "@/components/dashboard/indicators-dashboard";
 import { PerformanceAnalytics } from "@/components/analytics/performance-analytics";
 import { TimeTrackingDashboard } from "@/components/analytics/time-tracking-dashboard";
 import { WeeklyReportGenerator } from "@/components/analytics/weekly-report-generator";
-import { IndicatorsDashboard } from "@/components/dashboard/indicators-dashboard";
-import type { Metadata } from "next";
 import { useSearchParams } from "next/navigation";
-
-export const metadata: Metadata = {
-  title: "Analytics",
-  description: "Análise detalhada do seu desempenho e progresso"
-};
 
 export default function AnalyticsPage() {
   const searchParams = useSearchParams();
@@ -30,13 +24,13 @@ export default function AnalyticsPage() {
       </div>
 
       <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList className="grid grid-cols-6 w-full">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="performance">Desempenho</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
-          <TabsTrigger value="time">Tempo</TabsTrigger>
-          <TabsTrigger value="reports">Relatórios</TabsTrigger>
-          <TabsTrigger value="goals">Metas</TabsTrigger>
+        <TabsList className="flex justify-start w-full overflow-x-auto">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm whitespace-nowrap">Visão Geral</TabsTrigger>
+          <TabsTrigger value="performance" className="text-xs sm:text-sm whitespace-nowrap">Desempenho</TabsTrigger>
+          <TabsTrigger value="insights" className="text-xs sm:text-sm whitespace-nowrap">Insights</TabsTrigger>
+          <TabsTrigger value="time" className="text-xs sm:text-sm whitespace-nowrap">Tempo</TabsTrigger>
+          <TabsTrigger value="reports" className="text-xs sm:text-sm whitespace-nowrap">Relatórios</TabsTrigger>
+          <TabsTrigger value="goals" className="text-xs sm:text-sm whitespace-nowrap">Metas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
