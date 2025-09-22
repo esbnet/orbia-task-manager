@@ -1,38 +1,37 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Target, 
-  Calendar, 
-  Clock,
+import {
+  Activity,
   Award,
   BarChart3,
-  Activity
+  Calendar,
+  Clock,
+  Target,
+  TrendingDown,
+  TrendingUp
 } from "lucide-react";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
+import {
   Area,
-  RadarChart,
-  PolarGrid,
+  AreaChart,
+  CartesianGrid,
+  Line,
   PolarAngleAxis,
+  PolarGrid,
   PolarRadiusAxis,
-  Radar
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from "recharts";
-import { useState, useMemo } from "react";
-import { useTranslation } from "@/hooks/use-translation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+import { Badge } from "@/components/ui/badge";
 import { usePerformanceAnalytics } from "@/hooks/use-performance-analytics";
+import { useState } from "react";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface PerformanceData {
   productivity: number;
@@ -41,6 +40,10 @@ interface PerformanceData {
   goalAchievement: number;
   weeklyTrend: number;
   monthlyTrend: number;
+  averageTaskTime: number;
+  completionRate: number;
+  streakDays: number;
+  bestDayOfWeek: string;
 }
 
 interface TimeSeriesData {
@@ -61,7 +64,7 @@ export function PerformanceAnalytics() {
   }
 
   if (!analyticsData) {
-    return <div className="text-center p-8">Erro ao carregar dados</div>;
+    return <div className="p-8 text-center">Erro ao carregar dados</div>;
   }
 
   const { metrics, timeSeries, insights } = analyticsData;
@@ -113,17 +116,17 @@ export function PerformanceAnalytics() {
       </div>
 
       {/* Score Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="gap-4 grid grid-cols-1 md:grid-cols-4">
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Produtividade</p>
+                <p className="font-medium text-muted-foreground text-sm">Produtividade</p>
                 <p className={`text-2xl font-bold ${getScoreColor(metrics.productivity)}`}>
                   {metrics.productivity}%
                 </p>
               </div>
-              <div className="p-2 bg-blue-50 rounded-lg">
+              <div className="bg-blue-50 p-2 rounded-lg">
                 <BarChart3 className="w-6 h-6 text-blue-600" />
               </div>
             </div>
@@ -136,14 +139,14 @@ export function PerformanceAnalytics() {
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Consistência</p>
+                <p className="font-medium text-muted-foreground text-sm">Consistência</p>
                 <p className={`text-2xl font-bold ${getScoreColor(metrics.consistency)}`}>
                   {metrics.consistency}%
                 </p>
               </div>
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="bg-green-50 p-2 rounded-lg">
                 <Activity className="w-6 h-6 text-green-600" />
               </div>
             </div>
@@ -156,14 +159,14 @@ export function PerformanceAnalytics() {
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Eficiência</p>
+                <p className="font-medium text-muted-foreground text-sm">Eficiência</p>
                 <p className={`text-2xl font-bold ${getScoreColor(metrics.efficiency)}`}>
                   {metrics.efficiency}%
                 </p>
               </div>
-              <div className="p-2 bg-orange-50 rounded-lg">
+              <div className="bg-orange-50 p-2 rounded-lg">
                 <Clock className="w-6 h-6 text-orange-600" />
               </div>
             </div>
@@ -175,14 +178,14 @@ export function PerformanceAnalytics() {
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Metas</p>
+                <p className="font-medium text-muted-foreground text-sm">Metas</p>
                 <p className={`text-2xl font-bold ${getScoreColor(metrics.goalAchievement)}`}>
                   {metrics.goalAchievement}%
                 </p>
               </div>
-              <div className="p-2 bg-purple-50 rounded-lg">
+              <div className="bg-purple-50 p-2 rounded-lg">
                 <Target className="w-6 h-6 text-purple-600" />
               </div>
             </div>
@@ -195,7 +198,7 @@ export function PerformanceAnalytics() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
         {/* Performance Trend */}
         <Card>
           <CardHeader>
@@ -206,12 +209,12 @@ export function PerformanceAnalytics() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={timeSeries}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
+                  <XAxis
+                    dataKey="date"
                     tickFormatter={(value) => new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                   />
                   <YAxis />
-                  <Tooltip 
+                  <Tooltip
                     labelFormatter={(value) => new Date(value).toLocaleDateString('pt-BR')}
                   />
                   <Area
@@ -266,18 +269,17 @@ export function PerformanceAnalytics() {
           <CardTitle>Insights e Recomendações</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="gap-4 grid grid-cols-1 md:grid-cols-3">
             {insights.map((insight, index) => (
               <div
                 key={index}
-                className={`p-4 rounded-lg border ${
-                  insight.type === "positive" 
-                    ? "bg-green-50 border-green-200" 
-                    : "bg-yellow-50 border-yellow-200"
-                }`}
+                className={`p-4 rounded-lg border ${insight.type === "positive"
+                  ? "bg-green-50 border-green-200"
+                  : "bg-yellow-50 border-yellow-200"
+                  }`}
               >
-                <h4 className="font-medium mb-2">{insight.title}</h4>
-                <p className="text-sm text-muted-foreground">{insight.description}</p>
+                <h4 className="mb-2 font-medium">{insight.title}</h4>
+                <p className="text-muted-foreground text-sm">{insight.description}</p>
               </div>
             ))}
           </div>
@@ -291,21 +293,21 @@ export function PerformanceAnalytics() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="font-medium">Tarefas completadas no prazo</span>
-              <Badge variant="secondary">87%</Badge>
+            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+              <span className="font-medium">Taxa geral de conclusão</span>
+              <Badge variant="secondary">{metrics.completionRate}%</Badge>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
               <span className="font-medium">Tempo médio por tarefa</span>
-              <Badge variant="secondary">25 min</Badge>
+              <Badge variant="secondary">{metrics.averageTaskTime} min</Badge>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
               <span className="font-medium">Streak mais longo</span>
-              <Badge variant="secondary">12 dias</Badge>
+              <Badge variant="secondary">{metrics.streakDays} dias</Badge>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
               <span className="font-medium">Melhor dia da semana</span>
-              <Badge variant="secondary">Terça-feira</Badge>
+              <Badge variant="secondary">{metrics.bestDayOfWeek}</Badge>
             </div>
           </div>
         </CardContent>

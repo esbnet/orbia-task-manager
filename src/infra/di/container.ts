@@ -1,10 +1,11 @@
 import { DailyApplicationService } from "@/application/services/daily-application-service";
+import { FetchHttpClient } from "@/infra/services/http-client";
+import { FetchTodoHttpAdapter } from "@/infra/adapters/http/todo-http-adapter";
 import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
 import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
-import { FetchHttpClient } from "@/infra/services/http-client";
-import { FetchTodoHttpAdapter } from "@/infra/adapters/http/todo-http-adapter";
+import { PrismaTagRepository } from "@/infra/database/prisma/prisma-tag-repository";
 import { TodoRepositoryImpl } from "@/infra/repositories/todo-repository-impl";
 
 class DIContainer {
@@ -60,6 +61,13 @@ class DIContainer {
       this.instances.set('habitRepository', new PrismaHabitRepository());
     }
     return this.instances.get('habitRepository');
+  }
+
+  getTagRepository() {
+    if (!this.instances.has('tagRepository')) {
+      this.instances.set('tagRepository', new PrismaTagRepository());
+    }
+    return this.instances.get('tagRepository');
   }
 
   // Application Services
