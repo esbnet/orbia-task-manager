@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListChecks, Plus } from "lucide-react";
+import { Info, ListChecks, Plus } from "lucide-react";
 import type { Todo, TodoDifficulty } from "@/types/todo";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useCompleteTodo, useCreateTodo, useDeleteTodo, useTodos } from "@/hooks/use-todos";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -8,7 +10,6 @@ import { TodoCard } from "./todo-card";
 import { TodoForm } from "./todo-form";
 import { toast } from "sonner";
 import { useState } from "react";
-import { useTodos, useCreateTodo, useDeleteTodo, useCompleteTodo } from "@/hooks/use-todos";
 
 const defaultTodo: Todo = {
 	id: "",
@@ -106,8 +107,8 @@ export const TodoColumn = () => {
 	};
 
 	return (
-		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-blue-50/30 to-sky-50/30 dark:from-blue-950/20 dark:to-sky-950/20 rounded-xl border border-blue-100/50 dark:border-blue-800/30">
-			<Card className="bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/50 dark:to-sky-900/50 border-blue-200 dark:border-blue-700">
+		<div className="flex flex-col gap-4 bg-gradient-to-br from-blue-50/30 dark:from-blue-950/20 to-sky-50/30 dark:to-sky-950/20 p-4 border border-blue-100/50 dark:border-blue-800/30 rounded-xl">
+			<Card className="bg-gradient-to-r from-blue-50 dark:from-blue-900/50 to-sky-50 dark:to-sky-900/50 border-blue-200 dark:border-blue-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
@@ -116,21 +117,32 @@ export const TodoColumn = () => {
 								Afazeres
 							</CardTitle>
 						</div>
-						<Button
-							onClick={() => setIsFormOpen(true)}
-							size="sm"
-							className="bg-blue-600 hover:bg-blue-700 text-white"
-						>
-							<Plus className="mr-1 w-4 h-4" />
-							Novo Afazer
-						</Button>
+						<div className="flex items-center gap-2">
+							<Button
+								onClick={() => setIsFormOpen(true)}
+								size="sm"
+								className="bg-blue-600 hover:bg-blue-700 text-white"
+							>
+								<Plus className="mr-1 w-4 h-4" />
+								Novo Afazer
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex items-center gap-4 text-blue-700 text-sm">
+					<div className="flex justify-between items-center gap-4 text-blue-700 text-sm">
 						<div className="flex items-center gap-1">
 							<span>{inProgressTodos.length} ativos</span>
 						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Info className="w-4 h-4 text-blue-500 hover:text-blue-700 transition-colors cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<p>Tarefas pontuais que precisam ser realizadas uma vez ou em datas específicas. Ideal para atividades únicas ou projetos com prazo definido.</p>
+							</TooltipContent>
+						</Tooltip>
+
 					</div>
 				</CardContent>
 			</Card>

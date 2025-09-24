@@ -1,17 +1,17 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dumbbell, Info, Plus, TrendingUp } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableHabits, useCreateHabit, useDeleteHabit, useUpdateHabit } from "@/hooks/use-habits";
-import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
-import { toast } from "sonner";
-import { Badge } from "../ui/badge";
 import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
+import { toast } from "sonner";
 
 export function HabitColumn() {
 	const { data: habitsData, isLoading } = useAvailableHabits();
@@ -94,8 +94,8 @@ export function HabitColumn() {
 		habitId: string,
 		status: Habit["status"],
 	) => {
-		const habit = availableHabits.find((h) => h.id === habitId) || 
-						 completedInCurrentPeriod.find((h) => h.id === habitId);
+		const habit = availableHabits.find((h) => h.id === habitId) ||
+			completedInCurrentPeriod.find((h) => h.id === habitId);
 		if (habit) {
 			try {
 				await updateHabitMutation.mutateAsync({
@@ -148,9 +148,9 @@ export function HabitColumn() {
 	};
 
 	return (
-		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border border-green-100/50 dark:border-green-800/30">
+		<div className="flex flex-col gap-4 bg-gradient-to-br from-green-50/30 dark:from-green-950/20 to-emerald-50/30 dark:to-emerald-950/20 p-4 border border-green-100/50 dark:border-green-800/30 rounded-xl">
 			{/* Header */}
-			<Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/50 dark:to-blue-900/50 border-green-200 dark:border-green-700">
+			<Card className="bg-gradient-to-r from-green-50 dark:from-green-900/50 to-blue-50 dark:to-blue-900/50 border-green-200 dark:border-green-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
@@ -159,23 +159,33 @@ export function HabitColumn() {
 								Hábitos
 							</CardTitle>
 						</div>
-						<Button
-							onClick={() => setIsFormOpen(true)}
-							size="sm"
-							className="bg-green-600 hover:bg-green-700 text-white"
-
-						>
-							<Plus className="mr-1 w-4 h-4" />
-							Novo Hábito
-						</Button>
+						<div className="flex items-center gap-2">
+							<Button
+								onClick={() => setIsFormOpen(true)}
+								size="sm"
+								className="bg-green-600 hover:bg-green-700 text-white"
+							>
+								<Plus className="mr-1 w-4 h-4" />
+								Novo Hábito
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex items-center gap-4 text-green-700 text-sm">
+					<div className="flex justify-between items-center gap-4 text-green-700 text-sm">
 						<div className="flex items-center gap-1">
 							<TrendingUp className="w-4 h-4" />
 							<span>{availableHabits.length} hábitos ativos</span>
 						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Info className="w-4 h-4 text-green-500 hover:text-green-700 transition-colors cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<p>Comportamentos repetitivos que você deseja cultivar ou eliminar. São ações realizadas diariamente para criar consistência e disciplina na sua rotina.</p>
+							</TooltipContent>
+						</Tooltip>
+
 					</div>
 				</CardContent>
 			</Card>
@@ -209,7 +219,7 @@ export function HabitColumn() {
 								/>
 							);
 						})}
-				</div>
+					</div>
 				)}
 
 

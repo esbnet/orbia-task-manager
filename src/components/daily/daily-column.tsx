@@ -1,14 +1,15 @@
+import { CalendarCheck, Info, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
 import type { Daily, DailyDifficulty } from "@/types/daily";
-import { CalendarCheck, Plus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/hooks/use-translation";
-import { toast } from "sonner";
 import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
+import { toast } from "sonner";
+import { useTranslation } from "@/hooks/use-translation";
 
 const defaultDaily: Daily = {
 	id: "",
@@ -147,18 +148,20 @@ export const DailyColumn = () => {
 								{t('taskTypes.daily')}
 							</CardTitle>
 						</div>
-						<Button
-							onClick={() => setIsFormOpen(true)}
-							size="sm"
-							className="bg-amber-600 hover:bg-amber-700 text-white"
-						>
-							<Plus className="mr-1 w-4 h-4" />
-							{t('forms.newDaily')}
-						</Button>
+						<div className="flex items-center gap-2">
+							<Button
+								onClick={() => setIsFormOpen(true)}
+								size="sm"
+								className="bg-amber-600 hover:bg-amber-700 text-white"
+							>
+								<Plus className="mr-1 w-4 h-4" />
+								{t('forms.newDaily')}
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex items-center gap-4 text-amber-700 text-sm">
+					<div className="flex justify-between items-center gap-4 text-amber-700 text-sm">
 						<div className="flex items-center gap-1">
 							<span>{availableDailies.length} {t('tasks.availableTasks')}</span>
 						</div>
@@ -167,6 +170,15 @@ export const DailyColumn = () => {
 								<span>{completedDailies.length} {t('tasks.completedToday')}</span>
 							</div>
 						)}
+
+						<Tooltip>
+							<TooltipTrigger asChild className="self-end">
+								<Info className="w-4 h-4 text-amber-500 hover:text-amber-700 transition-colors cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<p>Tarefas que se repetem em intervalos regulares (diariamente, semanalmente, mensalmente). São compromissos recorrentes que precisam ser realizados periodicamente.</p>
+							</TooltipContent>
+						</Tooltip>
 					</div>
 				</CardContent>
 			</Card>

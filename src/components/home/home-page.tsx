@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-import { useTranslation } from "@/hooks/use-translation";
-import { useUserConfig } from "@/hooks/use-user-config";
-import { useSession } from "next-auth/react";
+import { ClientProviders } from '../providers/client-providers';
 import { ColumnFilter } from '../navigation/column-filter';
 import { QuickMenu } from '../navigation/quick-menu';
-import { ClientProviders } from '../providers/client-providers';
 import { TasksOverviewDialog } from './tasks-overview-dialog';
+import { useSession } from "next-auth/react";
+import { useTranslation } from "@/hooks/use-translation";
+import { useUserConfig } from "@/hooks/use-user-config";
 
 export default function HomePage() {
     const { data: session, status } = useSession();
@@ -50,9 +50,11 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <div className="flex flex-col flex-1 gap-4 animate-[fadeIn_1s_ease-in-out_forwards]">
-                <QuickMenu />
-                <ColumnFilter onFilterChange={setColumnFilter} />
+            <div className="flex flex-col flex-1 gap-2 animate-[fadeIn_1s_ease-in-out_forwards]">
+                <div className="flex flex-col">
+                    <QuickMenu />
+                    <ColumnFilter onFilterChange={setColumnFilter} />
+                </div>
                 <ClientProviders columnFilter={columnFilter} />
             </div>
 

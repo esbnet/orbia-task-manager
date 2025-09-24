@@ -1,17 +1,17 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
 	Edit,
 	Tag
 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { Todo } from "../../types";
+import { toast } from "sonner";
 // import { useTodoContext } from "@/contexts/todo-context";
 import { useButtonLoading } from "@/hooks/use-button-loading";
-import { toast } from "sonner";
-import type { Todo } from "../../types";
 
 interface TodoCardProps {
 	todo: Todo;
@@ -58,28 +58,28 @@ export function TodoCard({
 
 	return (
 		<Card className={`hover:shadow-md transition-shadow duration-200 ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="pb-3">
-				<div className="flex justify-between items-start">
-					<div className="flex-1">
-						<div className="flex justify-between items-center mb-2">
-							<div className="flex items-center gap-2">
-								<h3 className="font-semibold line-clamp-1">
+			<CardHeader className="px-4 pb-3">
+				<div className="flex justify-between items-start gap-2">
+					<div className="flex-1 min-w-0">
+						<div className="flex justify-between items-start gap-2 mb-2">
+							<div className="flex flex-1 items-center gap-2 min-w-0">
+								<h3 className="font-semibold break-words line-clamp-1">
 									{todo.title}
 								</h3>
 								{isCompleted && (
-									<CheckCircle className="w-5 h-5 text-green-600" />
+									<CheckCircle className="flex-shrink-0 w-5 h-5 text-green-600" />
 								)}
 							</div>
 
 							{/* Botões movidos para o topo */}
-							<div className="flex items-center">
+							<div className="flex flex-shrink-0 items-center gap-1">
 								{!isCompleted && (
 									<Button
 										title="Marcar como concluído"
 										variant={"ghost"}
 										onClick={handleComplete}
 										size="icon"
-										className="hover:bg-blue-50 rounded-full text-blue-600 hover:text-blue-600"
+										className="hover:bg-blue-50 rounded-full w-8 h-8 text-blue-600 hover:text-blue-600"
 										disabled={completeLoading.isLoading}
 									>
 										{completeLoading.isLoading ? (
@@ -94,7 +94,7 @@ export function TodoCard({
 										onClick={() => onEdit(todo)}
 										variant="ghost"
 										size="icon"
-										className="hover:bg-gray-100 rounded-full text-gray-600"
+										className="hover:bg-gray-100 rounded-full w-8 h-8 text-gray-600"
 									>
 										<Edit className="w-4 h-4" />
 									</Button>
@@ -102,7 +102,7 @@ export function TodoCard({
 							</div>
 						</div>
 
-						<div className="flex items-center gap-2 mb-2">
+						<div className="flex flex-wrap items-center gap-2 mb-2">
 							<Badge className={`text-xs ${difficulty.color}`} title="Dificuldade">
 								{difficulty.stars} {todo.difficulty}
 							</Badge>
@@ -124,7 +124,7 @@ export function TodoCard({
 						</div>
 
 						{todo.observations && (
-							<p className="mb-2 text-gray-600 text-sm line-clamp-2">
+							<p className="mb-2 text-gray-600 text-sm break-words line-clamp-2">
 								{todo.observations}
 							</p>
 						)}
@@ -132,18 +132,18 @@ export function TodoCard({
 				</div>
 			</CardHeader>
 
-			<CardContent className="pt-0">
+			<CardContent className="px-4 pt-0">
 				{/* Área das tags com ícone */}
 				{todo.tags && todo.tags.length > 0 && (
-					<div className="flex items-center gap-2">
-						<div className="flex gap-1">
+					<div className="flex items-start gap-2">
+						<Tag className="flex-shrink-0 mt-0.5 w-4 h-4 text-slate-500" />
+						<div className="flex flex-wrap gap-1 min-w-0">
 							{todo.tags.slice(0, 2).map((tag) => (
 								<Badge
 									key={tag}
 									variant="secondary"
-									className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
+									className="bg-slate-50 border border-slate-200 max-w-full text-slate-700 text-xs break-words"
 								>
-									<Tag className="mr-1 w-3 h-3" />
 									{tag}
 								</Badge>
 							))}

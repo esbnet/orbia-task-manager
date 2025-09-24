@@ -1,7 +1,12 @@
 "use client";
 
-import { AlertTriangle, Plus, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, Info, Plus, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger
+} from "@/components/ui/tooltip";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -125,9 +130,9 @@ export function GoalColumn() {
 	};
 
 	return (
-		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-purple-50/30 to-indigo-50/30 dark:from-purple-950/20 dark:to-indigo-950/20 rounded-xl border border-purple-100/50 dark:border-purple-800/30">
+		<div className="flex flex-col gap-4 bg-gradient-to-br from-purple-50/30 dark:from-purple-950/20 to-indigo-50/30 dark:to-indigo-950/20 p-4 border border-purple-100/50 dark:border-purple-800/30 rounded-xl">
 			{/* Header */}
-			<Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/50 dark:to-blue-900/50 border-purple-200 dark:border-purple-700">
+			<Card className="bg-gradient-to-r from-purple-50 dark:from-purple-900/50 to-blue-50 dark:to-blue-900/50 border-purple-200 dark:border-purple-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
@@ -136,21 +141,23 @@ export function GoalColumn() {
 								Metas
 							</CardTitle>
 						</div>
-						<Button
-							onClick={() => {
-								setEditingGoal(null);
-								setIsFormOpen(true);
-							}}
-							size="sm"
-							className="bg-purple-600 hover:bg-purple-700 text-white"
-						>
-							<Plus className="mr-1 w-4 h-4" />
-							Nova Meta
-						</Button>
+						<div className="flex items-center gap-2">
+							<Button
+								onClick={() => {
+									setEditingGoal(null);
+									setIsFormOpen(true);
+								}}
+								size="sm"
+								className="bg-purple-600 hover:bg-purple-700 text-white"
+							>
+								<Plus className="mr-1 w-4 h-4" />
+								Nova Meta
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex items-center gap-4 text-purple-700 text-sm">
+					<div className="flex justify-between items-center gap-4 text-purple-700 text-sm">
 						<div className="flex items-center gap-1">
 							<TrendingUp className="w-4 h-4" />
 							<span>{inProgressGoals.length} em andamento</span>
@@ -159,6 +166,15 @@ export function GoalColumn() {
 							<AlertTriangle className="w-4 h-4" />
 							<span>{overdueGoals.length} atrasadas</span>
 						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Info className="w-4 h-4 text-purple-500 hover:text-purple-700 transition-colors cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<p>Objetivos de longo prazo com data específica para conclusão. São projetos maiores que requerem planejamento, acompanhamento e podem estar associados a hábitos, tarefas diárias ou afazeres.</p>
+							</TooltipContent>
+						</Tooltip>
+
 					</div>
 				</CardContent>
 			</Card>
