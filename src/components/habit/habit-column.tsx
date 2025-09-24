@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, Info, Plus, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableHabits, useCreateHabit, useDeleteHabit, useUpdateHabit } from "@/hooks/use-habits";
+import { useMultipleHabitStats } from "@/hooks/use-habit-stats";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -23,27 +24,14 @@ export function HabitColumn() {
 	const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
-	const [habitStats, setHabitStats] = useState<Record<string, Habit>>({});
-
 	// Usar dados do React Query
 	const availableHabits = habitsData?.availableHabits || [];
 	const completedInCurrentPeriod = habitsData?.completedInCurrentPeriod || [];
 	const totalHabits = habitsData?.totalHabits || 0;
 
-	// Função para carregar estatísticas de um hábito específico
-	const loadHabitStats = useCallback(async (habitId: string) => {
-		try {
-			const response = await fetch(`/api/habits/${habitId}/stats`);
-			if (response.ok) {
-				const stats = await response.json();
-				setHabitStats(prev => ({
-					...prev,
-					[habitId]: stats,
-				}));
-			}
-		} catch (error) {
-		}
-	}, []);
+	// Carregar estatísticas para todos os hábitos disponíveis
+	const habitIds = availableHabits.map(habit => habit.id);
+	const { data: habitStats = {} } = useMultipleHabitStats(habitIds);
 
 	const handleCreateHabit = async (habitData: any) => {
 		try {
@@ -140,8 +128,7 @@ export function HabitColumn() {
 
 			toast.success(`Hábito "${habit?.title}" registrado! Total: ${result.currentCount}`);
 
-			// Carregar estatísticas atualizadas
-			await loadHabitStats(habitId);
+			// As estatísticas serão atualizadas automaticamente pelo React Query
 		} catch (error) {
 			toast.error('Erro ao registrar hábito. Tente novamente.');
 		}
@@ -160,6 +147,14 @@ export function HabitColumn() {
 							</CardTitle>
 						</div>
 						<div className="flex items-center gap-2">
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Info className="w-4 h-4 text-green-500 hover:text-green-700 transition-colors cursor-help" />
+								</TooltipTrigger>
+								<TooltipContent side="bottom" align="end" className="max-w-xs">
+									<p>Comportamentos repetitivos que você deseja cultivar ou eliminar. São ações realizadas diariamente para criar consistência e disciplina na sua rotina.</p>
+								</TooltipContent>
+							</Tooltip>
 							<Button
 								onClick={() => setIsFormOpen(true)}
 								size="sm"
@@ -172,20 +167,11 @@ export function HabitColumn() {
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex justify-between items-center gap-4 text-green-700 text-sm">
+					<div className="flex items-center gap-4 text-green-700 text-sm">
 						<div className="flex items-center gap-1">
 							<TrendingUp className="w-4 h-4" />
 							<span>{availableHabits.length} hábitos ativos</span>
 						</div>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Info className="w-4 h-4 text-green-500 hover:text-green-700 transition-colors cursor-help" />
-							</TooltipTrigger>
-							<TooltipContent side="bottom" align="end" className="max-w-xs">
-								<p>Comportamentos repetitivos que você deseja cultivar ou eliminar. São ações realizadas diariamente para criar consistência e disciplina na sua rotina.</p>
-							</TooltipContent>
-						</Tooltip>
-
 					</div>
 				</CardContent>
 			</Card>
@@ -216,6 +202,7 @@ export function HabitColumn() {
 									currentCount={stats?.currentPeriod?.period.count || 0}
 									target={stats?.currentPeriod?.period.target}
 									todayCount={stats?.todayEntries || 0}
+									streak={stats?.streak}
 								/>
 							);
 						})}

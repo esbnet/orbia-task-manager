@@ -60,6 +60,11 @@ interface HabitCardProps {
 	target?: number;
 	todayCount?: number;
 	nextAvailableAt?: Date;
+	streak?: {
+		currentStreak: number;
+		longestStreak: number;
+		isActiveToday: boolean;
+	};
 }
 
 export const HabitCard = memo(function HabitCard({
@@ -70,6 +75,7 @@ export const HabitCard = memo(function HabitCard({
 	currentCount = 0,
 	todayCount = 0,
 	nextAvailableAt,
+	streak,
 }: HabitCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isRegistering, setIsRegistering] = useState(false);
@@ -144,7 +150,7 @@ export const HabitCard = memo(function HabitCard({
 						</div>
 
 						{/* Estatísticas do período atual */}
-						{(currentCount > 0 || todayCount > 0) && (
+						{(currentCount > 0 || todayCount > 0 || streak) && (
 							<div className="flex items-center gap-4 mt-2 text-gray-600 text-sm">
 								{currentCount > 0 && (
 									<div className="flex items-center gap-1">
@@ -156,6 +162,12 @@ export const HabitCard = memo(function HabitCard({
 									<div className="flex items-center gap-1">
 										<Calendar className="w-4 h-4" />
 										<span>Hoje: {todayCount}</span>
+									</div>
+								)}
+								{streak && streak.currentStreak > 0 && (
+									<div className="flex items-center gap-1">
+										<span className="text-orange-600">🔥</span>
+										<span className="font-medium text-orange-600">{streak.currentStreak} dias</span>
 									</div>
 								)}
 							</div>
@@ -290,6 +302,30 @@ export const HabitCard = memo(function HabitCard({
 								))}
 							</div>
 						)}
+						{/* Estatísticas de streak */}
+						{streak && (
+							<div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+								<div className="flex items-center justify-between mb-2">
+									<span className="font-medium text-orange-800">Sequência</span>
+									{streak.isActiveToday && (
+										<Badge className="bg-green-100 text-green-800 border-green-200">
+											Ativo hoje
+										</Badge>
+									)}
+								</div>
+								<div className="flex items-center gap-4 text-sm">
+									<div className="flex items-center gap-1">
+										<span>🔥</span>
+										<span>Atual: <strong>{streak.currentStreak}</strong></span>
+									</div>
+									<div className="flex items-center gap-1">
+										<span>🏆</span>
+										<span>Recorde: <strong>{streak.longestStreak}</strong></span>
+									</div>
+								</div>
+							</div>
+						)}
+
 						<div className="text-gray-600 dark:text-gray-400 text-sm">
 							<strong>Última atualização:</strong>{" "}
 							{format(habit.updatedAt, "dd/MM/yyyy 'às' HH:mm", {

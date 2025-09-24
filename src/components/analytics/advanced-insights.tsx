@@ -129,10 +129,12 @@ export function AdvancedInsights() {
                   <XAxis dataKey="label" />
                   <YAxis />
                   <Tooltip 
-                    formatter={(value, name) => [
-                      name === "completedTasks" ? `${value} tarefas` : `${value}%`,
-                      name === "completedTasks" ? "Tarefas Concluídas" : "Eficiência"
-                    ]}
+                    formatter={(value, name) => {
+                      const sanitizedValue = typeof value === 'number' ? value.toString() : String(value).replace(/[<>"'&]/g, '');
+                      const label = name === "completedTasks" ? "Tarefas Concluídas" : "Eficiência";
+                      const suffix = name === "completedTasks" ? " tarefas" : "%";
+                      return [sanitizedValue + suffix, label];
+                    }}
                   />
                   <Bar dataKey="completedTasks" fill="#3b82f6" name="completedTasks" />
                 </BarChart>

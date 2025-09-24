@@ -7,8 +7,11 @@ export interface HabitEntryRepository {
 	// Buscar entradas de um período
 	findByPeriodId(periodId: string): Promise<HabitEntry[]>;
 	
-	// Buscar entradas de um hábito
-	findByHabitId(habitId: string): Promise<HabitEntryWithPeriod[]>;
+	// Buscar entradas de um hábito (simples)
+	findByHabitId(habitId: string): Promise<HabitEntry[]>;
+	
+	// Buscar entradas de um hábito com informações do período
+	findByHabitIdWithPeriod(habitId: string): Promise<HabitEntryWithPeriod[]>;
 	
 	// Buscar entradas de um hábito em um período específico
 	findByHabitIdAndPeriod(habitId: string, periodId: string): Promise<HabitEntry[]>;

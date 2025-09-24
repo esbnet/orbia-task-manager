@@ -59,7 +59,7 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
   };
 
   return (
-    <div className="flex justify-center items-center gap-2 bg-gray-50 dark:bg-gray-800 mb-4 py-2 rounded-lg">
+    <div className="flex justify-center items-center gap-2 bg-gray-50 dark:bg-gray-800 mb-4 p-2 rounded-full w-fit">
 
       {filters.map((filter) => {
         const Icon = filter.icon;
@@ -69,10 +69,10 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
             variant={activeFilter === filter.id ? "default" : "ghost"}
             size="sm"
             onClick={() => handleFilterClick(filter.id as ColumnType)}
-            className={`flex items-center gap-1 h-7 text-xs ${filter.color}`}
+            className={`flex xl:flex-1 p-1 rounded-full  items-center gap-1 h-6 w-6 text-xs ${filter.color}`}
           >
             <Icon className="w-3 h-3" />
-            <span className="hidden sm:inline">{filter.label}</span>
+            <span className="hidden xl:inline">{filter.label}</span>
           </Button>
         );
       })}
