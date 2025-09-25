@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart3,
   Clock,
@@ -9,7 +10,7 @@ import {
   Target,
   Timer
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useMemo, useState } from "react";
 import {
   Cell,
   Pie,
@@ -17,12 +18,12 @@ import {
   ResponsiveContainer,
   Tooltip
 } from "recharts";
-import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAnalyticsTags } from "@/hooks/use-analytics-tags";
+import { useGoals } from "@/hooks/use-goals";
 import { useHabits } from "@/hooks/use-habits";
 import { useTodos } from "@/hooks/use-todos";
 
@@ -52,10 +53,25 @@ export function TimeTrackingDashboard() {
   // Buscar dados reais
   const { data: todos } = useTodos();
   const { data: habits } = useHabits();
+  const { data: goals } = useGoals();
   const { data: userTags } = useAnalyticsTags();
 
-  // Calcular entradas de tempo baseadas em dados reais
+  // Dados reais de registros de tempo (temporariamente mock até resolver problema dos hooks)
+  const realTimeEntries: any[] = [];
+
+  // Calcular entradas de tempo baseadas em dados reais ou estimativas
   const timeEntries = useMemo((): TimeEntry[] => {
+    // Se há registros reais de tempo, usar eles
+    if (realTimeEntries && realTimeEntries.length > 0) {
+      return realTimeEntries.map(entry => ({
+        category: entry.category,
+        task: `${entry.taskType.toUpperCase()}: ${entry.taskId}`, // Temporário até mapear IDs para títulos
+        duration: entry.duration,
+        date: new Date(entry.date)
+      }));
+    }
+
+    // Caso contrário, usar estimativas baseadas em tarefas concluídas
     const entries: TimeEntry[] = [];
 
     // Adicionar entradas baseadas em todos concluídos
@@ -92,6 +108,23 @@ export function TimeTrackingDashboard() {
       });
     }
 
+    // Adicionar entradas baseadas em goals (estimativa)
+    if (goals) {
+      goals.forEach((goal: any) => {
+        // Estimar tempo baseado na prioridade
+        const duration = goal.priority === "URGENT" ? 120 :
+          goal.priority === "HIGH" ? 90 :
+            goal.priority === "MEDIUM" ? 60 : 30;
+
+        entries.push({
+          category: goal.category || "Metas",
+          task: goal.title,
+          duration,
+          date: new Date() // Goals não têm data específica, usar hoje
+        });
+      });
+    }
+
     // Se não houver dados, criar entradas de exemplo
     if (entries.length === 0) {
       return [
@@ -104,7 +137,7 @@ export function TimeTrackingDashboard() {
     }
 
     return entries.slice(0, 20); // Limitar a 20 entradas mais recentes
-  }, [todos, habits]);
+  }, [realTimeEntries, todos, habits, goals]);
 
   // Timer effect
   useEffect(() => {
@@ -144,6 +177,49 @@ export function TimeTrackingDashboard() {
     return ["Trabalho", "Pessoal", "Estudos", "Casa", "Saúde"];
   }, [userTags]);
 
+  // Opções de tarefa baseadas nas 4 categorias ativas
+  const taskOptions = useMemo(() => {
+    const options: Array<{ id: string; title: string; type: string; category?: string }> = [];
+
+    // Adicionar todos
+    if (todos) {
+      todos.forEach((todo: any) => {
+        options.push({
+          id: `todo-${todo.id}`,
+          title: todo.title,
+          type: "todo",
+          category: todo.tags?.[0] || "Geral"
+        });
+      });
+    }
+
+    // Adicionar hábitos
+    if (habits) {
+      habits.forEach((habit: any) => {
+        options.push({
+          id: `habit-${habit.id}`,
+          title: habit.title,
+          type: "habit",
+          category: habit.tags?.[0] || "Hábitos"
+        });
+      });
+    }
+
+    // Adicionar goals
+    if (goals) {
+      goals.forEach((goal: any) => {
+        options.push({
+          id: `goal-${goal.id}`,
+          title: goal.title,
+          type: "goal",
+          category: goal.category || "Metas"
+        });
+      });
+    }
+
+    return options;
+  }, [todos, habits, goals]);
+
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -174,10 +250,38 @@ export function TimeTrackingDashboard() {
     setIsTracking(false);
   };
 
-  const stopTracking = () => {
+  const stopTracking = async () => {
     setIsTracking(false);
-    // Aqui você salvaria o tempo registrado
-    console.log(`Registrado: ${currentTask} (${currentCategory}) - ${formatTime(elapsedTime)}`);
+
+    if (currentTask && elapsedTime > 0) {
+      try {
+        // Extrair informações da tarefa selecionada
+        const [taskType, taskId] = currentTask.split('-');
+
+        const response = await fetch('/api/time-tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            taskId,
+            taskType,
+            category: currentCategory,
+            duration: elapsedTime,
+            date: new Date().toISOString()
+          }),
+        });
+
+        if (response.ok) {
+          console.log(`Tempo registrado com sucesso: ${currentTask} (${currentCategory}) - ${formatTime(elapsedTime)}`);
+        } else {
+          console.error('Erro ao registrar tempo:', await response.text());
+        }
+      } catch (error) {
+        console.error('Erro ao registrar tempo:', error);
+      }
+    }
+
     setElapsedTime(0);
     setCurrentTask("");
   };
@@ -224,13 +328,18 @@ export function TimeTrackingDashboard() {
             <div className="gap-4 grid grid-cols-2">
               <div>
                 <label className="font-medium text-sm">Tarefa</label>
-                <input
-                  type="text"
+                <select
                   value={currentTask}
                   onChange={(e) => setCurrentTask(e.target.value)}
-                  placeholder="Digite a tarefa..."
                   className="mt-1 px-3 py-2 border rounded-md w-full text-sm"
-                />
+                >
+                  <option value="">Selecione uma tarefa...</option>
+                  {taskOptions.map(task => (
+                    <option key={task.id} value={task.id}>
+                      [{task.type.toUpperCase()}] {task.title}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="font-medium text-sm">Categoria</label>

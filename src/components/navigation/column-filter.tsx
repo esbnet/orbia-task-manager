@@ -59,7 +59,7 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
   };
 
   return (
-    <div className="flex justify-center items-center gap-2 bg-gray-50 dark:bg-gray-800 mb-4 p-2 rounded-full w-fit">
+    <div className="flex justify-center items-center self-end gap-2 bg-gray-50 dark:bg-gray-800 mb-4 p-2 rounded-full w-fit">
 
       {filters.map((filter) => {
         const Icon = filter.icon;

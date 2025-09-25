@@ -73,37 +73,20 @@ export class HabitStreakService {
 				}
 			} else {
 				// Se não há atividade no período, quebra o streak atual
-				if (tempStreak > 0) {
-					if (currentStreak === 0) {
-						currentStreak = tempStreak;
-					}
-					if (tempStreak > longestStreak) {
-						longestStreak = tempStreak;
-					}
-					tempStreak = 0;
+				if (tempStreak > longestStreak) {
+					longestStreak = tempStreak;
 				}
+				tempStreak = 0;
 			}
 		}
 
-		// Verificar se o streak atual ainda é válido
-		if (tempStreak > 0) {
-			if (currentStreak === 0) {
-				currentStreak = tempStreak;
-			}
-			if (tempStreak > longestStreak) {
-				longestStreak = tempStreak;
-			}
+		// O streak atual é o tempStreak final (sequência mais recente)
+		currentStreak = tempStreak;
+		if (tempStreak > longestStreak) {
+			longestStreak = tempStreak;
 		}
 
-		// Verificar se o streak atual deve ser quebrado por inatividade
-		if (currentStreak > 0 && lastCompletedDate) {
-			const daysSinceLastActivity = this.getDaysSince(lastCompletedDate, today);
-			const maxDaysWithoutActivity = this.getMaxDaysWithoutActivity(habit.reset);
-			
-			if (daysSinceLastActivity > maxDaysWithoutActivity) {
-				currentStreak = 0;
-			}
-		}
+
 
 		return {
 			currentStreak,

@@ -1,14 +1,19 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Activity,
+  AlertTriangle,
   Award,
   BarChart3,
   Calendar,
   Clock,
+  Tag,
   Target,
   TrendingDown,
-  TrendingUp
+  TrendingUp,
+  Zap
 } from "lucide-react";
 import {
   Area,
@@ -25,13 +30,11 @@ import {
   XAxis,
   YAxis
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { Badge } from "@/components/ui/badge";
 import { usePerformanceAnalytics } from "@/hooks/use-performance-analytics";
-import { useState } from "react";
 import { useTranslation } from "@/hooks/use-translation";
+import { useState } from "react";
 
 interface PerformanceData {
   productivity: number;
@@ -67,7 +70,7 @@ export function PerformanceAnalytics() {
     return <div className="p-8 text-center">Erro ao carregar dados</div>;
   }
 
-  const { metrics, timeSeries, insights } = analyticsData;
+  const { metrics, timeSeries, insights, tagAnalysis, priorityAnalysis, difficultyAnalysis } = analyticsData;
 
   const radarData = [
     { metric: "Produtividade", value: metrics.productivity, fullMark: 100 },
@@ -79,17 +82,27 @@ export function PerformanceAnalytics() {
 
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-green-600 bg-green-50";
-    if (score >= 75) return "text-blue-600 bg-blue-50";
-    if (score >= 60) return "text-yellow-600 bg-yellow-50";
-    return "text-red-600 bg-red-50";
+    if (score >= 90) return "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20";
+    if (score >= 75) return "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20";
+    if (score >= 60) return "text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/20";
+    return "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20";
   };
 
-  const getTrendIcon = (trend: number) => {
+  const getTrendIcon = (trend: number | string) => {
+    if (typeof trend === "string") {
+      return trend === "up" ? (
+        <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400" />
+      ) : trend === "down" ? (
+        <TrendingDown className="w-4 h-4 text-red-500 dark:text-red-400" />
+      ) : (
+        <BarChart3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+      );
+    }
+
     return trend > 0 ? (
-      <TrendingUp className="w-4 h-4 text-green-500" />
+      <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400" />
     ) : (
-      <TrendingDown className="w-4 h-4 text-red-500" />
+      <TrendingDown className="w-4 h-4 text-red-500 dark:text-red-400" />
     );
   };
 
@@ -126,8 +139,8 @@ export function PerformanceAnalytics() {
                   {metrics.productivity}%
                 </p>
               </div>
-              <div className="bg-blue-50 p-2 rounded-lg">
-                <BarChart3 className="w-6 h-6 text-blue-600" />
+              <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-lg">
+                <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             <div className="flex items-center mt-2 text-sm">
@@ -146,8 +159,8 @@ export function PerformanceAnalytics() {
                   {metrics.consistency}%
                 </p>
               </div>
-              <div className="bg-green-50 p-2 rounded-lg">
-                <Activity className="w-6 h-6 text-green-600" />
+              <div className="bg-green-50 dark:bg-green-950/20 p-2 rounded-lg">
+                <Activity className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
             <div className="flex items-center mt-2 text-sm">
@@ -166,8 +179,8 @@ export function PerformanceAnalytics() {
                   {metrics.efficiency}%
                 </p>
               </div>
-              <div className="bg-orange-50 p-2 rounded-lg">
-                <Clock className="w-6 h-6 text-orange-600" />
+              <div className="bg-orange-50 dark:bg-orange-950/20 p-2 rounded-lg">
+                <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
             <div className="flex items-center mt-2 text-sm">
@@ -185,8 +198,8 @@ export function PerformanceAnalytics() {
                   {metrics.goalAchievement}%
                 </p>
               </div>
-              <div className="bg-purple-50 p-2 rounded-lg">
-                <Target className="w-6 h-6 text-purple-600" />
+              <div className="bg-purple-50 dark:bg-purple-950/20 p-2 rounded-lg">
+                <Target className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
             <div className="flex items-center mt-2 text-sm">
@@ -274,11 +287,11 @@ export function PerformanceAnalytics() {
               <div
                 key={index}
                 className={`p-4 rounded-lg border ${insight.type === "positive"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-yellow-50 border-yellow-200"
+                  ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                  : "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
                   }`}
               >
-                <h4 className="mb-2 font-medium">{insight.title}</h4>
+                <h4 className="mb-2 font-medium text-foreground">{insight.title}</h4>
                 <p className="text-muted-foreground text-sm">{insight.description}</p>
               </div>
             ))}
@@ -293,25 +306,125 @@ export function PerformanceAnalytics() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-              <span className="font-medium">Taxa geral de conclusão</span>
+            <div className="flex justify-between items-center bg-muted/50 p-3 rounded-lg">
+              <span className="font-medium text-foreground">Taxa geral de conclusão</span>
               <Badge variant="secondary">{metrics.completionRate}%</Badge>
             </div>
-            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-              <span className="font-medium">Tempo médio por tarefa</span>
+            <div className="flex justify-between items-center bg-muted/50 p-3 rounded-lg">
+              <span className="font-medium text-foreground">Tempo médio por tarefa</span>
               <Badge variant="secondary">{metrics.averageTaskTime} min</Badge>
             </div>
-            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-              <span className="font-medium">Streak mais longo</span>
+            <div className="flex justify-between items-center bg-muted/50 p-3 rounded-lg">
+              <span className="font-medium text-foreground">Streak mais longo</span>
               <Badge variant="secondary">{metrics.streakDays} dias</Badge>
             </div>
-            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-              <span className="font-medium">Melhor dia da semana</span>
+            <div className="flex justify-between items-center bg-muted/50 p-3 rounded-lg">
+              <span className="font-medium text-foreground">Melhor dia da semana</span>
               <Badge variant="secondary">{metrics.bestDayOfWeek}</Badge>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Analysis Sections */}
+      <div className="gap-6 grid grid-cols-1 lg:grid-cols-3">
+        {/* Tag Analysis */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="w-5 h-5" />
+              Eficiência por Etiquetas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {tagAnalysis.slice(0, 5).map((tag, index) => (
+                <div key={tag.tag} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="rounded-full w-3 h-3"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="font-medium text-sm">{tag.tag}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {tag.efficiency}%
+                    </Badge>
+                    {getTrendIcon(tag.trend)}
+                  </div>
+                </div>
+              ))}
+              {tagAnalysis.length === 0 && (
+                <p className="py-4 text-muted-foreground text-sm text-center">
+                  Nenhuma etiqueta encontrada
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Priority Analysis */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Análise por Prioridade
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {priorityAnalysis.map((priority, index) => (
+                <div key={priority.priority} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${priority.priority === "Urgente" ? "bg-red-500" :
+                      priority.priority === "Alta" ? "bg-orange-500" :
+                        priority.priority === "Média" ? "bg-yellow-500" : "bg-green-500"
+                      }`} />
+                    <span className="font-medium text-sm">{priority.priority}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {priority.efficiency}%
+                    </Badge>
+                    {getTrendIcon(priority.trend)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Difficulty Analysis */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              Análise por Dificuldade
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {difficultyAnalysis.map((difficulty, index) => (
+                <div key={difficulty.difficulty} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${difficulty.difficulty === "Difícil" ? "bg-red-500" :
+                      difficulty.difficulty === "Média" ? "bg-yellow-500" : "bg-green-500"
+                      }`} />
+                    <span className="font-medium text-sm">{difficulty.difficulty}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {difficulty.efficiency}%
+                    </Badge>
+                    {getTrendIcon(difficulty.trend)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
