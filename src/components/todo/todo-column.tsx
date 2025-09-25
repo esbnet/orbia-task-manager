@@ -1,15 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info, ListChecks, Plus } from "lucide-react";
-import type { Todo, TodoDifficulty } from "@/types/todo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCompleteTodo, useCreateTodo, useDeleteTodo, useTodos } from "@/hooks/use-todos";
+import type { Todo, TodoDifficulty } from "@/types/todo";
+import { Info, ListChecks, Plus, SquareCheckBig } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useState } from "react";
+import { toast } from "sonner";
 import { TodoCard } from "./todo-card";
 import { TodoForm } from "./todo-form";
-import { toast } from "sonner";
-import { useState } from "react";
 
 const defaultTodo: Todo = {
 	id: "",
@@ -114,7 +114,7 @@ export const TodoColumn = () => {
 						<div className="flex items-center gap-2">
 							<ListChecks className="w-6 h-6 text-blue-600" />
 							<CardTitle className="font-bold text-blue-900 text-xl">
-								Afazeres
+								Tarefa
 							</CardTitle>
 						</div>
 						<div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export const TodoColumn = () => {
 								className="bg-blue-600 hover:bg-blue-700 text-white"
 							>
 								<Plus className="mr-1 w-4 h-4" />
-								Novo Afazer
+								Novo Tarefa
 							</Button>
 						</div>
 					</div>
@@ -139,6 +139,7 @@ export const TodoColumn = () => {
 								<Info className="w-4 h-4 text-blue-500 hover:text-blue-700 transition-colors cursor-help" />
 							</TooltipTrigger>
 							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<h1><SquareCheckBig className="inline-block mr-1 w-3 h-3" />Foco: produtividade</h1>
 								<p>Tarefas pontuais que precisam ser realizadas uma vez ou em datas específicas. Ideal para atividades únicas ou projetos com prazo definido.</p>
 							</TooltipContent>
 						</Tooltip>
@@ -152,7 +153,7 @@ export const TodoColumn = () => {
 				<Card className="bg-blue-50 border-blue-200">
 					<CardContent className="py-8 text-center">
 						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
-						<p className="text-blue-600">Carregando afazeres...</p>
+						<p className="text-blue-600">Carregando tarefa...</p>
 					</CardContent>
 				</Card>
 			)}
@@ -174,10 +175,10 @@ export const TodoColumn = () => {
 							<CardContent className="py-8 text-center">
 								<ListChecks className="mx-auto mb-3 w-12 h-12 text-gray-400" />
 								<h3 className="mb-2 font-medium text-gray-600 text-lg">
-									Nenhum afazer cadastrado
+									Nenhum tarefa cadastrado
 								</h3>
 								<p className="mb-4 text-gray-500">
-									Comece criando seu primeiro afazer para
+									Comece criando seu primeiro tarefa para
 									organizar suas tarefas
 								</p>
 								<Button
@@ -185,7 +186,7 @@ export const TodoColumn = () => {
 									className="bg-blue-600 hover:bg-blue-700"
 								>
 									<Plus className="mr-2 w-4 h-4" />
-									Criar Primeiro Afazer
+									Criar Primeiro Tarefa
 								</Button>
 							</CardContent>
 						</Card>

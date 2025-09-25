@@ -331,7 +331,7 @@ export function TimeTrackingDashboard() {
                 <select
                   value={currentTask}
                   onChange={(e) => setCurrentTask(e.target.value)}
-                  className="mt-1 px-3 py-2 border rounded-md w-full text-sm"
+                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input dark:border-gray-600 focus:border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
                 >
                   <option value="">Selecione uma tarefa...</option>
                   {taskOptions.map(task => (
@@ -346,7 +346,7 @@ export function TimeTrackingDashboard() {
                 <select
                   value={currentCategory}
                   onChange={(e) => setCurrentCategory(e.target.value)}
-                  className="mt-1 px-3 py-2 border rounded-md w-full text-sm"
+                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input dark:border-gray-600 focus:border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
                 >
                   {categoryOptions.map(category => (
                     <option key={category} value={category}>{category}</option>

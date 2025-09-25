@@ -16,12 +16,12 @@ export function useDailies() {
 	return useQuery({
 		queryKey: dailyKeys.lists(),
 		queryFn: async (): Promise<Daily[]> => {
-			const response = await fetch("/api/dailies");
+			const response = await fetch("/api/daily");
 			if (!response.ok) {
 				throw new Error("Erro ao buscar dailies");
 			}
 			const data = await response.json();
-			return data.dailies || [];
+			return data.daily || [];
 		},
 		staleTime: 2 * 60 * 1000, // 2 minutos
 	});
@@ -33,7 +33,7 @@ export function useAvailableDailies() {
 		queryKey: [...dailyKeys.lists(), "available"],
 		queryFn: async (): Promise<{ availableDailies: Daily[]; completedToday: Daily[] }> => {
 			// console.log('useAvailableDailies: Executando query');
-			const response = await fetch("/api/dailies/available");
+			const response = await fetch("/api/daily/available");
 			if (!response.ok) {
 				throw new Error("Erro ao buscar dailies disponíveis");
 			}
@@ -56,7 +56,7 @@ export function useDaily(id: string) {
 	return useQuery({
 		queryKey: dailyKeys.detail(id),
 		queryFn: async (): Promise<Daily | null> => {
-			const response = await fetch(`/api/dailies/${id}`);
+			const response = await fetch(`/api/daily/${id}`);
 			if (!response.ok) {
 				if (response.status === 404) return null;
 				throw new Error("Erro ao buscar daily");
@@ -75,7 +75,7 @@ export function useCompleteDaily() {
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<Daily> => {
-			const response = await fetch(`/api/dailies/${id}/complete`, {
+			const response = await fetch(`/api/daily/${id}/complete`, {
 				method: "POST",
 			});
 
@@ -94,7 +94,7 @@ export function useCompleteDaily() {
 		},
 		onSuccess: async (data, id) => {
 			// Força refetch imediato da query de dailies disponíveis
-			await queryClient.refetchQueries({ 
+			await queryClient.refetchQueries({
 				queryKey: [...dailyKeys.lists(), "available"],
 				type: 'active'
 			});

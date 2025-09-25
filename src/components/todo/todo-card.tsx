@@ -1,15 +1,15 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
 	Edit,
 	Tag
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Todo } from "../../types";
 import { toast } from "sonner";
+import type { Todo } from "../../types";
 // import { useTodoContext } from "@/contexts/todo-context";
 import { useButtonLoading } from "@/hooks/use-button-loading";
 
@@ -51,7 +51,7 @@ export function TodoCard({
 					await onComplete(todo.id);
 				},
 				undefined,
-				() => toast.error("Erro ao completar afazer. Tente novamente.")
+				() => toast.error("Erro ao completar tarefa. Tente novamente.")
 			);
 		}
 	};

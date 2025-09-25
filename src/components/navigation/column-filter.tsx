@@ -41,7 +41,7 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
     },
     {
       id: "todos",
-      label: "Afazeres",
+      label: "Tarefa",
       icon: ListChecks,
       color: "text-blue-600 bg-blue-50 hover:bg-blue-100"
     },

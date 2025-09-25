@@ -232,7 +232,7 @@ export function IndicatorsDashboard() {
         }));
     }, [habitsAnalytics]);
 
-    // Dados para gráfico de afazeres - mostrar todas as tarefas ativas
+    // Dados para gráfico de tarefa - mostrar todas as tarefas ativas
     const todosChartData = useMemo(() => {
         const allTodos = todos || [];
         const completed = allTodos.filter(todo => todo.lastCompletedDate).length;
@@ -469,12 +469,12 @@ export function IndicatorsDashboard() {
                 </CardContent>
             </Card>
 
-            {/* 📌 Seção 4 — Afazeres */}
+            {/* 📌 Seção 4 — Tarefa */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <CheckCircle className="w-5 h-5 text-orange-500" />
-                        Afazeres
+                        Tarefa
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -501,7 +501,7 @@ export function IndicatorsDashboard() {
                         </div>
                     </div>
 
-                    {/* Gráfico de pizza para afazeres */}
+                    {/* Gráfico de pizza para tarefa */}
                     <div className="mt-6 h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>

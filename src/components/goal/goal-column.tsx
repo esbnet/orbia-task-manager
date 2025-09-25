@@ -1,21 +1,20 @@
 "use client";
 
-import { AlertTriangle, Info, Plus, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger
 } from "@/components/ui/tooltip";
+import { AlertTriangle, Info, Plus, Target, TargetIcon, TrendingUp } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Goal } from "@/domain/entities/goal";
-import { GoalCard } from "./goal-card";
-import { GoalForm } from "./goal-form";
 import { useGoals } from "@/contexts/goal-context";
+import type { Goal } from "@/domain/entities/goal";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { GoalCard } from "./goal-card";
+import { GoalForm } from "./goal-form";
 
 export function GoalColumn() {
 	const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals();
@@ -171,7 +170,8 @@ export function GoalColumn() {
 								<Info className="w-4 h-4 text-purple-500 hover:text-purple-700 transition-colors cursor-help" />
 							</TooltipTrigger>
 							<TooltipContent side="bottom" align="end" className="max-w-xs">
-								<p>Objetivos de longo prazo com data específica para conclusão. São projetos maiores que requerem planejamento, acompanhamento e podem estar associados a hábitos, tarefas diárias ou afazeres.</p>
+								<h1><TargetIcon className="inline-block mr-1 w-3 h-3" />Foco: objetivo</h1>
+								<p>Objetivos de longo prazo com data específica para conclusão. São projetos maiores que requerem planejamento, acompanhamento e podem estar associados a hábitos, tarefas diárias ou tarefa.</p>
 							</TooltipContent>
 						</Tooltip>
 
@@ -224,10 +224,10 @@ export function GoalColumn() {
 
 					{inProgressGoals.length > 0 && (
 						<div>
-							<h3 className="flex items-center gap-1 mb-2 font-semibold text-blue-600 text-sm">
+							{/* <h3 className="flex items-center gap-1 mb-2 font-semibold text-blue-600 text-sm">
 								<Target className="w-4 h-4" />
 								Em Andamento
-							</h3>
+							</h3> */}
 							<div className="space-y-3">
 								{inProgressGoals
 									.filter((goal) => new Date(goal.targetDate) >= new Date())
@@ -243,37 +243,8 @@ export function GoalColumn() {
 						</div>
 					)}
 
-					{completedGoals.length > 0 && (
-						<div>
-							<h3 className="flex items-center gap-1 mb-2 font-semibold text-green-600 text-sm">
-								<TrendingUp className="w-4 h-4" />
-								Concluídas
-							</h3>
-							<div className="space-y-3">
-								{completedGoals.slice(0, 3).map((goal) => (
-									<GoalCard
-										key={goal.id}
-										goal={goal}
-										onEdit={openEditForm}
-										onStatusChange={handleStatusChange}
-									/>
-								))}
-								{completedGoals.length > 3 && (
-									<div className="py-2 text-center">
-										<Badge
-											variant="outline"
-											className="text-gray-600"
-										>
-											+{completedGoals.length - 3} metas
-											concluídas
-										</Badge>
-									</div>
-								)}
-							</div>
-						</div>
-					)}
-
-					{goals.length === 0 && (
+					{/* Mostrar card de "nenhuma meta" quando não há metas ativas (em andamento ou atrasadas) */}
+					{(inProgressGoals.length === 0 && overdueGoals.length === 0) && (
 						<Card className="bg-gray-50 border-gray-300 border-dashed">
 							<CardContent className="py-8 text-center">
 								<Target className="mx-auto mb-3 w-12 h-12 text-gray-400" />

@@ -1,18 +1,18 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, Info, Plus, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableHabits, useCreateHabit, useDeleteHabit, useUpdateHabit } from "@/hooks/use-habits";
-import { useMultipleHabitStats } from "@/hooks/use-habit-stats";
-import { useCallback, useState } from "react";
+import { Dumbbell, Info, Plus, RefreshCcw, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
+import { useMultipleHabitStats } from "@/hooks/use-habit-stats";
+import { useState } from "react";
+import { toast } from "sonner";
 import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
-import { toast } from "sonner";
 
 export function HabitColumn() {
 	const { data: habitsData, isLoading } = useAvailableHabits();
@@ -147,14 +147,6 @@ export function HabitColumn() {
 							</CardTitle>
 						</div>
 						<div className="flex items-center gap-2">
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Info className="w-4 h-4 text-green-500 hover:text-green-700 transition-colors cursor-help" />
-								</TooltipTrigger>
-								<TooltipContent side="bottom" align="end" className="max-w-xs">
-									<p>Comportamentos repetitivos que você deseja cultivar ou eliminar. São ações realizadas diariamente para criar consistência e disciplina na sua rotina.</p>
-								</TooltipContent>
-							</Tooltip>
 							<Button
 								onClick={() => setIsFormOpen(true)}
 								size="sm"
@@ -167,11 +159,21 @@ export function HabitColumn() {
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex items-center gap-4 text-green-700 text-sm">
+					<div className="flex justify-between items-center gap-4 text-green-700 text-sm">
 						<div className="flex items-center gap-1">
 							<TrendingUp className="w-4 h-4" />
 							<span>{availableHabits.length} hábitos ativos</span>
 						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Info className="w-4 h-4 text-green-500 hover:text-green-700 transition-colors cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<h1><RefreshCcw className="inline-block mr-1 w-3 h-3" />Foco: consistência</h1>
+								<p>Comportamentos repetitivos que você deseja cultivar ou eliminar. São ações realizadas diariamente para criar consistência e disciplina na sua rotina.</p>
+							</TooltipContent>
+						</Tooltip>
+
 					</div>
 				</CardContent>
 			</Card>
@@ -208,7 +210,6 @@ export function HabitColumn() {
 						})}
 					</div>
 				)}
-
 
 				{!isLoading && totalHabits === 0 && (
 					<Card className="bg-gray-50 border-gray-300 border-dashed">

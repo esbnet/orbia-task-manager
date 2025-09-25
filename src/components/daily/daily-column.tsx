@@ -1,15 +1,15 @@
-import { CalendarCheck, Info, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Daily, DailyDifficulty } from "@/types/daily";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
+import type { Daily, DailyDifficulty } from "@/types/daily";
+import { CalendarCheck, Info, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/use-translation";
+import { toast } from "sonner";
 import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
-import { toast } from "sonner";
-import { useTranslation } from "@/hooks/use-translation";
 
 const defaultDaily: Daily = {
 	id: "",
@@ -176,6 +176,7 @@ export const DailyColumn = () => {
 								<Info className="w-4 h-4 text-amber-500 hover:text-amber-700 transition-colors cursor-help" />
 							</TooltipTrigger>
 							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<h1><CalendarCheck className="inline-block mr-1 w-3 h-3" />Foco: rotina</h1>
 								<p>Tarefas que se repetem em intervalos regulares (diariamente, semanalmente, mensalmente). São compromissos recorrentes que precisam ser realizados periodicamente.</p>
 							</TooltipContent>
 						</Tooltip>
@@ -196,7 +197,7 @@ export const DailyColumn = () => {
 			{/* Dailies Disponíveis */}
 			{!isLoading && availableDailies.length > 0 && (
 				<div className="space-y-4">
-					<h3 className="font-semibold text-amber-800">Disponíveis</h3>
+					{/* <h3 className="font-semibold text-amber-800">Disponíveis</h3> */}
 					{availableDailies.map((daily: Daily) => (
 						<DailyCard
 							key={daily.id}
@@ -224,7 +225,7 @@ export const DailyColumn = () => {
 			)}
 
 			{/* Dailies Completadas Hoje */}
-			{!isLoading && completedDailies.length > 0 && (
+			{/* {!isLoading && completedDailies.length > 0 && (
 				<div className="space-y-4">
 					<h3 className="font-semibold text-green-800">Completadas Hoje</h3>
 					{completedDailies.map((daily: Daily) => (
@@ -251,7 +252,7 @@ export const DailyColumn = () => {
 						/>
 					))}
 				</div>
-			)}
+			)} */}
 
 			{/* Estado vazio */}
 			{!isLoading && availableDailies.length === 0 && completedDailies.length === 0 && (
