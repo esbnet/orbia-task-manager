@@ -12,6 +12,7 @@ export class ListGoalsUseCase {
 			goals = await this.goalRepository.findByStatus(
 				dto.status,
 			);
+			console.log(`[ListGoalsUseCase] Found ${goals.length} goals with status ${dto.status}`);
 		} else if (dto.priority) {
 			goals = await this.goalRepository.findByPriority(
 				dto.priority,

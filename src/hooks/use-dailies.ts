@@ -23,7 +23,8 @@ export function useDailies() {
 			const data = await response.json();
 			return data.daily || [];
 		},
-		staleTime: 2 * 60 * 1000, // 2 minutos
+		staleTime: 30 * 1000, // 30 segundos
+		refetchOnWindowFocus: true,
 	});
 }
 
@@ -100,6 +101,8 @@ export function useCompleteDaily() {
 			});
 			// Invalidate todas as outras queries de dailies
 			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
+			// Invalidate cache do gráfico de evolução semanal
+			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
 	});
 }

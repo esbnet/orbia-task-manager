@@ -48,6 +48,17 @@ export function TodoCard({
 		if (onComplete) {
 			await completeLoading.executeAsync(
 				async () => {
+					// Criar log do todo
+					await fetch('/api/todo-logs', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							todoId: todo.id,
+							todoTitle: todo.title,
+							difficulty: todo.difficulty,
+							tags: todo.tags
+						})
+					});
 					await onComplete(todo.id);
 				},
 				undefined,

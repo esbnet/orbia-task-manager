@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -15,7 +15,8 @@ export async function POST(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const dailyId = params.id;
+    const { id } = await params;
+    const dailyId = id;
 
     // Verificar se o daily existe e pertence ao usuário
     const daily = await prisma.daily.findFirst({

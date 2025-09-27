@@ -8,14 +8,30 @@ export class PrismaGoalRepository implements GoalRepository {
 	deleteByUserId(userId: string): Promise<void> {
 		throw new Error("Method not implemented." + userId);
 	}
-	findByStatus(status: GoalStatus): Promise<Goal[]> {
-		throw new Error("Method not implemented." + status);
+	async findByStatus(status: GoalStatus): Promise<Goal[]> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		const goals = await prisma.goal.findMany({
+			where: { userId, status },
+			orderBy: { createdAt: "desc" },
+		});
+
+		return goals.map(this.toDomain);
 	}
 	updateStatus(id: string, status: GoalStatus): Promise<Goal> {
 		throw new Error("Method not implemented." + status + id);
 	}
-	findByPriority(priority: GoalPriority): Promise<Goal[]> {
-		throw new Error("Method not implemented." + priority);
+	async findByPriority(priority: GoalPriority): Promise<Goal[]> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		const goals = await prisma.goal.findMany({
+			where: { userId, priority },
+			orderBy: { createdAt: "desc" },
+		});
+
+		return goals.map(this.toDomain);
 	}
 	updatePriority(id: string, priority: GoalPriority): Promise<Goal> {
 		throw new Error("Method not implemented." + priority + id);
@@ -77,8 +93,26 @@ export class PrismaGoalRepository implements GoalRepository {
 	findOverdue(): Promise<Goal[]> {
 		throw new Error("Method not implemented.");
 	}
-	findDueSoon(days: number): Promise<Goal[]> {
-		throw new Error("Method not implemented." + days);
+	async findDueSoon(days: number): Promise<Goal[]> {
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
+
+		const futureDate = new Date();
+		futureDate.setDate(futureDate.getDate() + days);
+
+		const goals = await prisma.goal.findMany({
+			where: {
+				userId,
+				status: "IN_PROGRESS",
+				targetDate: {
+					gte: new Date(),
+					lte: futureDate,
+				},
+			},
+			orderBy: { targetDate: "asc" },
+		});
+
+		return goals.map(this.toDomain);
 	}
 	async list(): Promise<Goal[]> {
 		const userId = await getCurrentUserId();

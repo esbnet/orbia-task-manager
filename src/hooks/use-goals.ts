@@ -12,18 +12,50 @@ export const goalKeys = {
 };
 
 // Hook para buscar todos os goals
-export function useGoals() {
+export function useGoals(status?: string) {
 	return useQuery({
-		queryKey: goalKeys.lists(),
+		queryKey: goalKeys.list({ status }),
+		enabled: true, // Force enable
 		queryFn: async (): Promise<Goal[]> => {
-			const response = await fetch("/api/goals");
+			const params = new URLSearchParams();
+			if (status) {
+				params.append('status', status);
+			}
+			const url = `/api/goals${params.toString() ? `?${params.toString()}` : ''}`;
+			const response = await fetch(url);
 			if (!response.ok) {
 				throw new Error("Erro ao buscar goals");
 			}
 			const data = await response.json();
-			return data.goals || [];
+
+			// Debug: verificar estrutura da resposta
+			if (process.env.NODE_ENV === 'development') {
+				console.log('[USE-GOALS] 📡 Resposta da API:', data);
+				console.log('[USE-GOALS] 📡 Tipo da resposta:', typeof data);
+				console.log('[USE-GOALS] 📡 É array?', Array.isArray(data));
+			}
+
+			// A API pode retornar array diretamente ou objeto com propriedade goals
+			if (Array.isArray(data)) {
+				if (process.env.NODE_ENV === 'development') {
+					console.log('[USE-GOALS] ✅ API retornou array diretamente:', data.length, 'metas');
+				}
+				return data;
+			} else if (data.goals && Array.isArray(data.goals)) {
+				if (process.env.NODE_ENV === 'development') {
+					console.log('[USE-GOALS] ✅ API retornou objeto com goals:', data.goals.length, 'metas');
+				}
+				return data.goals;
+			} else {
+				if (process.env.NODE_ENV === 'development') {
+					console.log('[USE-GOALS] ❌ Estrutura inesperada:', Object.keys(data));
+				}
+				return [];
+			}
 		},
-		staleTime: 2 * 60 * 1000, // 2 minutos
+		staleTime: 0, // Force fresh data
+		gcTime: 0, // No cache
+		refetchOnWindowFocus: true,
 	});
 }
 
@@ -38,7 +70,20 @@ export function useGoal(id: string) {
 				throw new Error("Erro ao buscar goal");
 			}
 			const data = await response.json();
-			return data.goal || null;
+
+			// Debug: verificar estrutura da resposta
+			if (process.env.NODE_ENV === 'development') {
+				console.log('[USE-GOAL] 📡 Resposta da API para goal específico:', data);
+			}
+
+			// A API pode retornar objeto diretamente ou com propriedade goal
+			if (data && typeof data === 'object' && 'id' in data) {
+				return data as Goal;
+			} else if (data.goal) {
+				return data.goal;
+			} else {
+				return null;
+			}
 		},
 		enabled: !!id,
 		staleTime: 5 * 60 * 1000, // 5 minutos
@@ -98,6 +143,8 @@ export function useUpdateGoal() {
 			// Update cache
 			queryClient.setQueryData(goalKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+			// Invalidate cache do gráfico de evolução semanal
+			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
 	});
 }

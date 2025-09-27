@@ -25,7 +25,8 @@ export function useHabits() {
 			const data = await response.json();
 			return data.habits || [];
 		},
-		staleTime: 2 * 60 * 1000, // 2 minutos
+		staleTime: 30 * 1000, // 30 segundos
+		refetchOnWindowFocus: true,
 	});
 }
 
@@ -181,6 +182,8 @@ export function useCompleteHabit() {
 			// Update cache
 			queryClient.setQueryData(habitKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate cache do gráfico de evolução semanal
+			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
 	});
 }
@@ -222,6 +225,8 @@ export function useRegisterHabit() {
 			queryClient.invalidateQueries({ queryKey: habitKeys.detail(variables.id) });
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate cache do gráfico de evolução semanal
+			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
 	});
 }

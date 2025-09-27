@@ -29,8 +29,15 @@ export function WeeklyReportGenerator() {
   const { data: todos, isLoading: todosLoading, error: todosError } = useTodos();
   const { data: habits, isLoading: habitsLoading, error: habitsError } = useHabits();
   const { data: dailies, isLoading: dailiesLoading, error: dailiesError } = useDailies();
-  const { data: goals, isLoading: goalsLoading, error: goalsError } = useGoals();
+  const { data: goals, isLoading: goalsLoading, error: goalsError } = useGoals("COMPLETED");
   const { data: analytics, isLoading: analyticsLoading, error: analyticsError } = useAdvancedAnalytics("week");
+
+  // Debug: verificar estado do hook
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[WEEKLY-REPORT] 🔍 === DEBUG HOOK GOALS ===');
+    console.log('[WEEKLY-REPORT] Goals Loading:', goalsLoading);
+    console.log('[WEEKLY-REPORT] Goals Error:', goalsError);
+  }
 
   // Calcular métricas em tempo real baseadas nos dados locais
   const realTimeMetrics = useMemo(() => {
@@ -39,19 +46,90 @@ export function WeeklyReportGenerator() {
     const now = new Date();
     const weekStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
+    // Debug: verificar dados das metas
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WEEKLY-REPORT] 🔍 === DEBUG METAS ===');
+      console.log('[WEEKLY-REPORT] Total de metas recebidas:', goals.length);
+      console.log('[WEEKLY-REPORT] Week start:', weekStart.toISOString());
+      console.log('[WEEKLY-REPORT] Exemplo de meta:', goals[0]);
+      console.log('[WEEKLY-REPORT] Estrutura completa dos dados:', goals);
+      console.log('[WEEKLY-REPORT] Tipo de goals:', typeof goals);
+      console.log('[WEEKLY-REPORT] Goals é array?', Array.isArray(goals));
+    }
+
     // Filtrar dados da semana atual
     const weekTodos = todos.filter((todo: any) => new Date(todo.createdAt) >= weekStart);
     const weekHabits = habits.filter((habit: any) => habit.createdAt && new Date(habit.createdAt) >= weekStart);
     const weekDailies = dailies.filter((daily: any) => new Date(daily.createdAt) >= weekStart);
-    const weekGoals = goals.filter((goal: any) => new Date(goal.createdAt) >= weekStart);
+    const weekGoals = goals.filter((goal: any) => {
+      if (!goal || !goal.updatedAt) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[WEEKLY-REPORT] ❌ Meta inválida ou sem updatedAt:', goal);
+        }
+        return false;
+      }
+
+      const updatedAt = new Date(goal.updatedAt);
+      const isInWeek = updatedAt >= weekStart;
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WEEKLY-REPORT] 🔍 Verificando meta:', {
+          title: goal.title,
+          updatedAt: goal.updatedAt,
+          updatedAtParsed: updatedAt.toISOString(),
+          weekStart: weekStart.toISOString(),
+          isInWeek: isInWeek
+        });
+
+        if (isInWeek) {
+          console.log('[WEEKLY-REPORT] ✅ Meta incluída na semana:', goal.title, updatedAt.toISOString());
+        }
+      }
+
+      return isInWeek;
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WEEKLY-REPORT] 📋 === RESUMO DOS DADOS FILTRADOS ===');
+      console.log('[WEEKLY-REPORT] Metas da semana:', weekGoals.length);
+      console.log('[WEEKLY-REPORT] Todos da semana:', weekTodos.length);
+      console.log('[WEEKLY-REPORT] Hábitos da semana:', weekHabits.length);
+      console.log('[WEEKLY-REPORT] Diárias da semana:', weekDailies.length);
+
+      if (weekGoals.length > 0) {
+        console.log('[WEEKLY-REPORT] ✅ METAS DA SEMANA ENCONTRADAS:');
+        weekGoals.forEach((goal, index) => {
+          console.log(`[WEEKLY-REPORT]   ${index + 1}. "${goal.title}" - ${goal.updatedAt}`);
+        });
+      } else {
+        console.log('[WEEKLY-REPORT] ❌ NENHUMA META DA SEMANA ENCONTRADA');
+        console.log('[WEEKLY-REPORT] 📋 TODAS AS METAS RECEBIDAS:');
+        goals.forEach((goal, index) => {
+          console.log(`[WEEKLY-REPORT]   ${index + 1}. "${goal.title}" - ${goal.updatedAt} - Status: ${goal.status}`);
+        });
+      }
+    }
 
     // Calcular métricas
-    const totalTasks = weekTodos.length + weekHabits.length + weekDailies.length;
+    const totalTasks = weekTodos.length + weekHabits.length + weekDailies.length + weekGoals.length;
     const completedTasks = weekTodos.filter((t: any) => t.completed).length +
       weekHabits.filter((h: any) => h.completedToday).length +
-      weekDailies.filter((d: any) => d.completed).length;
+      weekDailies.filter((d: any) => d.completed).length +
+      weekGoals.length; // Todas as metas filtradas já são completadas
 
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WEEKLY-REPORT] 📊 === MÉTRICAS FINAIS ===');
+      console.log('[WEEKLY-REPORT] Total de tarefas:', totalTasks);
+      console.log('[WEEKLY-REPORT] Tarefas concluídas:', completedTasks);
+      console.log('[WEEKLY-REPORT] Taxa de conclusão:', completionRate + '%');
+      console.log('[WEEKLY-REPORT] Detalhamento:');
+      console.log('[WEEKLY-REPORT]  - Todos:', weekTodos.length);
+      console.log('[WEEKLY-REPORT]  - Hábitos:', weekHabits.length);
+      console.log('[WEEKLY-REPORT]  - Diárias:', weekDailies.length);
+      console.log('[WEEKLY-REPORT]  - Metas:', weekGoals.length);
+    }
 
     // Calcular tempo estimado (em minutos)
     const estimatedTime = (weekTodos.length * 30) + (weekHabits.length * 15) + (weekDailies.length * 10);
