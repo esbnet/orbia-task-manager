@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
@@ -7,14 +6,15 @@ import {
 	LoaderCircle,
 	Tag
 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useButtonLoading } from "@/hooks/use-button-loading";
-import { useTranslation } from "@/hooks/use-translation";
-import { useState } from "react";
-import { toast } from "sonner";
 import type { Daily } from "../../types";
+import { toast } from "sonner";
+import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useState } from "react";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface DailyCardProps {
 	daily: Daily;
@@ -108,6 +108,37 @@ export function DailyCard({
 		}
 	};
 
+	const calculateNextAvailableDate = () => {
+		if (!daily.repeat) return null;
+
+		const now = new Date();
+		const { type, frequency } = daily.repeat;
+
+		switch (type) {
+			case "Diariamente":
+				const tomorrow = new Date(now);
+				tomorrow.setDate(now.getDate() + frequency);
+				tomorrow.setHours(0, 0, 0, 0);
+				return tomorrow;
+			case "Semanalmente":
+				const nextWeek = new Date(now);
+				nextWeek.setDate(now.getDate() + (7 * frequency));
+				return nextWeek;
+			case "Mensalmente":
+				const nextMonth = new Date(now);
+				nextMonth.setMonth(now.getMonth() + frequency);
+				return nextMonth;
+			case "Anualmente":
+				const nextYear = new Date(now);
+				nextYear.setFullYear(now.getFullYear() + frequency);
+				return nextYear;
+			default:
+				return null;
+		}
+	};
+
+	const calculatedNextAvailableAt = calculateNextAvailableDate();
+
 	return (
 		<Card className={`hover:shadow-md transition-shadow duration-200 ${(completeLoading.isLoading || isCompleting) ? "opacity-50 pointer-events-none" : ""}`}>
 			<CardHeader className="pb-3">
@@ -170,10 +201,29 @@ export function DailyCard({
 						)}
 
 						{/* Status do período */}
-						{isCompleted && nextAvailableAt && (
+						{isCompleted && calculatedNextAvailableAt && (
 							<div className="flex items-center gap-1 text-gray-500 text-sm">
 								<Clock className="w-4 h-4" />
-								<span>{t("actions.availableIn")} {formatNextAvailable(nextAvailableAt)}</span>
+								<span>{t("actions.availableIn")} {formatNextAvailable(calculatedNextAvailableAt)}</span>
+							</div>
+						)}
+
+						{/* Mostrar próxima disponibilidade mesmo quando não completada */}
+						{!isCompleted && calculatedNextAvailableAt && (
+							<div className="flex items-center gap-1 text-blue-600 text-sm">
+								<Clock className="w-4 h-4" />
+								<span>Próxima: {calculatedNextAvailableAt.toLocaleDateString('pt-BR')}</span>
+							</div>
+						)}
+
+						{/* Mostrar informações da repetição */}
+						{daily.repeat && (
+							<div className="flex items-center gap-1 text-gray-500 text-xs">
+								<RepeatIcon className="w-3 h-3" />
+								<span>
+									{daily.repeat.frequency > 1 ? `A cada ${daily.repeat.frequency} ` : ''}
+									{getRepeatLabel(daily.repeat.type)}
+								</span>
 							</div>
 						)}
 

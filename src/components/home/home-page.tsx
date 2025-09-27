@@ -45,7 +45,7 @@ export default function HomePage() {
     };
 
     return [
-        <main className="relative flex flex-col mx-auto p-6 min-h-screen">
+        <section className="relative flex flex-col mx-auto p-6 min-h-screen">
             {/* Header Section */}
             <div className="flex shadow-sm mb-8 p-8 border rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
                 <div className="flex justify-between items-center w-full">
@@ -98,6 +98,6 @@ export default function HomePage() {
                 open={showTasksDialog}
                 onOpenChange={handleDialogClose}
             />
-        </main>
+        </section>
     ]
 }

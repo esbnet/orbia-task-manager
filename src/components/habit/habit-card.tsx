@@ -125,13 +125,13 @@ export const HabitCard = memo(function HabitCard({
 			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""
 				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader >
-				<div className="flex justify-between items-start">
-					<div className="flex-1">
-						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+			<CardHeader className="pb-3">
+				<div className="flex justify-between items-start gap-3">
+					<div className="flex-1 min-w-0">
+						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
 							{habit.title}
 						</CardTitle>
-						<div className="flex items-center gap-2 mt-2">
+						<div className="flex flex-wrap items-center gap-2 mt-2">
 							<Badge
 								variant="outline"
 								className={priorityColors[habit.priority]}
@@ -151,7 +151,7 @@ export const HabitCard = memo(function HabitCard({
 
 						{/* Estatísticas do período atual */}
 						{(currentCount > 0 || todayCount > 0 || streak) && (
-							<div className="flex items-center gap-4 mt-2 text-gray-600 text-sm">
+							<div className="flex flex-wrap items-center gap-3 mt-2 text-gray-600 text-sm">
 								{currentCount > 0 && (
 									<div className="flex items-center gap-1">
 										<TrendingUp className="w-4 h-4" />
@@ -176,13 +176,13 @@ export const HabitCard = memo(function HabitCard({
 						{/* Próximo período disponível */}
 						{nextAvailableAt && (
 							<div className="flex items-center gap-1 mt-2 text-orange-600 text-sm">
-								<RotateCcw className="w-4 h-4" />
-								<span>Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+								<RotateCcw className="flex-shrink-0 w-4 h-4" />
+								<span className="break-words">Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
 							</div>
 						)}
 					</div>
 
-					<div className="flex items-center">
+					<div className="flex flex-shrink-0 items-center gap-1">
 						{habit.status === "Em Andamento" && (
 							<>
 								{/* Botão principal de registro */}
@@ -191,7 +191,7 @@ export const HabitCard = memo(function HabitCard({
 									size="icon"
 									variant="ghost"
 									onClick={handleRegister}
-									className="hover:bg-green-100 rounded-full text-green-600 hover:text-green-600"
+									className="hover:bg-green-100 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
 									disabled={registerLoading.isLoading || isRegistering}
 								>
 									{(registerLoading.isLoading || isRegistering) ? (
@@ -208,7 +208,7 @@ export const HabitCard = memo(function HabitCard({
 										variant="ghost"
 										onClick={() => onEdit(habit)}
 										disabled={editLoading.isLoading}
-										className="hover:bg-gray-100 rounded-full text-gray-600"
+										className="hover:bg-gray-100 rounded-full w-8 h-8 text-gray-600"
 									>
 										{editLoading.isLoading ? (
 											<div className="border-2 border-t-transparent rounded-full w-4 h-4 text-gray-400 animate-spin" />
@@ -220,7 +220,7 @@ export const HabitCard = memo(function HabitCard({
 
 								{/* Botão de arquivar hábito */}
 								<Button
-									className="hover:bg-red-100 rounded-full text-red-600 hover:text-red-600"
+									className="hover:bg-red-100 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
 									title="Arquivar hábito"
 									size="icon"
 									variant="ghost"
@@ -235,8 +235,6 @@ export const HabitCard = memo(function HabitCard({
 								</Button>
 							</>
 						)}
-
-
 					</div>
 				</div>
 			</CardHeader>
@@ -254,6 +252,7 @@ export const HabitCard = memo(function HabitCard({
 						size="sm"
 						variant="ghost"
 						onClick={() => setIsExpanded(!isExpanded)}
+						className="p-0 w-8 h-8"
 					>
 						{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
 					</Button>
@@ -262,24 +261,24 @@ export const HabitCard = memo(function HabitCard({
 				{isExpanded && (
 					<div className="mt-3 pt-3 border-gray-100 border-t">
 						{habit.observations && (
-							<p className="mb-3 text-gray-600 dark:text-gray-400">
+							<p className="mb-3 text-gray-600 dark:text-gray-400 break-words leading-relaxed">
 								{habit.observations}
 							</p>
 						)}
 
-						<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm" title="data de criação">
-							<Calendar className="w-4 h-4" />
-							<span>
+						<div className="flex flex-wrap items-center gap-2 mb-3 text-gray-500 text-sm" title="data de criação">
+							<Calendar className="flex-shrink-0 w-4 h-4" />
+							<span className="break-words">
 								{format(habit.createdAt, "dd 'de' MMMM 'de' yyyy", {
 									locale: ptBR,
 								})}
 							</span>
 							{isOverdue && (
-								<AlertTriangle className="w-4 h-4 text-red-500" />
+								<AlertTriangle className="flex-shrink-0 w-4 h-4 text-red-500" />
 							)}
 						</div>
 
-						<div className="flex items-center gap-2 mb-3 text-sm">
+						<div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
 							<Badge className={`text-xs ${difficultyBadge.color}`} title="Dificuldade">
 								{difficultyBadge.stars} {habit.difficulty}
 							</Badge>
@@ -304,16 +303,16 @@ export const HabitCard = memo(function HabitCard({
 						)}
 						{/* Estatísticas de streak */}
 						{streak && (
-							<div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-								<div className="flex items-center justify-between mb-2">
+							<div className="bg-orange-50 mb-3 p-3 border border-orange-200 rounded-lg">
+								<div className="flex flex-wrap justify-between items-center gap-2 mb-2">
 									<span className="font-medium text-orange-800">Sequência</span>
 									{streak.isActiveToday && (
-										<Badge className="bg-green-100 text-green-800 border-green-200">
+										<Badge className="bg-green-100 border-green-200 text-green-800 text-xs">
 											Ativo hoje
 										</Badge>
 									)}
 								</div>
-								<div className="flex items-center gap-4 text-sm">
+								<div className="flex flex-wrap items-center gap-4 text-sm">
 									<div className="flex items-center gap-1">
 										<span>🔥</span>
 										<span>Atual: <strong>{streak.currentStreak}</strong></span>
@@ -326,7 +325,7 @@ export const HabitCard = memo(function HabitCard({
 							</div>
 						)}
 
-						<div className="text-gray-600 dark:text-gray-400 text-sm">
+						<div className="text-gray-600 dark:text-gray-400 text-sm break-words">
 							<strong>Última atualização:</strong>{" "}
 							{format(habit.updatedAt, "dd/MM/yyyy 'às' HH:mm", {
 								locale: ptBR,

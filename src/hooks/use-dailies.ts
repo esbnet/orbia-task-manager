@@ -48,7 +48,9 @@ export function useAvailableDailies() {
 				completedToday: data.completedToday || []
 			};
 		},
-		staleTime: 1 * 60 * 1000, // 1 minuto
+		staleTime: 30 * 1000, // 30 segundos
+		refetchOnWindowFocus: true,
+		refetchInterval: 60 * 1000, // Refetch a cada 1 minuto
 	});
 }
 

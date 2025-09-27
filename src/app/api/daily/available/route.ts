@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from "@/auth";
 import { PrismaClient } from "@prisma/client";
+import { auth } from "@/auth";
 
 const prisma = new PrismaClient();
 
@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Buscar dailies disponíveis (não completados hoje)
-    const availableDailies = await prisma.daily.findMany({
+    // Buscar todas as dailies do usuário
+    const allDailies = await prisma.daily.findMany({
       where: {
         userId: session.user.id,
         startDate: {
@@ -24,6 +24,15 @@ export async function GET(request: NextRequest) {
         }
       },
       include: {
+        periods: {
+          where: {
+            isActive: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1
+        },
         logs: {
           where: {
             completedAt: {
@@ -39,49 +48,47 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Filtrar apenas os que não foram completados hoje
-    const notCompletedToday = availableDailies.filter(daily =>
-      !daily.logs || daily.logs.length === 0
-    );
+    // Separar dailies disponíveis e completadas
+    const availableDailies = [];
+    const completedToday = [];
 
-    // Buscar dailies completados hoje
-    const completedToday = await prisma.daily.findMany({
-      where: {
-        userId: session.user.id,
-        logs: {
-          some: {
-            completedAt: {
-              gte: today,
-              lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-            }
-          }
-        }
-      },
-      include: {
-        logs: {
-          where: {
-            completedAt: {
-              gte: today,
-              lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-            }
-          },
-          orderBy: {
-            completedAt: 'desc'
-          },
-          take: 1
-        },
-        subtasks: true
-      },
-      orderBy: {
-        logs: {
-          _count: 'desc'
-        }
+    for (const daily of allDailies) {
+      const activePeriod = daily.periods[0];
+
+      // Se tem período ativo e não foi completado hoje, está disponível
+      if (activePeriod && !activePeriod.isCompleted) {
+        availableDailies.push(daily);
       }
-    });
+      // Se foi completado hoje, adicionar à lista de completadas
+      else if (daily.logs && daily.logs.length > 0) {
+        completedToday.push(daily);
+      }
+      // Se não tem período ativo mas deveria ter (baseado na data de início e tipo de repetição)
+      else if (shouldHaveActivePeriod(daily)) {
+        // Criar período automaticamente
+        const endDate = calculatePeriodEnd(daily.repeatType, now, daily.repeatFrequency);
+        const newPeriod = await prisma.dailyPeriod.create({
+          data: {
+            dailyId: daily.id,
+            periodType: daily.repeatType,
+            startDate: now,
+            endDate,
+            isCompleted: false,
+            isActive: true,
+          }
+        });
+
+        // Adicionar à lista de disponíveis
+        availableDailies.push({
+          ...daily,
+          periods: [newPeriod]
+        });
+      }
+    }
 
     return NextResponse.json({
-      availableDailies: notCompletedToday,
-      completedToday: completedToday,
+      availableDailies,
+      completedToday,
       success: true
     });
 
@@ -92,4 +99,78 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Verifica se uma daily deveria ter um período ativo
+function shouldHaveActivePeriod(daily: any): boolean {
+  const now = new Date();
+  const startDate = new Date(daily.startDate);
+
+  // Se a data de início ainda não chegou, não deveria ter período ativo
+  if (now < startDate) {
+    return false;
+  }
+
+  // Se nunca foi completada, deveria ter um período ativo
+  if (!daily.lastCompletedDate) {
+    return true;
+  }
+
+  // Se já foi completada antes, verificar baseado no tipo de repetição
+  const lastCompleted = new Date(daily.lastCompletedDate);
+  const { repeatType, repeatFrequency } = daily;
+
+  switch (repeatType) {
+    case "Diariamente":
+      const nextDay = new Date(lastCompleted);
+      nextDay.setDate(lastCompleted.getDate() + repeatFrequency);
+      return now >= nextDay;
+
+    case "Semanalmente":
+      const nextWeek = new Date(lastCompleted);
+      nextWeek.setDate(lastCompleted.getDate() + (7 * repeatFrequency));
+      return now >= nextWeek;
+
+    case "Mensalmente":
+      const nextMonth = new Date(lastCompleted);
+      nextMonth.setMonth(lastCompleted.getMonth() + repeatFrequency);
+      return now >= nextMonth;
+
+    case "Anualmente":
+      const nextYear = new Date(lastCompleted);
+      nextYear.setFullYear(lastCompleted.getFullYear() + repeatFrequency);
+      return now >= nextYear;
+
+    default:
+      return true;
+  }
+}
+
+// Calcula a data de fim do período baseado no tipo de repetição
+function calculatePeriodEnd(repeatType: string, startDate: Date, frequency: number): Date {
+  const endDate = new Date(startDate);
+
+  switch (repeatType) {
+    case "Diariamente":
+      endDate.setHours(23, 59, 59, 999);
+      break;
+    case "Semanalmente":
+      endDate.setDate(endDate.getDate() + (7 * frequency - 1));
+      endDate.setHours(23, 59, 59, 999);
+      break;
+    case "Mensalmente":
+      endDate.setMonth(endDate.getMonth() + frequency);
+      endDate.setDate(0); // Último dia do mês
+      endDate.setHours(23, 59, 59, 999);
+      break;
+    case "Anualmente":
+      endDate.setFullYear(endDate.getFullYear() + frequency);
+      endDate.setMonth(11, 31); // 31 de dezembro
+      endDate.setHours(23, 59, 59, 999);
+      break;
+    default:
+      endDate.setHours(23, 59, 59, 999);
+  }
+
+  return endDate;
 }

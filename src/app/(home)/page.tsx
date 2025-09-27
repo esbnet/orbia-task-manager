@@ -10,6 +10,5 @@ export const metadata: Metadata = {
 
 export default async function Home() {
 	const session = await auth();
-	if (!session) return <SignInForm />;
-	return <HomePage />;
+	return (!session ? <SignInForm /> : <HomePage />)
 }

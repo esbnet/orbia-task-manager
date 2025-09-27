@@ -31,13 +31,12 @@ export default async function RootLayout({
 	}
 
 	return (
-		<>
+		<div className="m-auto">
 			<HeaderWrapper />
-			<main className="flex-1">
+			<div className="flex-1">
 				<UserWidget />
-
 				{children}
-			</main>
-		</>
+			</div>
+		</div>
 	);
 }
