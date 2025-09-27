@@ -112,6 +112,7 @@ export const HabitCard = memo(function HabitCard({
 	const handleComplete = async () => {
 		try {
 			await completeLoading.executeAsync(async () => {
+				// Chama o callback que já está conectado com a mutation no habit-column
 				onStatusChange?.(habit.id, "Completo");
 				toast.success(`Hábito "${habit.title}" arquivado com sucesso!`);
 			});
@@ -122,64 +123,15 @@ export const HabitCard = memo(function HabitCard({
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""
+			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""
 				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="pb-3">
+			<CardHeader className="">
 				<div className="flex justify-between items-start gap-3">
 					<div className="flex-1 min-w-0">
-						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
+						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
 							{habit.title}
 						</CardTitle>
-						<div className="flex flex-wrap items-center gap-2 mt-2">
-							<Badge
-								variant="outline"
-								className={priorityColors[habit.priority]}
-							>
-								{habit.priority}
-							</Badge>
-							<Badge
-								variant="outline"
-								className={statusColors[habit.status]}
-							>
-								{habit.status === "Em Andamento" && <TrendingUp className="w-3 h-3" />}
-								{habit.status === "Completo" && <CheckCircle className="w-3 h-3" />}
-								{habit.status === "Cancelado" && <AlertTriangle className="w-3 h-3" />}
-								{habit.status}
-							</Badge>
-						</div>
-
-						{/* Estatísticas do período atual */}
-						{(currentCount > 0 || todayCount > 0 || streak) && (
-							<div className="flex flex-wrap items-center gap-3 mt-2 text-gray-600 text-sm">
-								{currentCount > 0 && (
-									<div className="flex items-center gap-1">
-										<TrendingUp className="w-4 h-4" />
-										<span>Registros: {currentCount}</span>
-									</div>
-								)}
-								{todayCount > 0 && (
-									<div className="flex items-center gap-1">
-										<Calendar className="w-4 h-4" />
-										<span>Hoje: {todayCount}</span>
-									</div>
-								)}
-								{streak && streak.currentStreak > 0 && (
-									<div className="flex items-center gap-1">
-										<span className="text-orange-600">🔥</span>
-										<span className="font-medium text-orange-600">{streak.currentStreak} dias</span>
-									</div>
-								)}
-							</div>
-						)}
-
-						{/* Próximo período disponível */}
-						{nextAvailableAt && (
-							<div className="flex items-center gap-1 mt-2 text-orange-600 text-sm">
-								<RotateCcw className="flex-shrink-0 w-4 h-4" />
-								<span className="break-words">Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-							</div>
-						)}
 					</div>
 
 					<div className="flex flex-shrink-0 items-center gap-1">
@@ -235,97 +187,166 @@ export const HabitCard = memo(function HabitCard({
 								</Button>
 							</>
 						)}
+
+						{/* Botão para expandir/ocultar detalhes */}
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={() => setIsExpanded(!isExpanded)}
+							className="flex-shrink-0 p-0 w-8 h-8"
+						>
+							{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
+						</Button>
 					</div>
 				</div>
 			</CardHeader>
 
 			<CardContent className="pt-0">
-				<div className="flex justify-between items-center pt-3">
-					<Badge
-						className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs"
-						title="Data de início"
-					>
-						<Calendar className="w-3 h-3" />
-						{format(habit.createdAt, "dd/MM/yyyy", { locale: ptBR })}
-					</Badge>
-					<Button
-						size="sm"
-						variant="ghost"
-						onClick={() => setIsExpanded(!isExpanded)}
-						className="p-0 w-8 h-8"
-					>
-						{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
-					</Button>
-				</div>
-
+				{/* Conteúdo expandido */}
 				{isExpanded && (
-					<div className="mt-3 pt-3 border-gray-100 border-t">
-						{habit.observations && (
-							<p className="mb-3 text-gray-600 dark:text-gray-400 break-words leading-relaxed">
-								{habit.observations}
-							</p>
+					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+						{/* Informações básicas */}
+						<div className="space-y-3">
+							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+								Informações Básicas
+							</div>
+							<div className="flex flex-wrap items-center gap-2">
+								<Badge
+									variant="outline"
+									className={priorityColors[habit.priority]}
+								>
+									{habit.priority}
+								</Badge>
+								<Badge
+									variant="outline"
+									className={statusColors[habit.status]}
+								>
+									{habit.status === "Em Andamento" && <TrendingUp className="w-3 h-3" />}
+									{habit.status === "Completo" && <CheckCircle className="w-3 h-3" />}
+									{habit.status === "Cancelado" && <AlertTriangle className="w-3 h-3" />}
+									{habit.status}
+								</Badge>
+							</div>
+						</div>
+
+						{/* Estatísticas do período atual */}
+						{(currentCount > 0 || todayCount > 0 || streak) && (
+							<div className="space-y-2">
+								<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+									Atividade Atual
+								</div>
+								<div className="flex flex-wrap gap-3 text-gray-600 text-sm">
+									{currentCount > 0 && (
+										<div className="flex items-center gap-1">
+											<TrendingUp className="w-4 h-4" />
+											<span>Registros: {currentCount}</span>
+										</div>
+									)}
+									{todayCount > 0 && (
+										<div className="flex items-center gap-1">
+											<Calendar className="w-4 h-4" />
+											<span>Hoje: {todayCount}</span>
+										</div>
+									)}
+									{streak && streak.currentStreak > 0 && (
+										<div className="flex items-center gap-1">
+											<span className="text-orange-600 dark:text-orange-400">🔥</span>
+											<span className="font-medium text-orange-600 dark:text-orange-400">{streak.currentStreak} dias</span>
+										</div>
+									)}
+								</div>
+							</div>
 						)}
 
-						<div className="flex flex-wrap items-center gap-2 mb-3 text-gray-500 text-sm" title="data de criação">
-							<Calendar className="flex-shrink-0 w-4 h-4" />
-							<span className="break-words">
-								{format(habit.createdAt, "dd 'de' MMMM 'de' yyyy", {
-									locale: ptBR,
-								})}
-							</span>
-							{isOverdue && (
-								<AlertTriangle className="flex-shrink-0 w-4 h-4 text-red-500" />
+						{/* Próximo período disponível */}
+						{nextAvailableAt && (
+							<div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 text-sm">
+								<RotateCcw className="w-4 h-4" />
+								<span>Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+							</div>
+						)}
+
+						{/* Observações */}
+						{habit.observations && (
+							<div>
+								<div className="mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
+									Observações
+								</div>
+								<p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+									{habit.observations}
+								</p>
+							</div>
+						)}
+
+						{/* Detalhes do hábito */}
+						<div className="space-y-3">
+							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+								Detalhes
+							</div>
+
+							<div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
+								<Calendar className="w-4 h-4" />
+								<span>
+									Criado em {format(habit.createdAt, "dd 'de' MMMM 'de' yyyy", {
+										locale: ptBR,
+									})}
+								</span>
+								{isOverdue && (
+									<AlertTriangle className="w-4 h-4 text-red-500 dark:text-red-400" />
+								)}
+							</div>
+
+							<div className="flex items-center gap-2">
+								<Badge className={`text-xs ${difficultyBadge.color}`}>
+									{difficultyBadge.stars} {habit.difficulty}
+								</Badge>
+								<Badge className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-xs">
+									<RotateCcw className="w-3 h-3" /> {habit.reset}
+								</Badge>
+							</div>
+
+							{habit.tags.length > 0 && (
+								<div className="flex flex-wrap gap-1">
+									{habit.tags.map((tag) => (
+										<Badge
+											key={tag}
+											variant="secondary"
+											className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+										>
+											<Tag className="mr-1 w-3 h-3" />
+											{tag}
+										</Badge>
+									))}
+								</div>
 							)}
 						</div>
 
-						<div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
-							<Badge className={`text-xs ${difficultyBadge.color}`} title="Dificuldade">
-								{difficultyBadge.stars} {habit.difficulty}
-							</Badge>
-							<Badge className="bg-purple-50 border border-purple-200 text-purple-700 text-xs" title="Frequência">
-								<RotateCcw className="w-3 h-3" /> {habit.reset}
-							</Badge>
-						</div>
-
-						{habit.tags.length > 0 && (
-							<div className="flex flex-wrap gap-1 my-3">
-								{habit.tags.map((tag) => (
-									<Badge
-										key={tag}
-										variant="secondary"
-										className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
-									>
-										<Tag className="mr-1 w-3 h-3" />
-										{tag}
-									</Badge>
-								))}
-							</div>
-						)}
 						{/* Estatísticas de streak */}
 						{streak && (
-							<div className="bg-orange-50 mb-3 p-3 border border-orange-200 rounded-lg">
-								<div className="flex flex-wrap justify-between items-center gap-2 mb-2">
-									<span className="font-medium text-orange-800">Sequência</span>
+							<div className="bg-orange-50 dark:bg-orange-900/20 p-3 border border-orange-200 dark:border-orange-800 rounded-lg">
+								<div className="flex justify-between items-center mb-2">
+									<span className="font-medium text-orange-800 dark:text-orange-200">Sequência</span>
 									{streak.isActiveToday && (
-										<Badge className="bg-green-100 border-green-200 text-green-800 text-xs">
+										<Badge className="bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-700 text-green-800 dark:text-green-200 text-xs">
 											Ativo hoje
 										</Badge>
 									)}
 								</div>
-								<div className="flex flex-wrap items-center gap-4 text-sm">
-									<div className="flex items-center gap-1">
+								<div className="flex items-center gap-4 text-sm">
+									<div className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
 										<span>🔥</span>
-										<span>Atual: <strong>{streak.currentStreak}</strong></span>
+										<span>Atual: <strong className="text-orange-600 dark:text-orange-400">{streak.currentStreak}</strong></span>
 									</div>
-									<div className="flex items-center gap-1">
+									<div className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
 										<span>🏆</span>
-										<span>Recorde: <strong>{streak.longestStreak}</strong></span>
+										<span>Recorde: <strong className="text-orange-600 dark:text-orange-400">{streak.longestStreak}</strong></span>
 									</div>
 								</div>
 							</div>
 						)}
 
-						<div className="text-gray-600 dark:text-gray-400 text-sm break-words">
+						{/* Última atualização */}
+						<div className="pt-2 border-gray-100 dark:border-gray-700 border-t text-gray-600 dark:text-gray-400 text-sm">
 							<strong>Última atualização:</strong>{" "}
 							{format(habit.updatedAt, "dd/MM/yyyy 'às' HH:mm", {
 								locale: ptBR,

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAvailableHabits, useCreateHabit, useDeleteHabit, useUpdateHabit } from "@/hooks/use-habits";
+import { useAvailableHabits, useCreateHabit, useDeleteHabit, useRegisterHabit, useUpdateHabit } from "@/hooks/use-habits";
 import { Dumbbell, Info, Plus, RefreshCcw, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export function HabitColumn() {
 	const createHabitMutation = useCreateHabit();
 	const updateHabitMutation = useUpdateHabit();
 	const deleteHabitMutation = useDeleteHabit();
+	const registerHabitMutation = useRegisterHabit();
 
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -109,26 +110,12 @@ export function HabitColumn() {
 		setEditingHabit(null);
 	};
 
-	const handleRegisterHabit = async (habitId: string, note?: string,) => {
+	const handleRegisterHabit = async (habitId: string, note?: string) => {
 		try {
-			const response = await fetch(`/api/habits/${habitId}/register`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ note }),
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to register habit');
-			}
-
-			const result = await response.json();
+			const result = await registerHabitMutation.mutateAsync({ id: habitId, note });
 			const habit = availableHabits.find(h => h.id === habitId);
 
 			toast.success(`Hábito "${habit?.title}" registrado! Total: ${result.currentCount}`);
-
-			// As estatísticas serão atualizadas automaticamente pelo React Query
 		} catch (error) {
 			toast.error('Erro ao registrar hábito. Tente novamente.');
 		}
