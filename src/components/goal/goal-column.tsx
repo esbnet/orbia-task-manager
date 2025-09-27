@@ -76,20 +76,9 @@ export function GoalColumn() {
 				// Se houver tarefas anexadas, atualizar separadamente
 				if (goalData.attachedTasks && goalData.attachedTasks.length > 0) {
 					try {
-						const response = await fetch(`/api/goals/${editingGoal.id}/tasks`, {
-							method: "PUT",
-							headers: {
-								"Content-Type": "application/json",
-							},
-							body: JSON.stringify({ tasks: goalData.attachedTasks }),
-						});
-
-						if (!response.ok) {
-							console.error("Erro ao atualizar tarefas anexadas");
-						} else {
-							// Invalidar o cache das tarefas anexadas para forçar recarregamento
-							queryClient.invalidateQueries({ queryKey: ["attached-tasks", editingGoal.id] });
-						}
+						// TODO: Implementar mutation para attached tasks quando disponível
+						// Por enquanto, apenas invalidar o cache das tarefas anexadas
+						queryClient.invalidateQueries({ queryKey: ["attached-tasks", editingGoal.id] });
 					} catch (error) {
 						console.error("Erro ao atualizar tarefas anexadas:", error);
 					}

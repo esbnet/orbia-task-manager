@@ -31,16 +31,16 @@ interface GoalCardProps {
 }
 
 const priorityColors: Record<Goal["priority"], string> = {
-	LOW: "bg-green-100 text-green-800 border border-green-200",
-	MEDIUM: "bg-yellow-100 text-yellow-800 border border-yellow-200",
-	HIGH: "bg-orange-100 text-orange-800 border border-orange-200",
-	URGENT: "bg-red-100 text-red-800 border border-red-200",
+	LOW: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-700",
+	MEDIUM: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700",
+	HIGH: "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 border border-orange-200 dark:border-orange-700",
+	URGENT: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-700",
 };
 
 const statusColors: Record<Goal["status"], string> = {
-	IN_PROGRESS: "bg-blue-50 text-blue-700 border border-blue-200",
-	COMPLETED: "bg-green-50 text-green-700 border border-green-200",
-	CANCELLED: "bg-gray-50 text-gray-700 border border-gray-200",
+	IN_PROGRESS: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border border-blue-200 dark:border-blue-700",
+	COMPLETED: "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700",
+	CANCELLED: "bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700",
 };
 
 const priorityLabels: Record<Goal["priority"], string> = {
@@ -64,7 +64,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 		goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date();
 	const daysUntilTarget = Math.ceil(
 		(new Date(goal.targetDate).getTime() - new Date().getTime()) /
-			(1000 * 60 * 60 * 24),
+		(1000 * 60 * 60 * 24),
 	);
 
 	// Calcular progresso baseado no tempo
@@ -139,40 +139,25 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50" : ""} ${statusChangeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}
+			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${statusChangeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}
 		>
 			<CardHeader className="pb-3">
-				<div className="flex justify-between items-start gap-2">
-					<div className="flex-1">
-						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+				<div className="flex justify-between items-start gap-3">
+					<div className="flex-1 min-w-0">
+						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
 							{goal.title}
 						</CardTitle>
-						<div className="flex items-center gap-2 mt-2">
-							<Badge
-								variant="outline"
-								className={priorityColors[goal.priority]}
-							>
-								{priorityLabels[goal.priority]}
-							</Badge>
-							<Badge
-								variant="outline"
-								className={statusColors[goal.status]}
-							>
-								{statusLabels[goal.status]}
-							</Badge>
-						</div>
 					</div>
-					<div className="flex items-center">
+
+					<div className="flex flex-shrink-0 items-center gap-1">
 						{goal.status === "IN_PROGRESS" && (
 							<>
 								<Button
-									title="Concluído"
+									title="Concluído"
 									size="icon"
 									variant="ghost"
-									onClick={() =>
-										handleStatusChange("COMPLETED")
-									}
-									className="hover:bg-green-100 rounded-full text-green-600 hover:text-green-600"
+									onClick={() => handleStatusChange("COMPLETED")}
+									className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
 									disabled={statusChangeLoading.isLoading}
 								>
 									{statusChangeLoading.isLoading ? (
@@ -187,7 +172,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 										size="icon"
 										variant="ghost"
 										onClick={() => onEdit(goal)}
-										className="hover:bg-gray-100 rounded-full text-gray-600"
+										className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
 									>
 										<Edit className="w-4 h-4" />
 									</Button>
@@ -198,7 +183,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 									size="icon"
 									variant="ghost"
 									onClick={() => setIsCancelDialogOpen(true)}
-									className="hover:bg-red-100 rounded-full text-red-600 hover:text-red-600"
+									className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
 									disabled={statusChangeLoading.isLoading}
 								>
 									{statusChangeLoading.isLoading ? (
@@ -209,113 +194,143 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 								</Button>
 							</>
 						)}
+
+						{/* Botão para expandir/ocultar detalhes */}
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={() => setIsExpanded(!isExpanded)}
+							className="flex-shrink-0 p-0 w-8 h-8"
+						>
+							<ChevronDown className={`transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+						</Button>
 					</div>
 				</div>
 			</CardHeader>
 
 			<CardContent className="pt-0">
-				{goal.description && (
-					<p className="mb-3 text-gray-600 dark:text-gray-400">
-						{goal.description}
-					</p>
-				)}
 
-				<div className="flex items-center gap-2 mb-3 text-gray-500 text-sm">
-					<Calendar className="w-4 h-4" />
-					<span>
-						Meta:{" "}
-						{format(
-							new Date(goal.targetDate),
-							"dd 'de' MMMM 'de' yyyy",
-							{
-								locale: ptBR,
-							},
+				{/* Conteúdo expandido */}
+				{isExpanded && (
+					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+						{/* Informações básicas */}
+						<div className="space-y-3">
+							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+								Informações Básicas
+							</div>
+							{/* Sempre visível - apenas data de criação */}
+							<div className="pt-3">
+								<Badge
+									className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
+									title="Data de criação"
+								>
+									<Calendar className="w-3 h-3" />
+									{format(goal.createdAt, "dd/MM/yyyy", { locale: ptBR })}
+								</Badge>
+							</div>
+
+							<div className="flex flex-wrap items-center gap-2">
+								<Badge
+									variant="outline"
+									className={priorityColors[goal.priority]}
+								>
+									{priorityLabels[goal.priority]}
+								</Badge>
+								<Badge
+									variant="outline"
+									className={statusColors[goal.status]}
+								>
+									{statusLabels[goal.status]}
+								</Badge>
+							</div>
+						</div>
+
+						{/* Descrição */}
+						{goal.description && (
+							<div>
+								<div className="mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
+									Descrição
+								</div>
+								<p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+									{goal.description}
+								</p>
+							</div>
 						)}
-					</span>
-					{isOverdue && (
-						<AlertTriangle className="w-4 h-4 text-red-500" />
-					)}
-				</div>
 
-				{goal.status === "IN_PROGRESS" && (
-					<>
-						<div className="text-gray-600 dark:text-gray-400 text-sm">
-							{isOverdue ? (
-								<span className="font-medium text-red-600">
-									Atrasado há {Math.abs(daysUntilTarget)} dias
-								</span>
-							) : daysUntilTarget > 0 ? (
-								<span className="text-blue-600">
-									Faltam {daysUntilTarget} dias
-								</span>
-							) : (
-								<span className="font-medium text-orange-600">
-									Vence hoje!
-								</span>
+						{/* Data da meta */}
+						<div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
+							<Calendar className="w-4 h-4" />
+							<span>
+								Meta:{" "}
+								{format(
+									new Date(goal.targetDate),
+									"dd 'de' MMMM 'de' yyyy",
+									{
+										locale: ptBR,
+									},
+								)}
+							</span>
+							{isOverdue && (
+								<AlertTriangle className="w-4 h-4 text-red-500 dark:text-red-400" />
 							)}
 						</div>
-						<div className="mt-4">
-							<div className="flex justify-between mb-2 text-gray-500 text-xs">
-								<span>Progresso do tempo</span>
-							</div>
-							<div className="relative bg-gradient-to-r from-green-600 via-yellow-600 to-red-600 border border-gray-300 rounded-full w-full h-3">
-								{/* Marca indicando o ponto atual */}
-								<div
-									className="top-0 bottom-0 absolute flex flex-col justify-center items-center text-center"
-									style={{
-										left: `${timeProgress.progress}%`,
-									}}
-								>
-									<div className="flex justify-center items-center bg-gray-400 rounded-full outline-1 outline-amber-50 w-1 h-1 font-thin text-gray-600 dark:text-gray-200 text-xs">
-										<span className="-mt-5">
-											{timeProgress.progress}%
+
+						{/* Status e progresso para metas em andamento */}
+						{goal.status === "IN_PROGRESS" && (
+							<>
+								<div className="text-gray-600 dark:text-gray-400 text-sm">
+									{isOverdue ? (
+										<span className="font-medium text-red-600 dark:text-red-400">
+											Atrasado há {Math.abs(daysUntilTarget)} dias
 										</span>
+									) : daysUntilTarget > 0 ? (
+										<span className="text-blue-600 dark:text-blue-400">
+											Faltam {daysUntilTarget} dias
+										</span>
+									) : (
+										<span className="font-medium text-orange-600 dark:text-orange-400">
+											Vence hoje!
+										</span>
+									)}
+								</div>
+								<div className="space-y-2">
+									<div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs">
+										<span>Progresso do tempo</span>
+										<span>{timeProgress.progress}%</span>
+									</div>
+									<div className="relative bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full w-full h-3">
+										<div
+											className="bg-gradient-to-r from-green-500 to-red-500 rounded-full h-full transition-all duration-300"
+											style={{ width: `${timeProgress.progress}%` }}
+										/>
 									</div>
 								</div>
-							</div>
-						</div>
-					</>
-				)}
-
-				{goal.tags.length > 0 && (
-					<div className="flex flex-wrap gap-1 mt-3">
-						{goal.tags.map((tag) => (
-							<Badge
-								key={tag}
-								variant="secondary"
-								className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
-							>
-								<Tag className="mr-1 w-3 h-3" />
-								{tag}
-							</Badge>
-						))}
-					</div>
-				)}
-
-				<div className="flex justify-between items-center mt-4 pt-3 border-gray-100 border-t">
-					<Badge
-						className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs"
-						title="Data de início"
-					>
-						<Calendar className="w-3 h-3" />
-						{format(goal.createdAt, "dd/MM/yyyy", { locale: ptBR })}
-					</Badge>
-					<Button
-						size="sm"
-						variant="ghost"
-						onClick={() => setIsExpanded(!isExpanded)}
-					>
-						{isExpanded ? (
-							<ChevronDown className="rotate-180 transition-all duration-200" />
-						) : (
-							<ChevronDown className="rotate-0 transition-all duration-200" />
+							</>
 						)}
-					</Button>
-				</div>
 
-				{isExpanded && (
-					<div className="mt-3 pt-3 border-gray-100 border-t">
-						<div className="text-gray-600 dark:text-gray-400 text-sm">
+						{/* Tags */}
+						{goal.tags.length > 0 && (
+							<div className="space-y-2">
+								<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+									Tags
+								</div>
+								<div className="flex flex-wrap gap-1">
+									{goal.tags.map((tag) => (
+										<Badge
+											key={tag}
+											variant="secondary"
+											className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+										>
+											<Tag className="mr-1 w-3 h-3" />
+											{tag}
+										</Badge>
+									))}
+								</div>
+							</div>
+						)}
+
+						{/* Última atualização */}
+						<div className="pt-2 border-gray-100 dark:border-gray-700 border-t text-gray-600 dark:text-gray-400 text-sm">
 							<strong>Última atualização:</strong>{" "}
 							{format(goal.updatedAt, "dd/MM/yyyy 'às' HH:mm", {
 								locale: ptBR,

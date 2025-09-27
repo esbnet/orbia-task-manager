@@ -63,14 +63,10 @@ export const TodoColumn = () => {
 
 	// Editar todo existente
 	const handleEditTodo = async (todoData: Omit<Todo, "id" | "createdAt">) => {
-		try {
-			// TODO: Implementar updateTodo no contexto
-			toast.success(`Todo "${todoData.title}" atualizado com sucesso!`);
-			setIsFormOpen(false);
-			setEditingTodo(null);
-		} catch (error) {
-			toast.error("Erro ao atualizar todo. Tente novamente.");
-		}
+		// TODO: Implementar edição quando useUpdateTodo estiver funcionando
+		toast.success(`Todo "${todoData.title}" - edição será implementada em breve!`);
+		setIsFormOpen(false);
+		setEditingTodo(null);
 	};
 
 	// Deletar todo

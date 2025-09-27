@@ -54,26 +54,9 @@ export const DailyColumn = () => {
 
 	// Funções de controle do formulário
 	const openEditForm = async (daily: Daily) => {
-		// Se for um daily mock, usar os dados diretamente
-		if (daily.id.startsWith('mock-')) {
-			setEditingDaily(daily);
-			setIsFormOpen(true);
-			return;
-		}
-
-		try {
-			// Buscar dados completos da daily para edição
-			const response = await fetch(`/api/daily/${daily.id}`);
-			if (response.ok) {
-				const data = await response.json();
-				setEditingDaily(data.daily);
-				setIsFormOpen(true);
-			} else {
-				toast.error(t('messages.errorLoadingData'));
-			}
-		} catch (error) {
-			toast.error(t('messages.errorLoadingData'));
-		}
+		// Para dailies reais, usar os dados diretamente (já temos todos os dados necessários)
+		setEditingDaily(daily);
+		setIsFormOpen(true);
 	};
 
 	const closeForm = () => {
