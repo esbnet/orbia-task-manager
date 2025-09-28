@@ -5,10 +5,8 @@ import {
 	DialogClose,
 	DialogContent,
 	DialogDescription,
-	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
 	Popover,
@@ -48,6 +46,7 @@ interface DailyFormProps {
 	onSubmit?: (daily: Omit<Daily, "id" | "createdAt">) => Promise<void>;
 	onCancel?: () => void;
 	open?: boolean;
+	onDelete?: (dailyId: string) => void;
 }
 
 export function DailyForm({
@@ -55,6 +54,7 @@ export function DailyForm({
 	onSubmit,
 	onCancel,
 	open = false,
+	onDelete,
 }: DailyFormProps) {
 	const { } = useDailyState();
 	const { tagOptions } = useTags();
@@ -366,7 +366,13 @@ export function DailyForm({
 						</div>
 					</form>
 					<div className="flex justify-right items-center">
-						<DialogConfirmDelete id={daily.id} />
+						<Button
+							variant="link"
+							className="flex justify-center items-center hover:bg-background/20 rounded-lg text-destructive cursor-pointer"
+							onClick={() => onDelete?.(daily.id)}
+						>
+							<Trash2 size={16} /> Delete esta tarefa
+						</Button>
 					</div>
 				</DialogContent>
 			</Dialog>
@@ -374,55 +380,3 @@ export function DailyForm({
 	);
 }
 
-function DialogConfirmDelete({ id }: { id: string }) {
-	const [isDeleting, setIsDeleting] = useState(false);
-
-	const onDelete = async () => {
-		if (isDeleting) return;
-		setIsDeleting(true);
-		try {
-			// TODO: Implementar deleção via hook
-			toast.success("Tarefa excluída com sucesso!");
-		} finally {
-			setIsDeleting(false);
-		}
-	};
-
-	return (
-		<Dialog>
-			<DialogTrigger asChild>
-				<div className="flex justify-center items-center mt-4 w-full">
-					<Button
-						variant="link"
-						// size="sm"
-						className="flex justify-center items-center hover:bg-background/20 rounded-lg text-destructive cursor-pointer"
-					>
-						<Trash2 size={16} /> Delete esta tarefa
-					</Button>
-				</div>
-			</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px]">
-				<DialogHeader>
-					<DialogTitle>Você tem certeza?</DialogTitle>
-					<DialogDescription>
-						Confirmando a exclusão, você não poderá desfazer essa
-						ação.
-					</DialogDescription>
-				</DialogHeader>
-				<DialogFooter>
-					<Button
-						type="submit"
-						variant={"destructive"}
-						onClick={onDelete}
-						disabled={isDeleting}
-					>
-						{isDeleting ? "Excluindo..." : "Excluir"}
-					</Button>
-					<DialogClose asChild>
-						<Button variant="outline">Cancel</Button>
-					</DialogClose>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
-	);
-}

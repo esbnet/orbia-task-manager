@@ -1,4 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
 import type { Daily, DailyDifficulty } from "@/types/daily";
@@ -111,8 +119,17 @@ export const DailyColumn = () => {
 				// Chamar deleteDaily do React Query
 				await deleteDailyMutation.mutateAsync(dailyToDelete.id);
 				toast.success(`Daily "${dailyToDelete.title}" removida com sucesso!`);
+
+				// Fechar dialog e form se estiver aberto
 				setIsDeleteDialogOpen(false);
 				setDailyToDelete(null);
+
+				// Fechar o form se estiver aberto
+				if (isFormOpen) {
+					setIsFormOpen(false);
+					setEditingDaily(null);
+				}
+
 				// A lista será automaticamente atualizada pelo React Query
 			} catch (error) {
 				toast.error("Erro ao remover daily. Tente novamente.");
@@ -181,29 +198,32 @@ export const DailyColumn = () => {
 			{!isLoading && availableDailies.length > 0 && (
 				<div className="space-y-4">
 					{/* <h3 className="font-semibold text-amber-800">Disponíveis</h3> */}
-					{availableDailies.map((daily: Daily) => (
-						<DailyCard
-							key={daily.id}
-							daily={{
-								id: daily.id,
-								userId: daily.userId,
-								title: daily.title,
-								observations: daily.observations,
-								difficulty: daily.difficulty as "Fácil",
-								repeat: {
-									type: (daily as any).repeatType as 'Diariamente',
-									frequency: (daily as any).repeatFrequency
-								},
-								tags: daily.tags,
-								startDate: new Date(),
-								tasks: daily.tasks || [],
-								createdAt: new Date(),
-							}}
-							onComplete={handleCompleteDaily}
-							onEdit={openEditForm}
-							isCompleted={false}
-						/>
-					))}
+					{availableDailies.map((daily: Daily) => {
+
+						return (
+							<DailyCard
+								key={daily.id}
+								daily={{
+									id: daily.id,
+									userId: daily.userId,
+									title: daily.title,
+									observations: daily.observations,
+									difficulty: daily.difficulty as "Fácil",
+									repeat: {
+										type: (daily as any).repeatType as 'Diariamente',
+										frequency: (daily as any).repeatFrequency
+									},
+									tags: daily.tags,
+									startDate: new Date(),
+									tasks: daily.tasks || [],
+									createdAt: new Date(),
+								}}
+								onComplete={handleCompleteDaily}
+								onEdit={openEditForm}
+								isCompleted={false}
+							/>
+						)
+					})}
 				</div>
 			)}
 
@@ -265,7 +285,43 @@ export const DailyColumn = () => {
 				onSubmit={editingDaily ? handleEditDaily : handleCreateDaily}
 				onCancel={closeForm}
 				open={isFormOpen}
+				onDelete={(dailyId: string) => {
+					setDailyToDelete(availableDailies.find(d => d.id === dailyId) || completedDailies.find(d => d.id === dailyId) || null);
+					setIsDeleteDialogOpen(true);
+				}}
 			/>
+
+			{/* Delete Confirmation Dialog */}
+			<Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+				<DialogContent className="sm:max-w-[425px]">
+					<DialogHeader>
+						<DialogTitle>Você tem certeza?</DialogTitle>
+						<DialogDescription>
+							Confirmando a exclusão, você não poderá desfazer essa ação.
+							A tarefa "{dailyToDelete?.title}" será removida permanentemente.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => {
+								setIsDeleteDialogOpen(false);
+								setDailyToDelete(null);
+							}}
+						>
+							Cancelar
+						</Button>
+						<Button
+							type="submit"
+							variant={"destructive"}
+							onClick={confirmDeleteDaily}
+							disabled={deleteDailyMutation.isPending}
+						>
+							{deleteDailyMutation.isPending ? "Excluindo..." : "Excluir"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div >
 	);
 };

@@ -33,23 +33,19 @@ export function useAvailableDailies() {
 	return useQuery({
 		queryKey: [...dailyKeys.lists(), "available"],
 		queryFn: async (): Promise<{ availableDailies: Daily[]; completedToday: Daily[] }> => {
-			// console.log('useAvailableDailies: Executando query');
 			const response = await fetch("/api/daily/available");
 			if (!response.ok) {
 				throw new Error("Erro ao buscar dailies disponíveis");
 			}
 			const data = await response.json();
-			// console.log('useAvailableDailies: Dados retornados', {
-			// 	availableCount: data.availableDailies?.length || 0,
-			// 	completedCount: data.completedToday?.length || 0
-			// });
 			return {
 				availableDailies: data.availableDailies || [],
 				completedToday: data.completedToday || []
 			};
 		},
-		staleTime: 30 * 1000, // 30 segundos
+		staleTime: 0, // Desabilitar cache para debug
 		refetchOnWindowFocus: true,
+		refetchOnMount: true, // Forçar refetch ao montar componente
 		refetchInterval: 60 * 1000, // Refetch a cada 1 minuto
 	});
 }
@@ -96,15 +92,18 @@ export function useCompleteDaily() {
 			throw new Error("Erro ao buscar daily atualizado");
 		},
 		onSuccess: async (data, id) => {
-			// Força refetch imediato da query de dailies disponíveis
-			await queryClient.refetchQueries({
+			// Invalidate query específica de dailies disponíveis
+			queryClient.invalidateQueries({
 				queryKey: [...dailyKeys.lists(), "available"],
-				type: 'active'
+				exact: true
 			});
+
 			// Invalidate todas as outras queries de dailies
 			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
+
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
+
 		},
 	});
 }
@@ -149,7 +148,6 @@ export function useUpdateDaily() {
 
 	return useMutation({
 		mutationFn: async ({ id, data }: { id: string; data: Partial<Daily> }): Promise<Daily> => {
-			// console.log('useUpdateDaily: Iniciando atualização', { id, data });
 			const response = await fetch(`/api/daily/${id}`, {
 				method: "PATCH",
 				headers: {
@@ -163,15 +161,12 @@ export function useUpdateDaily() {
 			}
 
 			const result = await response.json();
-			// console.log('useUpdateDaily: Atualização bem-sucedida', result.daily);
 			return result.daily;
 		},
 		onSuccess: (data, { id }) => {
-			// console.log('useUpdateDaily: onSuccess - Invalidando cache');
 			// Update cache
 			queryClient.setQueryData(dailyKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
-			// console.log('useUpdateDaily: Cache invalidado');
 		},
 	});
 }
