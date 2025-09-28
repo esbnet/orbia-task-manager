@@ -8,7 +8,9 @@ import {
   Target
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTaskCounts } from "@/hooks/use-task-counts";
 import { useState } from "react";
 
 type ColumnType = "all" | "habits" | "dailies" | "todos" | "goals";
@@ -19,6 +21,26 @@ interface ColumnFilterProps {
 
 export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
   const [activeFilter, setActiveFilter] = useState<ColumnType>("all");
+  const { data: taskCounts, isLoading } = useTaskCounts();
+
+  const getCountForFilter = (filterId: ColumnType): number => {
+    if (!taskCounts || isLoading) return 0;
+
+    switch (filterId) {
+      case "all":
+        return taskCounts.total;
+      case "habits":
+        return taskCounts.habits;
+      case "dailies":
+        return taskCounts.dailies;
+      case "todos":
+        return taskCounts.todos;
+      case "goals":
+        return taskCounts.goals;
+      default:
+        return 0;
+    }
+  };
 
   const filters = [
     {
@@ -63,17 +85,27 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
 
       {filters.map((filter) => {
         const Icon = filter.icon;
+        const count = getCountForFilter(filter.id as ColumnType);
         return (
-          <Button
-            key={filter.id}
-            variant={activeFilter === filter.id ? "default" : "ghost"}
-            size="sm"
-            onClick={() => handleFilterClick(filter.id as ColumnType)}
-            className={`flex xl:flex-1 p-1 rounded-full  items-center gap-1 h-6 w-6 text-xs ${filter.color}`}
-          >
-            <Icon className="w-3 h-3" />
-            <span className="hidden xl:inline">{filter.label}</span>
-          </Button>
+          <div key={filter.id} className="relative">
+            <Button
+              variant={activeFilter === filter.id ? "default" : "ghost"}
+              size="sm"
+              onClick={() => handleFilterClick(filter.id as ColumnType)}
+              className={`flex xl:flex-1 p-1 rounded-full items-center gap-1 h-6 text-xs ${filter.color} ${activeFilter === filter.id ? "w-auto px-2" : "w-6"}`}
+            >
+              <Icon className="w-3 h-3" />
+              <span className="hidden xl:inline">{filter.label}</span>
+            </Button>
+            {count > 0 && (
+              <Badge
+                variant="secondary"
+                className="-top-1 -right-1 absolute flex justify-center items-center bg-orange-500 hover:bg-orange-600 px-1 border-0 rounded-full min-w-4 h-4 text-[10px] text-white"
+              >
+                {count > 99 ? '99+' : count}
+              </Badge>
+            )}
+          </div>
         );
       })}
     </div>

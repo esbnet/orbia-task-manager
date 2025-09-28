@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Todo } from "@/types";
+import { taskCountKeys } from "./use-task-counts";
 
 export const todoKeys = {
   all: ["todos"] as const,
@@ -49,6 +50,8 @@ export function useCreateTodo() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: todoKeys.all });
+      // Invalidate cache de contagens de tarefas
+      queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
     },
   });
 }
@@ -96,6 +99,8 @@ export function useDeleteTodo() {
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: todoKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+      // Invalidate cache de contagens de tarefas
+      queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
     },
   });
 }
@@ -118,6 +123,8 @@ export function useCompleteTodo() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: todoKeys.all });
+      // Invalidate cache de contagens de tarefas
+      queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
       // Invalidate cache do gráfico de evolução semanal
       queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
     },

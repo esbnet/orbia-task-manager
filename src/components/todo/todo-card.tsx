@@ -24,15 +24,15 @@ interface TodoCardProps {
 }
 
 const difficultyConfig = {
-	"Trivial": { color: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600", stars: "⭐" },
-	"Fácil": { color: "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700", stars: "⭐⭐" },
-	"Médio": { color: "bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700", stars: "⭐⭐⭐" },
-	"Difícil": { color: "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-700", stars: "⭐⭐⭐⭐" },
+	"Trivial": { color: "bg-gray-50/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-200 border border-gray-200/80 dark:border-gray-600", stars: "⭐" },
+	"Fácil": { color: "bg-green-50/80 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200/80 dark:border-green-700", stars: "⭐⭐" },
+	"Médio": { color: "bg-yellow-50/80 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200/80 dark:border-yellow-700", stars: "⭐⭐⭐" },
+	"Difícil": { color: "bg-red-50/80 dark:bg-red-900/30 text-red-700 dark:text-red-200 border border-red-200/80 dark:border-red-700", stars: "⭐⭐⭐⭐" },
 };
 
 const statusConfig = {
-	completed: "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700",
-	pending: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border border-blue-200 dark:border-blue-700",
+	completed: "bg-green-50/80 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200/80 dark:border-green-700",
+	pending: "bg-blue-50/80 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border border-blue-200/80 dark:border-blue-700",
 };
 
 export function TodoCard({
@@ -124,7 +124,7 @@ export function TodoCard({
 							</div>
 							<div className="pt-3">
 								<Badge
-									className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
+									className="bg-indigo-50/80 dark:bg-indigo-900/30 border border-indigo-200/80 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
 									title="Data de criação"
 								>
 									<Calendar className="w-3 h-3" />
@@ -146,7 +146,7 @@ export function TodoCard({
 								</Badge>
 
 								{todo.startDate && (
-									<Badge className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs" title="Data de início">
+									<Badge className="bg-indigo-50/80 dark:bg-indigo-900/30 border border-indigo-200/80 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs" title="Data de início">
 										<Calendar className="w-3 h-3" />
 										{new Date(todo.startDate).toLocaleDateString()}
 									</Badge>
@@ -177,14 +177,14 @@ export function TodoCard({
 										<Badge
 											key={tag}
 											variant="secondary"
-											className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+											className="bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
 										>
 											<Tag className="mr-1 w-3 h-3" />
 											{tag}
 										</Badge>
 									))}
 									{todo.tags.length > 3 && (
-										<Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs">
+										<Badge variant="outline" className="bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs">
 											+{todo.tags.length - 3}
 										</Badge>
 									)}

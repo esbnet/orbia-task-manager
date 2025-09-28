@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Goal } from "@/types";
+import { taskCountKeys } from "./use-task-counts";
 
 // Query keys para goals
 export const goalKeys = {
@@ -114,6 +115,8 @@ export function useCreateGoal() {
 		onSuccess: () => {
 			// Invalidate all goal queries
 			queryClient.invalidateQueries({ queryKey: goalKeys.all });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 		},
 	});
 }
@@ -143,6 +146,8 @@ export function useUpdateGoal() {
 			// Update cache
 			queryClient.setQueryData(goalKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
@@ -167,6 +172,8 @@ export function useDeleteGoal() {
 			// Remove from cache
 			queryClient.removeQueries({ queryKey: goalKeys.detail(id) });
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 		},
 	});
 }

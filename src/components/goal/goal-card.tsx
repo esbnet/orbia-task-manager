@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Goal } from "@/domain/entities/goal";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
@@ -59,7 +58,8 @@ const statusLabels: Record<Goal["status"], string> = {
 export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-	const statusChangeLoading = useButtonLoading();
+	const [isCompleting, setIsCompleting] = useState(false);
+	const [isCanceling, setIsCanceling] = useState(false);
 	const isOverdue =
 		goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date();
 	const daysUntilTarget = Math.ceil(
@@ -126,20 +126,24 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 	const timeProgress = calculateTimeProgress();
 
 	const handleStatusChange = async (newStatus: Goal["status"]) => {
-		await statusChangeLoading.executeAsync(
-			async () => {
-				if (onStatusChange) {
-					await onStatusChange(goal.id, newStatus);
-				}
-			},
-			undefined,
-			() => console.error("Erro ao alterar status da meta."),
-		);
+		// Definir qual estado de loading usar baseado na ação
+		const setLoading = newStatus === "COMPLETED" ? setIsCompleting : setIsCanceling;
+
+		setLoading(true);
+		try {
+			if (onStatusChange) {
+				await onStatusChange(goal.id, newStatus);
+			}
+		} catch (error) {
+			console.error("Erro ao alterar status da meta:", error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${statusChangeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}
+			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${(isCompleting || isCanceling) ? "opacity-50 pointer-events-none" : ""}`}
 		>
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start gap-3">
@@ -158,9 +162,9 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 									variant="ghost"
 									onClick={() => handleStatusChange("COMPLETED")}
 									className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
-									disabled={statusChangeLoading.isLoading}
+									disabled={isCompleting}
 								>
-									{statusChangeLoading.isLoading ? (
+									{isCompleting ? (
 										<div className="border-2 border-green-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
 									) : (
 										<CheckCircle className="w-4 h-4" />
@@ -184,9 +188,9 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 									variant="ghost"
 									onClick={() => setIsCancelDialogOpen(true)}
 									className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
-									disabled={statusChangeLoading.isLoading}
+									disabled={isCanceling}
 								>
-									{statusChangeLoading.isLoading ? (
+									{isCanceling ? (
 										<div className="border-2 border-t-transparent border-red-600 rounded-full w-4 h-4 animate-spin" />
 									) : (
 										<XCircle className="w-4 h-4" />

@@ -10,8 +10,20 @@ export class PrismaTodoRepository implements TodoRepository {
 	deleteByUserId(userId: string): Promise<void> {
 		throw new Error("Method not implemented." + userId);
 	}
-	findById(id: string): Promise<Todo | null> {
-		throw new Error("Method not implemented." + id);
+	async findById(id: string): Promise<Todo | null> {
+		const userId = await getCurrentUserId();
+		if (!userId) return null;
+
+		const todo = await prisma.todo.findUnique({
+			where: { id, userId },
+			include: {
+				subtasks: {
+					orderBy: { order: "asc" },
+				},
+			},
+		});
+
+		return todo ? this.toDomain(todo) : null;
 	}
 	markComplete(id: string): Promise<Todo> {
 		throw new Error("Method not implemented." + id);

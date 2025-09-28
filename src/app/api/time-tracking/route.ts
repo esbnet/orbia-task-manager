@@ -30,7 +30,7 @@ interface TimeEntry {
  *             properties:
  *               taskId:
  *                 type: string
- *                 description: ID da tarefa (habit, daily, todo ou goal)
+ *                 description: ID da tarefa - habit, daily, todo ou goal
  *               taskType:
  *                 type: string
  *                 enum: [habit, daily, todo, goal]
@@ -43,7 +43,7 @@ interface TimeEntry {
  *               date:
  *                 type: string
  *                 format: date-time
- *                 description: Data do registro (opcional, padrão: agora)
+ *                 description: Data do registro - opcional, padrão: agora
  *     responses:
  *       201:
  *         description: Tempo registrado com sucesso

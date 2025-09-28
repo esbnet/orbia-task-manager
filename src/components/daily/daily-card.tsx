@@ -26,10 +26,10 @@ interface DailyCardProps {
 }
 
 const difficultyConfig = {
-	"Trivial": { color: "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200", stars: "⭐" },
-	"Fácil": { color: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200", stars: "⭐⭐" },
-	"Médio": { color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200", stars: "⭐⭐⭐" },
-	"Difícil": { color: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200", stars: "⭐⭐⭐⭐" },
+	"Trivial": { color: "bg-gray-100/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-200", stars: "⭐" },
+	"Fácil": { color: "bg-green-100/80 dark:bg-green-900/30 text-green-800 dark:text-green-200", stars: "⭐⭐" },
+	"Médio": { color: "bg-yellow-100/80 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200", stars: "⭐⭐⭐" },
+	"Difícil": { color: "bg-red-100/80 dark:bg-red-900/30 text-red-800 dark:text-red-200", stars: "⭐⭐⭐⭐" },
 };
 
 const repeatTypeConfig = {
@@ -206,7 +206,7 @@ export function DailyCard({
 							</div>
 							<div className="pt-3">
 								<Badge
-									className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
+									className="bg-indigo-50/80 dark:bg-indigo-900/30 border border-indigo-200/80 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
 									title="Data de criação"
 								>
 									<Calendar className="w-3 h-3" />
@@ -271,14 +271,14 @@ export function DailyCard({
 									<Badge
 										key={tag}
 										variant="secondary"
-										className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+										className="bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
 									>
 										<Tag className="mr-1 w-3 h-3" />
 										{tag}
 									</Badge>
 								))}
 								{daily.tags.length > 3 && (
-									<Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs">
+									<Badge variant="outline" className="bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs">
 										+{daily.tags.length - 3}
 									</Badge>
 								)}

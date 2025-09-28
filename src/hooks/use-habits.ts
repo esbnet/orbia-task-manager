@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitFormData } from "@/types/habit";
+import { taskCountKeys } from "./use-task-counts";
 
 // Query keys para melhor organização
 export const habitKeys = {
@@ -182,6 +183,8 @@ export function useCompleteHabit() {
 			// Update cache
 			queryClient.setQueryData(habitKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
@@ -225,6 +228,8 @@ export function useRegisterHabit() {
 			queryClient.invalidateQueries({ queryKey: habitKeys.detail(variables.id) });
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},

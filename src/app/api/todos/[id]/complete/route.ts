@@ -1,9 +1,11 @@
 import { ToggleTodoUseCase } from "@/application/use-cases/todo/toggle-todo/toggle-todo-use-case";
+import { PrismaTodoLogRepository } from "@/infra/database/prisma/prisma-todo-log-repository";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import type { NextRequest } from "next/server";
 
 const todoRepo = new PrismaTodoRepository();
-const toggleCompleteUseCase = new ToggleTodoUseCase(todoRepo);
+const todoLogRepo = new PrismaTodoLogRepository();
+const toggleCompleteUseCase = new ToggleTodoUseCase(todoRepo, todoLogRepo);
 
 /**
  * @swagger
