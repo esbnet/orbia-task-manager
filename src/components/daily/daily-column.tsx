@@ -1,7 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
 import type { Daily, DailyDifficulty } from "@/types/daily";
-import { CalendarCheck, Plus } from "lucide-react";
+import { CalendarCheck, Info, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -53,26 +62,9 @@ export const DailyColumn = () => {
 
 	// Funções de controle do formulário
 	const openEditForm = async (daily: Daily) => {
-		// Se for um daily mock, usar os dados diretamente
-		if (daily.id.startsWith('mock-')) {
-			setEditingDaily(daily);
-			setIsFormOpen(true);
-			return;
-		}
-
-		try {
-			// Buscar dados completos da daily para edição
-			const response = await fetch(`/api/daily/${daily.id}`);
-			if (response.ok) {
-				const data = await response.json();
-				setEditingDaily(data.daily);
-				setIsFormOpen(true);
-			} else {
-				toast.error(t('messages.errorLoadingData'));
-			}
-		} catch (error) {
-			toast.error(t('messages.errorLoadingData'));
-		}
+		// Para dailies reais, usar os dados diretamente (já temos todos os dados necessários)
+		setEditingDaily(daily);
+		setIsFormOpen(true);
 	};
 
 	const closeForm = () => {
@@ -127,8 +119,17 @@ export const DailyColumn = () => {
 				// Chamar deleteDaily do React Query
 				await deleteDailyMutation.mutateAsync(dailyToDelete.id);
 				toast.success(`Daily "${dailyToDelete.title}" removida com sucesso!`);
+
+				// Fechar dialog e form se estiver aberto
 				setIsDeleteDialogOpen(false);
 				setDailyToDelete(null);
+
+				// Fechar o form se estiver aberto
+				if (isFormOpen) {
+					setIsFormOpen(false);
+					setEditingDaily(null);
+				}
+
 				// A lista será automaticamente atualizada pelo React Query
 			} catch (error) {
 				toast.error("Erro ao remover daily. Tente novamente.");
@@ -147,18 +148,20 @@ export const DailyColumn = () => {
 								{t('taskTypes.daily')}
 							</CardTitle>
 						</div>
-						<Button
-							onClick={() => setIsFormOpen(true)}
-							size="sm"
-							className="bg-amber-600 hover:bg-amber-700 text-white"
-						>
-							<Plus className="mr-1 w-4 h-4" />
-							{t('forms.newDaily')}
-						</Button>
+						<div className="flex items-center gap-2">
+							<Button
+								onClick={() => setIsFormOpen(true)}
+								size="sm"
+								className="bg-amber-600 hover:bg-amber-700 text-white"
+							>
+								<Plus className="mr-1 w-4 h-4" />
+								{t('forms.newDaily')}
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex items-center gap-4 text-amber-700 text-sm">
+					<div className="flex justify-between items-center gap-4 text-amber-700 text-sm">
 						<div className="flex items-center gap-1">
 							<span>{availableDailies.length} {t('tasks.availableTasks')}</span>
 						</div>
@@ -167,6 +170,16 @@ export const DailyColumn = () => {
 								<span>{completedDailies.length} {t('tasks.completedToday')}</span>
 							</div>
 						)}
+
+						<Tooltip>
+							<TooltipTrigger asChild className="self-end">
+								<Info className="w-4 h-4 text-amber-500 hover:text-amber-700 transition-colors cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<h1><CalendarCheck className="inline-block mr-1 w-3 h-3" />Foco: rotina</h1>
+								<p>Tarefas que se repetem em intervalos regulares (diariamente, semanalmente, mensalmente). São compromissos recorrentes que precisam ser realizados periodicamente.</p>
+							</TooltipContent>
+						</Tooltip>
 					</div>
 				</CardContent>
 			</Card>
@@ -184,35 +197,38 @@ export const DailyColumn = () => {
 			{/* Dailies Disponíveis */}
 			{!isLoading && availableDailies.length > 0 && (
 				<div className="space-y-4">
-					<h3 className="font-semibold text-amber-800">Disponíveis</h3>
-					{availableDailies.map((daily: Daily) => (
-						<DailyCard
-							key={daily.id}
-							daily={{
-								id: daily.id,
-								userId: daily.userId,
-								title: daily.title,
-								observations: daily.observations,
-								difficulty: daily.difficulty as "Fácil",
-								repeat: {
-									type: (daily as any).repeatType as 'Diariamente',
-									frequency: (daily as any).repeatFrequency
-								},
-								tags: daily.tags,
-								startDate: new Date(),
-								tasks: daily.tasks || [],
-								createdAt: new Date(),
-							}}
-							onComplete={handleCompleteDaily}
-							onEdit={openEditForm}
-							isCompleted={false}
-						/>
-					))}
+					{/* <h3 className="font-semibold text-amber-800">Disponíveis</h3> */}
+					{availableDailies.map((daily: Daily) => {
+
+						return (
+							<DailyCard
+								key={daily.id}
+								daily={{
+									id: daily.id,
+									userId: daily.userId,
+									title: daily.title,
+									observations: daily.observations,
+									difficulty: daily.difficulty as "Fácil",
+									repeat: {
+										type: (daily as any).repeatType as 'Diariamente',
+										frequency: (daily as any).repeatFrequency
+									},
+									tags: daily.tags,
+									startDate: new Date(),
+									tasks: daily.tasks || [],
+									createdAt: new Date(),
+								}}
+								onComplete={handleCompleteDaily}
+								onEdit={openEditForm}
+								isCompleted={false}
+							/>
+						)
+					})}
 				</div>
 			)}
 
 			{/* Dailies Completadas Hoje */}
-			{!isLoading && completedDailies.length > 0 && (
+			{/* {!isLoading && completedDailies.length > 0 && (
 				<div className="space-y-4">
 					<h3 className="font-semibold text-green-800">Completadas Hoje</h3>
 					{completedDailies.map((daily: Daily) => (
@@ -239,7 +255,7 @@ export const DailyColumn = () => {
 						/>
 					))}
 				</div>
-			)}
+			)} */}
 
 			{/* Estado vazio */}
 			{!isLoading && availableDailies.length === 0 && completedDailies.length === 0 && (
@@ -269,7 +285,43 @@ export const DailyColumn = () => {
 				onSubmit={editingDaily ? handleEditDaily : handleCreateDaily}
 				onCancel={closeForm}
 				open={isFormOpen}
+				onDelete={(dailyId: string) => {
+					setDailyToDelete(availableDailies.find(d => d.id === dailyId) || completedDailies.find(d => d.id === dailyId) || null);
+					setIsDeleteDialogOpen(true);
+				}}
 			/>
+
+			{/* Delete Confirmation Dialog */}
+			<Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+				<DialogContent className="sm:max-w-[425px]">
+					<DialogHeader>
+						<DialogTitle>Você tem certeza?</DialogTitle>
+						<DialogDescription>
+							Confirmando a exclusão, você não poderá desfazer essa ação.
+							A tarefa "{dailyToDelete?.title}" será removida permanentemente.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => {
+								setIsDeleteDialogOpen(false);
+								setDailyToDelete(null);
+							}}
+						>
+							Cancelar
+						</Button>
+						<Button
+							type="submit"
+							variant={"destructive"}
+							onClick={confirmDeleteDaily}
+							disabled={deleteDailyMutation.isPending}
+						>
+							{deleteDailyMutation.isPending ? "Excluindo..." : "Excluir"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div >
 	);
 };

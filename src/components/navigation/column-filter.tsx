@@ -1,13 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { 
-  Dumbbell, 
-  CalendarCheck, 
-  ListChecks, 
-  Target,
-  Grid3X3
+import {
+  CalendarCheck,
+  Dumbbell,
+  Grid3X3,
+  ListChecks,
+  Target
 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 type ColumnType = "all" | "habits" | "dailies" | "todos" | "goals";
@@ -20,11 +21,36 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
   const [activeFilter, setActiveFilter] = useState<ColumnType>("all");
 
   const filters = [
-    { id: "all", label: "Todas", icon: Grid3X3 },
-    { id: "habits", label: "Hábitos", icon: Dumbbell },
-    { id: "dailies", label: "Diárias", icon: CalendarCheck },
-    { id: "todos", label: "Afazeres", icon: ListChecks },
-    { id: "goals", label: "Metas", icon: Target }
+    {
+      id: "all",
+      label: "Todas",
+      icon: Grid3X3,
+      color: "text-gray-600 bg-gray-50 hover:bg-gray-100"
+    },
+    {
+      id: "habits",
+      label: "Hábitos",
+      icon: Dumbbell,
+      color: "text-green-600 bg-green-50 hover:bg-green-100"
+    },
+    {
+      id: "dailies",
+      label: "Diárias",
+      icon: CalendarCheck,
+      color: "text-orange-600 bg-orange-50 hover:bg-orange-100"
+    },
+    {
+      id: "todos",
+      label: "Tarefa",
+      icon: ListChecks,
+      color: "text-blue-600 bg-blue-50 hover:bg-blue-100"
+    },
+    {
+      id: "goals",
+      label: "Metas",
+      icon: Target,
+      color: "text-purple-600 bg-purple-50 hover:bg-purple-100"
+    }
   ];
 
   const handleFilterClick = (filterId: ColumnType) => {
@@ -33,7 +59,8 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
   };
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-lg mb-4">
+    <div className="flex justify-center items-center self-end gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-full w-fit">
+
       {filters.map((filter) => {
         const Icon = filter.icon;
         return (
@@ -42,10 +69,10 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
             variant={activeFilter === filter.id ? "default" : "ghost"}
             size="sm"
             onClick={() => handleFilterClick(filter.id as ColumnType)}
-            className="flex items-center gap-1 text-xs h-7"
+            className={`flex xl:flex-1 p-1 rounded-full  items-center gap-1 h-6 w-6 text-xs ${filter.color}`}
           >
             <Icon className="w-3 h-3" />
-            <span className="hidden sm:inline">{filter.label}</span>
+            <span className="hidden xl:inline">{filter.label}</span>
           </Button>
         );
       })}

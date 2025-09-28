@@ -22,6 +22,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useDeleteTodo, useUpdateTodo } from "@/hooks/use-todos";
 import { format, setDefaultOptions } from "date-fns";
 import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -30,7 +31,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpdateTodo, useDeleteTodo } from "@/hooks/use-todos";
 import { useTags } from "@/hooks/use-tags";
 import type { TodoDifficulty } from "@/types/todo";
 import { ptBR } from "date-fns/locale";
@@ -144,7 +144,7 @@ export function TodoForm({
 			>
 				<DialogContent className="flex flex-col gap-4 shadow-xl backdrop-blur-sm backdrop-opacity-0">
 					<DialogHeader className="flex flex-col gap-1">
-						<DialogTitle>Editar Afazer</DialogTitle>
+						<DialogTitle>Editar Tarefa</DialogTitle>
 
 						<DialogDescription className="text-zinc-400 text-sm">
 							Altere os detalhes da tarefa
@@ -185,7 +185,7 @@ export function TodoForm({
 								/>
 							)}
 							{!todo.id && (
-								<div className="text-sm text-gray-500 p-2 border border-dashed rounded">
+								<div className="p-2 border border-dashed rounded text-gray-500 text-sm">
 									Salve a tarefa primeiro para adicionar subtarefas
 								</div>
 							)}

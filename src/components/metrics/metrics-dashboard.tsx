@@ -1,32 +1,5 @@
 "use client";
 
-import {
-    AlertTriangle,
-    BarChart3,
-    Calendar,
-    CheckCircle,
-    Clock,
-    ExternalLink,
-    Lightbulb,
-    Target,
-    TrendingDown,
-    TrendingUp,
-    Zap
-} from "lucide-react";
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Line,
-    LineChart,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Dialog,
@@ -44,14 +17,41 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    AlertTriangle,
+    BarChart3,
+    Calendar,
+    CheckCircle,
+    Clock,
+    ExternalLink,
+    Lightbulb,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    Zap
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis
+} from "recharts";
 
-import { Button } from "../ui/button";
-import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useGoals } from "@/contexts/goal-context";
+import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useHabits } from "@/hooks/use-habits";
 import { useHabitsAnalytics } from "@/hooks/use-habits-analytics";
 import { useTodos } from "@/hooks/use-todos";
+import { Button } from "../ui/button";
 
 interface MetricsData {
     // Performance geral
@@ -700,7 +700,7 @@ export function MetricsDashboard() {
                 color: "#3b82f6"
             },
             {
-                name: "Afazeres",
+                name: "Tarefa",
                 value: todosCount,
                 color: "#f59e0b"
             }
@@ -838,7 +838,7 @@ export function MetricsDashboard() {
                                     {/* Todos */}
                                     {metricsData.todosInsights.strongPoints.length > 0 && (
                                         <div>
-                                            <p className="font-medium text-green-700 text-sm">📝 Afazeres:</p>
+                                            <p className="font-medium text-green-700 text-sm">📝 Tarefa:</p>
                                             <ul className="space-y-1 mt-1 text-muted-foreground text-sm">
                                                 {metricsData.todosInsights.strongPoints.map((point, index) => (
                                                     <li key={index} className="flex items-start gap-2">
@@ -910,7 +910,7 @@ export function MetricsDashboard() {
                                     {/* Todos */}
                                     {metricsData.todosInsights.attentionAreas.length > 0 && (
                                         <div>
-                                            <p className="font-medium text-orange-700 text-sm">📝 Afazeres:</p>
+                                            <p className="font-medium text-orange-700 text-sm">📝 Tarefa:</p>
                                             <ul className="space-y-1 mt-1 text-muted-foreground text-sm">
                                                 {metricsData.todosInsights.attentionAreas.map((area, index) => (
                                                     <li key={index} className="flex items-start gap-2">
@@ -1516,7 +1516,7 @@ export function MetricsDashboard() {
                                         {[
                                             { name: "Hábitos", color: "#10b981" },
                                             { name: "Diárias", color: "#3b82f6" },
-                                            { name: "Afazeres", color: "#f59e0b" }
+                                            { name: "Tarefa", color: "#f59e0b" }
                                         ].map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}

@@ -24,7 +24,7 @@
 - ✅ Filtros por data e status
 - ✅ Sistema de tags e dificuldade
 
-#### 📝 **Afazeres (Todos)**
+#### 📝 **Tarefa (Todos)**
 - ✅ Criar tarefas pontuais
 - ✅ Gerenciar subtarefas
 - ✅ Sistema de prioridades

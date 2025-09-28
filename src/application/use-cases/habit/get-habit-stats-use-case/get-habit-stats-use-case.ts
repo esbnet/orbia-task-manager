@@ -3,6 +3,7 @@ import type { HabitPeriodRepository } from "@/domain/repositories/habit-period-r
 import type { HabitEntryRepository } from "@/domain/repositories/habit-entry-repository";
 import type { HabitPeriod } from "@/domain/entities/habit-period";
 import type { HabitEntry } from "@/domain/entities/habit-entry";
+import { HabitStreakService, type StreakInfo } from "@/domain/services/habit-streak-service";
 
 export interface GetHabitStatsInput {
 	habitId: string;
@@ -22,6 +23,7 @@ export interface GetHabitStatsOutput {
 	totalEntries: number;
 	todayEntries: number;
 	averagePerPeriod: number;
+	streak: StreakInfo;
 }
 
 export class GetHabitStatsUseCase {
@@ -77,6 +79,10 @@ export class GetHabitStatsUseCase {
 			? totalEntries / allPeriods.length 
 			: 0;
 
+		// 6. Calcular streak
+		const allEntries = await this.habitEntryRepository.findByHabitId(input.habitId);
+		const streak = HabitStreakService.calculateStreak(habit, allPeriods, allEntries);
+
 		return {
 			habitId: input.habitId,
 			habitTitle: habit.title,
@@ -85,6 +91,7 @@ export class GetHabitStatsUseCase {
 			totalEntries,
 			todayEntries: todayEntries.length,
 			averagePerPeriod: Math.round(averagePerPeriod * 100) / 100,
+			streak,
 		};
 	}
 }

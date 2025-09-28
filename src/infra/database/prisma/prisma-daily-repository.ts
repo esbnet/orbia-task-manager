@@ -1,9 +1,9 @@
 import type { Daily } from "@/domain/entities/daily";
 import type { DailyRepository } from "@/domain/repositories/all-repository";
-import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { prisma } from "@/infra/database/prisma/prisma-client";
 import { PrismaDailyLogRepository } from './prisma-daily-log-repository';
 import { PrismaDailyPeriodRepository } from './prisma-daily-period-repository';
+import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
+import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaDailyRepository implements DailyRepository {
 	private dailyPeriodRepository = new PrismaDailyPeriodRepository();
@@ -72,10 +72,7 @@ export class PrismaDailyRepository implements DailyRepository {
 		if (activePeriod.isCompleted) throw new Error("Daily already completed in this period");
 
 		// Complete period and create log
-		const completedPeriod = await this.dailyPeriodRepository.update(activePeriod.id, {
-			isCompleted: true,
-			isActive: false,
-		});
+		const completedPeriod = await this.dailyPeriodRepository.completeAndFinalize(activePeriod.id);
 
 		await this.dailyLogRepository.create({
 			dailyId: id,

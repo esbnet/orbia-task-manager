@@ -1,31 +1,31 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  BarChart3,
+  Clock,
+  Pause,
+  Play,
+  Square,
+  Target,
+  Timer
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip
+} from "recharts";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Clock, 
-  Play, 
-  Pause, 
-  Square, 
-  BarChart3,
-  Timer,
-  Target
-} from "lucide-react";
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid
-} from "recharts";
-import { useState, useEffect } from "react";
+import { useAnalyticsTags } from "@/hooks/use-analytics-tags";
+import { useGoals } from "@/hooks/use-goals";
+import { useHabits } from "@/hooks/use-habits";
+import { useTodos } from "@/hooks/use-todos";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -49,13 +49,95 @@ export function TimeTrackingDashboard() {
   const [currentTask, setCurrentTask] = useState("");
   const [currentCategory, setCurrentCategory] = useState("Trabalho");
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [timeEntries] = useState<TimeEntry[]>([
-    { category: "Trabalho", task: "Desenvolvimento", duration: 180, date: new Date() },
-    { category: "Pessoal", task: "Exercícios", duration: 60, date: new Date() },
-    { category: "Estudos", task: "Leitura", duration: 90, date: new Date() },
-    { category: "Casa", task: "Limpeza", duration: 45, date: new Date() },
-    { category: "Saúde", task: "Consulta", duration: 30, date: new Date() },
-  ]);
+
+  // Buscar dados reais
+  const { data: todos } = useTodos();
+  const { data: habits } = useHabits();
+  const { data: goals } = useGoals();
+  const { data: userTags } = useAnalyticsTags();
+
+  // Dados reais de registros de tempo (temporariamente mock até resolver problema dos hooks)
+  const realTimeEntries: any[] = [];
+
+  // Calcular entradas de tempo baseadas em dados reais ou estimativas
+  const timeEntries = useMemo((): TimeEntry[] => {
+    // Se há registros reais de tempo, usar eles
+    if (realTimeEntries && realTimeEntries.length > 0) {
+      return realTimeEntries.map(entry => ({
+        category: entry.category,
+        task: `${entry.taskType.toUpperCase()}: ${entry.taskId}`, // Temporário até mapear IDs para títulos
+        duration: entry.duration,
+        date: new Date(entry.date)
+      }));
+    }
+
+    // Caso contrário, usar estimativas baseadas em tarefas concluídas
+    const entries: TimeEntry[] = [];
+
+    // Adicionar entradas baseadas em todos concluídos
+    if (todos) {
+      todos.forEach((todo: any) => {
+        if (todo.lastCompletedDate) {
+          const category = todo.tags?.[0] || "Geral";
+          const duration = todo.difficulty === "Difícil" ? 45 :
+            todo.difficulty === "Médio" ? 25 : 15;
+
+          entries.push({
+            category,
+            task: todo.title,
+            duration,
+            date: new Date(todo.lastCompletedDate)
+          });
+        }
+      });
+    }
+
+    // Adicionar entradas baseadas em hábitos (estimativa)
+    if (habits) {
+      habits.forEach((habit: any) => {
+        // Estimar tempo baseado na frequência
+        const duration = habit.frequency === "Diária" ? 10 :
+          habit.frequency === "Semanal" ? 30 : 60;
+
+        entries.push({
+          category: habit.tags?.[0] || "Hábitos",
+          task: habit.title,
+          duration,
+          date: new Date() // Hábitos não têm data específica, usar hoje
+        });
+      });
+    }
+
+    // Adicionar entradas baseadas em goals (estimativa)
+    if (goals) {
+      goals.forEach((goal: any) => {
+        // Estimar tempo baseado na prioridade
+        const duration = goal.priority === "URGENT" ? 120 :
+          goal.priority === "HIGH" ? 90 :
+            goal.priority === "MEDIUM" ? 60 : 30;
+
+        entries.push({
+          category: goal.category || "Metas",
+          task: goal.title,
+          duration,
+          date: new Date() // Goals não têm data específica, usar hoje
+        });
+      });
+    }
+
+    // Se não houver dados, criar entradas de exemplo
+    if (entries.length === 0) {
+      return [
+        { category: "Trabalho", task: "Desenvolvimento", duration: 180, date: new Date() },
+        { category: "Pessoal", task: "Exercícios", duration: 60, date: new Date() },
+        { category: "Estudos", task: "Leitura", duration: 90, date: new Date() },
+        { category: "Casa", task: "Limpeza", duration: 45, date: new Date() },
+        { category: "Saúde", task: "Consulta", duration: 30, date: new Date() },
+      ];
+    }
+
+    return entries.slice(0, 20); // Limitar a 20 entradas mais recentes
+  }, [realTimeEntries, todos, habits, goals]);
 
   // Timer effect
   useEffect(() => {
@@ -68,29 +150,81 @@ export function TimeTrackingDashboard() {
     return () => clearInterval(interval);
   }, [isTracking]);
 
-  // Calculate category statistics
-  const categoryStats: CategoryTime[] = (() => {
-    const categoryTotals = timeEntries.reduce((acc, entry) => {
-      acc[entry.category] = (acc[entry.category] || 0) + entry.duration;
-      return acc;
-    }, {} as Record<string, number>);
+  // Calcular estatísticas de categoria
+  const categoryStats: CategoryTime[] = useMemo(() => {
+    const categoryTotals: Record<string, number> = {};
 
-    const totalTime = Object.values(categoryTotals).reduce((sum, time) => sum + time, 0);
-    
+    timeEntries.forEach(entry => {
+      categoryTotals[entry.category] = (categoryTotals[entry.category] || 0) + entry.duration;
+    });
+
+    const totalTime = Object.values(categoryTotals).reduce((sum: number, time: number) => sum + time, 0);
+
     return Object.entries(categoryTotals).map(([category, time], index) => ({
       category,
       totalTime: time,
       percentage: Math.round((time / totalTime) * 100),
       color: COLORS[index % COLORS.length],
-      tasks: timeEntries.filter(e => e.category === category).length
+      tasks: timeEntries.filter((e: TimeEntry) => e.category === category).length
     }));
-  })();
+  }, [timeEntries]);
+
+  // Opções de categoria baseadas nas tags do usuário
+  const categoryOptions = useMemo(() => {
+    if (userTags && userTags.length > 0) {
+      return userTags.map(tag => tag.name);
+    }
+    return ["Trabalho", "Pessoal", "Estudos", "Casa", "Saúde"];
+  }, [userTags]);
+
+  // Opções de tarefa baseadas nas 4 categorias ativas
+  const taskOptions = useMemo(() => {
+    const options: Array<{ id: string; title: string; type: string; category?: string }> = [];
+
+    // Adicionar todos
+    if (todos) {
+      todos.forEach((todo: any) => {
+        options.push({
+          id: `todo-${todo.id}`,
+          title: todo.title,
+          type: "todo",
+          category: todo.tags?.[0] || "Geral"
+        });
+      });
+    }
+
+    // Adicionar hábitos
+    if (habits) {
+      habits.forEach((habit: any) => {
+        options.push({
+          id: `habit-${habit.id}`,
+          title: habit.title,
+          type: "habit",
+          category: habit.tags?.[0] || "Hábitos"
+        });
+      });
+    }
+
+    // Adicionar goals
+    if (goals) {
+      goals.forEach((goal: any) => {
+        options.push({
+          id: `goal-${goal.id}`,
+          title: goal.title,
+          type: "goal",
+          category: goal.category || "Metas"
+        });
+      });
+    }
+
+    return options;
+  }, [todos, habits, goals]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -100,7 +234,7 @@ export function TimeTrackingDashboard() {
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${mins}min`;
     }
@@ -116,10 +250,38 @@ export function TimeTrackingDashboard() {
     setIsTracking(false);
   };
 
-  const stopTracking = () => {
+  const stopTracking = async () => {
     setIsTracking(false);
-    // Aqui você salvaria o tempo registrado
-    console.log(`Registrado: ${currentTask} (${currentCategory}) - ${formatTime(elapsedTime)}`);
+
+    if (currentTask && elapsedTime > 0) {
+      try {
+        // Extrair informações da tarefa selecionada
+        const [taskType, taskId] = currentTask.split('-');
+
+        const response = await fetch('/api/time-tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            taskId,
+            taskType,
+            category: currentCategory,
+            duration: elapsedTime,
+            date: new Date().toISOString()
+          }),
+        });
+
+        if (response.ok) {
+          console.log(`Tempo registrado com sucesso: ${currentTask} (${currentCategory}) - ${formatTime(elapsedTime)}`);
+        } else {
+          console.error('Erro ao registrar tempo:', await response.text());
+        }
+      } catch (error) {
+        console.error('Erro ao registrar tempo:', error);
+      }
+    }
+
     setElapsedTime(0);
     setCurrentTask("");
   };
@@ -127,7 +289,7 @@ export function TimeTrackingDashboard() {
   return (
     <div className="space-y-6">
       {/* Active Timer */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+      <Card className="bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-indigo-50 dark:to-indigo-900/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Timer className="w-5 h-5" />
@@ -137,55 +299,58 @@ export function TimeTrackingDashboard() {
         <CardContent>
           <div className="space-y-4">
             <div className="text-center">
-              <div className="text-4xl font-mono font-bold text-blue-600 mb-2">
+              <div className="mb-2 font-mono font-bold text-blue-600 text-4xl">
                 {formatTime(elapsedTime)}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {currentTask || "Nenhuma tarefa selecionada"}
               </p>
             </div>
-            
-            <div className="flex gap-2 justify-center">
+
+            <div className="flex justify-center gap-2">
               {!isTracking ? (
                 <Button onClick={startTracking} className="bg-green-600 hover:bg-green-700">
-                  <Play className="w-4 h-4 mr-2" />
+                  <Play className="mr-2 w-4 h-4" />
                   Iniciar
                 </Button>
               ) : (
                 <Button onClick={pauseTracking} variant="outline">
-                  <Pause className="w-4 h-4 mr-2" />
+                  <Pause className="mr-2 w-4 h-4" />
                   Pausar
                 </Button>
               )}
               <Button onClick={stopTracking} variant="outline">
-                <Square className="w-4 h-4 mr-2" />
+                <Square className="mr-2 w-4 h-4" />
                 Parar
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="gap-4 grid grid-cols-2">
               <div>
-                <label className="text-sm font-medium">Tarefa</label>
-                <input
-                  type="text"
+                <label className="font-medium text-sm">Tarefa</label>
+                <select
                   value={currentTask}
                   onChange={(e) => setCurrentTask(e.target.value)}
-                  placeholder="Digite a tarefa..."
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                />
+                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input dark:border-gray-600 focus:border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
+                >
+                  <option value="">Selecione uma tarefa...</option>
+                  {taskOptions.map(task => (
+                    <option key={task.id} value={task.id}>
+                      [{task.type.toUpperCase()}] {task.title}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="text-sm font-medium">Categoria</label>
+                <label className="font-medium text-sm">Categoria</label>
                 <select
                   value={currentCategory}
                   onChange={(e) => setCurrentCategory(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input dark:border-gray-600 focus:border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
                 >
-                  <option value="Trabalho">Trabalho</option>
-                  <option value="Pessoal">Pessoal</option>
-                  <option value="Estudos">Estudos</option>
-                  <option value="Casa">Casa</option>
-                  <option value="Saúde">Saúde</option>
+                  {categoryOptions.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -194,7 +359,7 @@ export function TimeTrackingDashboard() {
       </Card>
 
       {/* Time Analysis */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
         {/* Category Distribution */}
         <Card>
           <CardHeader>
@@ -242,15 +407,15 @@ export function TimeTrackingDashboard() {
                 <div key={category.category} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
+                      <div
+                        className="rounded-full w-3 h-3"
                         style={{ backgroundColor: category.color }}
                       />
                       <span className="font-medium">{category.category}</span>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">{formatDuration(category.totalTime)}</div>
-                      <div className="text-xs text-muted-foreground">{category.tasks} tarefas</div>
+                      <div className="text-muted-foreground text-xs">{category.tasks} tarefas</div>
                     </div>
                   </div>
                   <Progress value={category.percentage} className="h-2" />
@@ -271,15 +436,15 @@ export function TimeTrackingDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {timeEntries.map((entry, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            {timeEntries.map((entry: TimeEntry, index: number) => (
+              <div key={index} className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Badge variant="secondary">{entry.category}</Badge>
                   <span className="font-medium">{entry.task}</span>
                 </div>
                 <div className="text-right">
                   <div className="font-medium">{formatDuration(entry.duration)}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     {entry.date.toLocaleDateString()}
                   </div>
                 </div>

@@ -43,7 +43,10 @@ export function useActiveTasks() {
 				return [];
 			}
 		},
-		staleTime: 2 * 60 * 1000, // 2 minutos
-		retry: 1, // Tenta apenas uma vez em caso de erro
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		gcTime: 10 * 60 * 1000, // 10 minutos
+		retry: 1,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false
 	});
 }

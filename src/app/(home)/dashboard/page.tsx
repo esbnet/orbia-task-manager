@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
     return (
-        <div className="mx-auto px-4 py-8 container">
+        <div className="mx-auto px-4 py-8">
             <IndicatorsDashboard />
         </div>
     );

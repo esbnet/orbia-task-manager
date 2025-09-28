@@ -63,7 +63,7 @@ const dictionaries: Record<Locale, Dict> = {
             metrics: "Métricas",
         },
         home: {
-            title: "Gerenciador de Tarefas",
+            title: "Dashboard",
         },
         tasks: {
             overview: "Visão Geral das Tarefas",
@@ -95,11 +95,11 @@ const dictionaries: Record<Locale, Dict> = {
             resetFrequency: "Frequência de Reset",
             addObservations: "Adicionar observações",
             addTags: "Adicionar etiquetas",
-            newDaily: "Nova diária",
+            newDaily: "Nova Diária",
             newHabit: "Novo Hábito",
             editHabit: "Editar Hábito",
             editDaily: "Editar",
-            editTodo: "Editar Afazer",
+            editTodo: "Editar Tarefa",
             editDetails: "Edite os detalhes da diária",
             changeDetails: "Altere os detalhes da tarefa",
             enterHabitTitle: "Digite o título do seu hábito",
@@ -199,7 +199,7 @@ const dictionaries: Record<Locale, Dict> = {
             metrics: "Metrics",
         },
         home: {
-            title: "Task Manager",
+            title: "Dashboard",
         },
         tasks: {
             overview: "Tasks Overview",
@@ -334,7 +334,7 @@ const dictionaries: Record<Locale, Dict> = {
             metrics: "Métricas",
         },
         home: {
-            title: "Gestor de Tareas",
+            title: "Panel",
         },
         tasks: {
             overview: "Resumen de Tareas",

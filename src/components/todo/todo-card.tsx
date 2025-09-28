@@ -1,17 +1,19 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
+	ChevronDown,
 	Edit,
 	Tag
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-// import { useTodoContext } from "@/contexts/todo-context";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 import { toast } from "sonner";
 import type { Todo } from "../../types";
+// import { useTodoContext } from "@/contexts/todo-context";
+import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useState } from "react";
 
 interface TodoCardProps {
 	todo: Todo;
@@ -22,15 +24,15 @@ interface TodoCardProps {
 }
 
 const difficultyConfig = {
-	"Trivial": { color: "bg-gray-50 text-gray-700 border border-gray-200", stars: "⭐" },
-	"Fácil": { color: "bg-green-50 text-green-700 border border-green-200", stars: "⭐⭐" },
-	"Médio": { color: "bg-yellow-50 text-yellow-800 border border-yellow-200", stars: "⭐⭐⭐" },
-	"Difícil": { color: "bg-red-50 text-red-700 border border-red-200", stars: "⭐⭐⭐⭐" },
+	"Trivial": { color: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600", stars: "⭐" },
+	"Fácil": { color: "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700", stars: "⭐⭐" },
+	"Médio": { color: "bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700", stars: "⭐⭐⭐" },
+	"Difícil": { color: "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-700", stars: "⭐⭐⭐⭐" },
 };
 
 const statusConfig = {
-	completed: "bg-green-50 text-green-700 border border-green-200",
-	pending: "bg-blue-50 text-blue-700 border border-blue-200",
+	completed: "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700",
+	pending: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border border-blue-200 dark:border-blue-700",
 };
 
 export function TodoCard({
@@ -42,117 +44,153 @@ export function TodoCard({
 }: TodoCardProps) {
 	// Removido useTodoContext
 	const completeLoading = useButtonLoading();
+	const [isExpanded, setIsExpanded] = useState(false);
 	const difficulty = difficultyConfig[todo.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 
 	const handleComplete = async () => {
 		if (onComplete) {
 			await completeLoading.executeAsync(
 				async () => {
+					// TODO: Implementar mutation para todo-logs quando disponível
+					// Por enquanto, apenas chama o callback que já está conectado com a mutation
 					await onComplete(todo.id);
 				},
 				undefined,
-				() => toast.error("Erro ao completar afazer. Tente novamente.")
+				() => toast.error("Erro ao completar tarefa. Tente novamente.")
 			);
 		}
 	};
 
 	return (
 		<Card className={`hover:shadow-md transition-shadow duration-200 ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="pb-3">
-				<div className="flex justify-between items-start">
-					<div className="flex-1">
-						<div className="flex justify-between items-center mb-2">
-							<div className="flex items-center gap-2">
-								<h3 className="font-semibold line-clamp-1">
-									{todo.title}
-								</h3>
-								{isCompleted && (
-									<CheckCircle className="w-5 h-5 text-green-600" />
-								)}
-							</div>
+			<CardHeader className="px-4">
+				<div className="flex justify-between items-start gap-3">
+					<div className="flex-1 min-w-0">
+						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
+							{todo.title}
+						</CardTitle>
+					</div>
 
-							{/* Botões movidos para o topo */}
-							<div className="flex items-center">
-								{!isCompleted && (
-									<Button
-										title="Marcar como concluído"
-										variant={"ghost"}
-										onClick={handleComplete}
-										size="icon"
-										className="hover:bg-blue-50 rounded-full text-blue-600 hover:text-blue-600"
-										disabled={completeLoading.isLoading}
-									>
-										{completeLoading.isLoading ? (
-											<div className="border-2 border-t-transparent border-blue-600 rounded-full w-4 h-4 animate-spin" />
-										) : (
-											<CheckCircle className="w-4 h-4" />
-										)}
-									</Button>
-								)}
-								{onEdit && (
-									<Button
-										onClick={() => onEdit(todo)}
-										variant="ghost"
-										size="icon"
-										className="hover:bg-gray-100 rounded-full text-gray-600"
-									>
-										<Edit className="w-4 h-4" />
-									</Button>
-								)}
-							</div>
-						</div>
-
-						<div className="flex items-center gap-2 mb-2">
-							<Badge className={`text-xs ${difficulty.color}`} title="Dificuldade">
-								{difficulty.stars} {todo.difficulty}
-							</Badge>
-
-							<Badge
-								className={`text-xs ${statusConfig[isCompleted ? 'completed' : 'pending']}`}
-								title="Status"
+					<div className="flex flex-shrink-0 items-center gap-1">
+						{!isCompleted && (
+							<Button
+								title="Marcar como concluído"
+								variant="ghost"
+								onClick={handleComplete}
+								size="icon"
+								className="hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full w-8 h-8 text-blue-600 hover:text-blue-600"
+								disabled={completeLoading.isLoading}
 							>
-								<CheckCircle className="w-3 h-3" />
-								{isCompleted ? "Concluído" : "Em andamento"}
-							</Badge>
-
-							{todo.startDate && (
-								<Badge className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs" title="Data de início">
-									<Calendar className="w-3 h-3" />
-									{new Date(todo.startDate).toLocaleDateString()}
-								</Badge>
-							)}
-						</div>
-
-						{todo.observations && (
-							<p className="mb-2 text-gray-600 text-sm line-clamp-2">
-								{todo.observations}
-							</p>
+								{completeLoading.isLoading ? (
+									<div className="border-2 border-t-transparent border-blue-600 rounded-full w-4 h-4 animate-spin" />
+								) : (
+									<CheckCircle className="w-4 h-4" />
+								)}
+							</Button>
 						)}
+
+						{onEdit && (
+							<Button
+								onClick={() => onEdit(todo)}
+								variant="ghost"
+								size="icon"
+								className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
+							>
+								<Edit className="w-4 h-4" />
+							</Button>
+						)}
+
+						{/* Botão para expandir/ocultar detalhes */}
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={() => setIsExpanded(!isExpanded)}
+							className="flex-shrink-0 p-0 w-8 h-8"
+						>
+							<ChevronDown className={`transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+						</Button>
 					</div>
 				</div>
 			</CardHeader>
 
-			<CardContent className="pt-0">
-				{/* Área das tags com ícone */}
-				{todo.tags && todo.tags.length > 0 && (
-					<div className="flex items-center gap-2">
-						<div className="flex gap-1">
-							{todo.tags.slice(0, 2).map((tag) => (
+			<CardContent className="px-4 pt-0">
+				{/* Conteúdo expandido */}
+				{isExpanded && (
+					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+						{/* Informações básicas */}
+						<div className="space-y-3">
+							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+								Informações Básicas
+							</div>
+							<div className="pt-3">
 								<Badge
-									key={tag}
-									variant="secondary"
-									className="bg-slate-50 border border-slate-200 text-slate-700 text-xs"
+									className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
+									title="Data de criação"
 								>
-									<Tag className="mr-1 w-3 h-3" />
-									{tag}
+									<Calendar className="w-3 h-3" />
+									{new Date(todo.createdAt).toLocaleDateString('pt-BR')}
 								</Badge>
-							))}
-							{todo.tags.length > 2 && (
-								<Badge variant="outline" className="bg-slate-50 border border-slate-200 text-slate-700 text-xs">
-									+{todo.tags.length - 2}
+							</div>
+
+							<div className="flex flex-wrap items-center gap-2">
+								<Badge className={`text-xs ${difficulty.color}`} title="Dificuldade">
+									{difficulty.stars} {todo.difficulty}
 								</Badge>
-							)}
+
+								<Badge
+									className={`text-xs ${statusConfig[isCompleted ? 'completed' : 'pending']} dark:text-gray-300`}
+									title="Status"
+								>
+									<CheckCircle className="w-3 h-3" />
+									{isCompleted ? "Concluído" : "Em andamento"}
+								</Badge>
+
+								{todo.startDate && (
+									<Badge className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs" title="Data de início">
+										<Calendar className="w-3 h-3" />
+										{new Date(todo.startDate).toLocaleDateString()}
+									</Badge>
+								)}
+							</div>
 						</div>
+
+						{/* Observações */}
+						{todo.observations && (
+							<div>
+								<div className="mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
+									Observações
+								</div>
+								<p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+									{todo.observations}
+								</p>
+							</div>
+						)}
+
+						{/* Tags */}
+						{todo.tags && todo.tags.length > 0 && (
+							<div className="space-y-2">
+								<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+									Tags
+								</div>
+								<div className="flex flex-wrap gap-1">
+									{todo.tags.slice(0, 3).map((tag) => (
+										<Badge
+											key={tag}
+											variant="secondary"
+											className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+										>
+											<Tag className="mr-1 w-3 h-3" />
+											{tag}
+										</Badge>
+									))}
+									{todo.tags.length > 3 && (
+										<Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs">
+											+{todo.tags.length - 3}
+										</Badge>
+									)}
+								</div>
+							</div>
+						)}
 					</div>
 				)}
 			</CardContent>

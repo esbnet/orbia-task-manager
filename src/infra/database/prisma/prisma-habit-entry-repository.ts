@@ -27,7 +27,18 @@ export class PrismaHabitEntryRepository implements HabitEntryRepository {
 		return entries.map(this.toDomain);
 	}
 
-	async findByHabitId(habitId: string): Promise<HabitEntryWithPeriod[]> {
+	async findByHabitId(habitId: string): Promise<HabitEntry[]> {
+		const entries = await prisma.habitEntry.findMany({
+			where: { habitId },
+			orderBy: {
+				timestamp: 'desc',
+			},
+		});
+
+		return entries.map(this.toDomain);
+	}
+
+	async findByHabitIdWithPeriod(habitId: string): Promise<HabitEntryWithPeriod[]> {
 		const entries = await prisma.habitEntry.findMany({
 			where: { habitId },
 			include: {

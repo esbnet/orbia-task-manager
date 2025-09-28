@@ -1,43 +1,45 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  BarChart3,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Download,
+  Info,
+  Lightbulb,
+  RefreshCw,
+  Target,
+  TrendingDown,
+  TrendingUp
+} from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  BarChart3, 
-  Calendar,
-  Target,
-  Lightbulb,
-  Download,
-  RefreshCw
-} from "lucide-react";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Area,
-  AreaChart
-} from "recharts";
-import { useState } from "react";
 import { useAdvancedAnalytics } from "@/hooks/use-advanced-analytics";
+import { useState } from "react";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export function AdvancedInsights() {
   const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter">("month");
+  const [showCategoriesTable, setShowCategoriesTable] = useState(false);
   const { data: analytics, isLoading, refetch } = useAdvancedAnalytics(timeRange);
 
   if (isLoading) {
@@ -45,7 +47,7 @@ export function AdvancedInsights() {
   }
 
   if (!analytics) {
-    return <div className="text-center p-8">Erro ao carregar dados</div>;
+    return <div className="p-8 text-center">Erro ao carregar dados</div>;
   }
 
   const { productiveHours, categoryAnalysis, weeklyReports, monthlyTrends, insights } = analytics;
@@ -60,9 +62,9 @@ export function AdvancedInsights() {
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case "up": return <TrendingUp className="w-4 h-4 text-green-500" />;
-      case "down": return <TrendingDown className="w-4 h-4 text-red-500" />;
-      default: return <BarChart3 className="w-4 h-4 text-gray-500" />;
+      case "up": return <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400" />;
+      case "down": return <TrendingDown className="w-4 h-4 text-red-500 dark:text-red-400" />;
+      default: return <BarChart3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
     }
   };
 
@@ -93,17 +95,102 @@ export function AdvancedInsights() {
         </div>
       </div>
 
+      {/* Categories Information Table */}
+      <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <CardTitle className="text-blue-900 dark:text-blue-100 text-lg">
+                Categorias de Análise
+              </CardTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowCategoriesTable(!showCategoriesTable)}
+              className="hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+            >
+              {showCategoriesTable ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        {showCategoriesTable && (
+          <CardContent className="pt-0">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-blue-200 dark:border-blue-700">
+                    <th className="px-3 py-2 font-semibold text-blue-900 dark:text-blue-100 text-left">
+                      Categoria
+                    </th>
+                    <th className="px-3 py-2 font-semibold text-blue-900 dark:text-blue-100 text-left">
+                      Ícone
+                    </th>
+                    <th className="px-3 py-2 font-semibold text-blue-900 dark:text-blue-100 text-left">
+                      Métricas
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-blue-100 dark:border-blue-800">
+                    <td className="px-3 py-3 font-medium text-blue-800 dark:text-blue-200">
+                      Hábitos
+                    </td>
+                    <td className="px-3 py-3 text-2xl">🔄</td>
+                    <td className="px-3 py-3 text-blue-700 dark:text-blue-300 text-sm">
+                      Tempo médio: 15min, foco em consistência
+                    </td>
+                  </tr>
+                  <tr className="border-b border-blue-100 dark:border-blue-800">
+                    <td className="px-3 py-3 font-medium text-blue-800 dark:text-blue-200">
+                      Diárias
+                    </td>
+                    <td className="px-3 py-3 text-2xl">📅</td>
+                    <td className="px-3 py-3 text-blue-700 dark:text-blue-300 text-sm">
+                      Tempo médio: 10min, foco em rotina
+                    </td>
+                  </tr>
+                  <tr className="border-b border-blue-100 dark:border-blue-800">
+                    <td className="px-3 py-3 font-medium text-blue-800 dark:text-blue-200">
+                      Tarefas
+                    </td>
+                    <td className="px-3 py-3 text-2xl">✅</td>
+                    <td className="px-3 py-3 text-blue-700 dark:text-blue-300 text-sm">
+                      Tempo médio: 30min, foco em produtividade
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-3 font-medium text-blue-800 dark:text-blue-200">
+                      Metas
+                    </td>
+                    <td className="px-3 py-3 text-2xl">🎯</td>
+                    <td className="px-3 py-3 text-blue-700 dark:text-blue-300 text-sm">
+                      Tempo médio: 60min, foco em objetivos
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
       {/* Key Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="gap-4 grid grid-cols-1 md:grid-cols-3">
         {insights.map((insight, index) => (
           <Card key={index} className={`border ${getImpactColor(insight.impact)}`}>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 mt-1" />
+                <Lightbulb className="mt-1 w-5 h-5" />
                 <div className="flex-1">
                   <h4 className="font-medium text-sm">{insight.title}</h4>
-                  <p className="text-xs mt-1 opacity-80">{insight.description}</p>
-                  <p className="text-xs mt-2 font-medium">{insight.recommendation}</p>
+                  <p className="opacity-80 mt-1 text-xs">{insight.description}</p>
+                  <p className="mt-2 font-medium text-xs">{insight.recommendation}</p>
                 </div>
               </div>
             </CardContent>
@@ -112,7 +199,7 @@ export function AdvancedInsights() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
         {/* Productive Hours */}
         <Card>
           <CardHeader>
@@ -128,11 +215,13 @@ export function AdvancedInsights() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" />
                   <YAxis />
-                  <Tooltip 
-                    formatter={(value, name) => [
-                      name === "completedTasks" ? `${value} tarefas` : `${value}%`,
-                      name === "completedTasks" ? "Tarefas Concluídas" : "Eficiência"
-                    ]}
+                  <Tooltip
+                    formatter={(value, name) => {
+                      const sanitizedValue = typeof value === 'number' ? value.toString() : String(value).replace(/[<>"'&]/g, '');
+                      const label = name === "completedTasks" ? "Tarefas Concluídas" : "Eficiência";
+                      const suffix = name === "completedTasks" ? " tarefas" : "%";
+                      return [sanitizedValue + suffix, label];
+                    }}
                   />
                   <Bar dataKey="completedTasks" fill="#3b82f6" name="completedTasks" />
                 </BarChart>
@@ -152,15 +241,15 @@ export function AdvancedInsights() {
           <CardContent>
             <div className="space-y-4">
               {categoryAnalysis.map((category, index) => (
-                <div key={category.category} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div key={category.category} className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div 
-                      className="w-4 h-4 rounded-full" 
+                    <div
+                      className="rounded-full w-4 h-4"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
                     <div>
                       <p className="font-medium text-sm">{category.category}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {category.completedTasks} tarefas • {category.totalTime}min
                       </p>
                     </div>
@@ -193,16 +282,16 @@ export function AdvancedInsights() {
                   <XAxis dataKey="week" />
                   <YAxis />
                   <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="completedTasks" 
-                    stroke="#10b981" 
+                  <Line
+                    type="monotone"
+                    dataKey="completedTasks"
+                    stroke="#10b981"
                     name="Tarefas Concluídas"
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="totalTasks" 
-                    stroke="#3b82f6" 
+                  <Line
+                    type="monotone"
+                    dataKey="totalTasks"
+                    stroke="#3b82f6"
                     name="Total de Tarefas"
                   />
                 </LineChart>
@@ -258,13 +347,13 @@ export function AdvancedInsights() {
           <div className="flex justify-between items-center">
             <CardTitle>Relatório Detalhado</CardTitle>
             <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="mr-2 w-4 h-4" />
               Exportar PDF
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="gap-6 grid grid-cols-1 md:grid-cols-3">
             {weeklyReports.slice(0, 3).map((report, index) => (
               <div key={index} className="space-y-3">
                 <h4 className="font-medium">{report.week}</h4>
@@ -279,11 +368,11 @@ export function AdvancedInsights() {
                   </div>
                   <div className="flex justify-between">
                     <span>Melhor dia:</span>
-                    <span className="font-medium text-green-600">{report.bestDay}</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">{report.bestDay}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Pior dia:</span>
-                    <span className="font-medium text-red-600">{report.worstDay}</span>
+                    <span className="font-medium text-red-600 dark:text-red-400">{report.worstDay}</span>
                   </div>
                 </div>
               </div>

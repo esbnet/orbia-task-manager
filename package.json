@@ -19,7 +19,9 @@
 		"db:reset:dev": "pnpm run db:dev && npx prisma db push --force-reset",
 		"db:reset:prod": "pnpm run db:prod && npx prisma db push --force-reset",
 		"i18n:find": "node scripts/find-hardcoded-strings.js",
-		"postinstall": "prisma generate"
+		"analyze": "node scripts/analyze-bundle.js",
+		"analyze:bundle": "ANALYZE=true npm run build",
+		"postinstall": "prisma generate && prisma migrate"
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.10.0",

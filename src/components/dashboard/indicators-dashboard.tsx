@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Award,
     BarChart3,
@@ -9,7 +10,6 @@ import {
     Target,
     Trophy
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     CartesianGrid,
     Cell,
@@ -23,13 +23,13 @@ import {
     YAxis
 } from "recharts";
 
+import { useGoals } from "@/contexts/goal-context";
 import { useActiveTasks } from "@/hooks/use-active-tasks";
 import { useAvailableDailies } from "@/hooks/use-dailies";
-import { useGoals } from "@/contexts/goal-context";
 import { useHabits } from "@/hooks/use-habits";
 import { useHabitsAnalytics } from "@/hooks/use-habits-analytics";
-import { useMemo } from "react";
 import { useTodos } from "@/hooks/use-todos";
+import { useMemo } from "react";
 
 export function IndicatorsDashboard() {
     const { data: habits } = useHabits();
@@ -39,36 +39,187 @@ export function IndicatorsDashboard() {
     const { goals } = useGoals();
     const { data: activeTasks } = useActiveTasks();
 
-    // Cálculos para o resumo do dia
+
+    // Cálculos aprimorados para o resumo do dia usando dados do banco
     const dailySummary = useMemo(() => {
-        const completedTodos = todos?.filter(todo => todo.lastCompletedDate)?.length || 0;
-        const totalTodos = todos?.length || 0;
+        // Dados de todos - usar todas as tarefas ativas (não concluídas) para exibição,
+        // mas calcular métricas baseadas em tarefas recentes para precisão
+        const allTodos = todos || [];
+        const activeTodos = allTodos.filter(todo => !todo.lastCompletedDate); // Tarefas não concluídas
+        const recentTodos = allTodos.filter(todo => {
+            const createdDate = new Date(todo.createdAt);
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return createdDate >= weekAgo;
+        }) || [];
+
+        const completedTodos = recentTodos.filter(todo => todo.lastCompletedDate).length;
+        const totalTodos = recentTodos.length;
+        const pendingTodos = activeTodos.length; // Mostrar tarefas ativas pendentes
+
+        // Dados de dailies - já vem do banco com lógica de disponibilidade
         const completedDailies = dailiesData?.completedToday?.length || 0;
         const totalDailies = dailiesData?.availableDailies?.length || 0;
+        const availableDailies = totalDailies - completedDailies;
 
-        // Calcular pontuação baseada em conclusão
-        const todoPoints = completedTodos * 10;
-        const dailyPoints = completedDailies * 15;
-        const habitPoints = habitsAnalytics?.currentStreaks?.reduce((sum, streak) =>
-            sum + Math.min(streak.streakDays, 7), 0) || 0;
+        // Dados de hábitos - usar analytics do banco para maior precisão
+        const activeHabits = habitsAnalytics?.activeHabits || 0;
+        const habitCompletionRate = habitsAnalytics?.completionRate || 0;
 
-        const totalPoints = todoPoints + dailyPoints + habitPoints;
+        // Dados de metas - calcular métricas baseadas em atividades reais
+        const completedGoals = goals.filter(goal => goal.status === "COMPLETED");
+        const inProgressGoals = goals.filter(goal => goal.status === "IN_PROGRESS");
+        const totalGoals = goals.length;
+        const completedGoalsRate = totalGoals > 0 ? (completedGoals.length / totalGoals) * 100 : 0;
 
-        // Calcular streak ativo (mínimo dos streaks atuais)
-        const activeStreak = habitsAnalytics?.currentStreaks && habitsAnalytics.currentStreaks.length > 0
-            ? Math.min(...habitsAnalytics.currentStreaks.map(s => s.streakDays))
-            : 0;
+        // Calcular pontuação mais precisa baseada em dificuldade e importância
+        const todoPoints = recentTodos.reduce((sum, todo) => {
+            const isCompleted = !!todo.lastCompletedDate;
+            const difficultyMultiplier = todo.difficulty === 'Difícil' ? 3 :
+                todo.difficulty === 'Médio' ? 2 : 1;
+            return sum + (isCompleted ? 10 * difficultyMultiplier : 0);
+        }, 0);
+
+        const dailyPoints = (dailiesData?.completedToday || []).reduce((sum, daily) => {
+            const difficultyMultiplier = daily.difficulty === 'Difícil' ? 3 :
+                daily.difficulty === 'Médio' ? 2 : 1;
+            return sum + (15 * difficultyMultiplier);
+        }, 0);
+
+        // Pontos de hábitos baseados em streaks e consistência
+        const habitPoints = habitsAnalytics?.currentStreaks?.reduce((sum, streak) => {
+            const streakBonus = Math.min(streak.streakDays, 30); // Máximo 30 dias de bônus
+            return sum + (streakBonus * 5);
+        }, 0) || 0;
+
+        // Pontos de metas baseados em conclusão e prioridade
+        const goalPoints = completedGoals.reduce((sum, goal) => {
+            const priorityMultiplier = goal.priority === 'URGENT' ? 4 :
+                goal.priority === 'HIGH' ? 3 :
+                    goal.priority === 'MEDIUM' ? 2 : 1;
+            return sum + (25 * priorityMultiplier);
+        }, 0);
+
+        // Bônus por completar todas as tarefas do dia (incluindo metas)
+        const allTasksCompleted = (completedTodos === totalTodos && totalTodos > 0) ||
+            (completedDailies === totalDailies && totalDailies > 0) ||
+            completedGoals.length > 0;
+        const completionBonus = allTasksCompleted ? 50 : 0;
+
+        const totalPoints = todoPoints + dailyPoints + habitPoints + goalPoints + completionBonus;
+
+        // Calcular streak universal baseado em todos os tipos de tarefas
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        // Coletar todas as datas de atividades dos 4 tipos de tarefas
+        const activityDates: Date[] = [];
+
+        // 1. Diárias concluídas hoje
+        if (dailiesData?.completedToday && dailiesData.completedToday.length > 0) {
+            activityDates.push(today);
+        }
+
+        // 2. Todos concluídos (última conclusão)
+        const completedTodosList = allTodos.filter(todo => todo.lastCompletedDate);
+        completedTodosList.forEach(todo => {
+            const completedDate = new Date(todo.lastCompletedDate!);
+            completedDate.setHours(0, 0, 0, 0);
+            if (!activityDates.some(date => date.getTime() === completedDate.getTime())) {
+                activityDates.push(completedDate);
+            }
+        });
+
+        // 3. Hábitos (dos streaks existentes)
+        if (habitsAnalytics?.currentStreaks) {
+            habitsAnalytics.currentStreaks.forEach(streak => {
+                // Adicionar os últimos dias do streak
+                for (let i = 0; i < streak.streakDays; i++) {
+                    const streakDate = new Date(today);
+                    streakDate.setDate(streakDate.getDate() - i);
+                    if (!activityDates.some(date => date.getTime() === streakDate.getTime())) {
+                        activityDates.push(streakDate);
+                    }
+                }
+            });
+        }
+
+        // 4. Metas concluídas
+        completedGoals.forEach(goal => {
+            const completedDate = new Date(goal.updatedAt);
+            completedDate.setHours(0, 0, 0, 0);
+            if (!activityDates.some(date => date.getTime() === completedDate.getTime())) {
+                activityDates.push(completedDate);
+            }
+        });
+
+        // Ordenar as datas
+        activityDates.sort((a, b) => b.getTime() - a.getTime());
+
+        // Calcular o streak
+        let activeStreak = 0;
+        let currentDate = new Date(today);
+
+        for (const activityDate of activityDates) {
+            if (activityDate.getTime() === currentDate.getTime()) {
+                activeStreak++;
+                currentDate.setDate(currentDate.getDate() - 1);
+            } else if (activityDate.getTime() === yesterday.getTime() && activeStreak === 0) {
+                // Se não teve atividade hoje mas teve ontem, streak = 1
+                activeStreak = 1;
+                currentDate.setDate(currentDate.getDate() - 1);
+            } else {
+                break;
+            }
+        }
+
+        // Taxa de conclusão ponderada por tipo de tarefa (incluindo metas)
+        const weightedCompletionRate = (() => {
+            const todoWeight = 0.3;
+            const dailyWeight = 0.3;
+            const habitWeight = 0.2;
+            const goalWeight = 0.2;
+
+            const todoRate = totalTodos > 0 ? (completedTodos / totalTodos) : 0;
+            const dailyRate = totalDailies > 0 ? (completedDailies / totalDailies) : 0;
+            const habitRate = habitCompletionRate / 100;
+            const goalRate = completedGoalsRate / 100;
+
+            return (todoRate * todoWeight + dailyRate * dailyWeight + habitRate * habitWeight + goalRate * goalWeight) * 100;
+        })();
+
+        // Calcular produtividade geral baseada em atividades reais
+        const generalProductivity = (() => {
+            const totalActivities = completedTodos + completedDailies + completedGoals.length;
+            const totalPossibleActivities = totalTodos + totalDailies + totalGoals;
+            return totalPossibleActivities > 0 ? (totalActivities / totalPossibleActivities) * 100 : 0;
+        })();
+
+        // Calcular métricas gerais incluindo todas as tarefas ativas
+        const allActiveTodos = allTodos.filter(todo => !todo.lastCompletedDate).length;
+        const totalActiveTasks = allActiveTodos + availableDailies;
 
         return {
             completedTasks: completedTodos + completedDailies,
-            totalTasks: totalTodos + totalDailies,
+            totalTasks: totalTodos + totalDailies, // Métricas baseadas em tarefas recentes
+            pendingTasks: totalActiveTasks, // Mostrar tarefas ativas pendentes
             dailyScore: totalPoints,
             activeStreak,
-            completionRate: totalTodos + totalDailies > 0
-                ? ((completedTodos + completedDailies) / (totalTodos + totalDailies)) * 100
-                : 0
+            completionRate: weightedCompletionRate,
+            generalProductivity,
+            completedGoals,
+            inProgressGoals,
+            breakdown: {
+                todos: { completed: completedTodos, total: totalTodos, rate: totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0 },
+                dailies: { completed: completedDailies, total: totalDailies, rate: totalDailies > 0 ? (completedDailies / totalDailies) * 100 : 0 },
+                habits: { active: activeHabits, completionRate: habitCompletionRate },
+                goals: { completed: completedGoals.length, total: totalGoals, rate: completedGoalsRate }
+            }
         };
-    }, [todos, dailiesData, habitsAnalytics]);
+    }, [todos, dailiesData, habitsAnalytics, goals]);
 
     // Dados para gráficos de hábitos
     const habitsChartData = useMemo(() => {
@@ -81,10 +232,11 @@ export function IndicatorsDashboard() {
         }));
     }, [habitsAnalytics]);
 
-    // Dados para gráfico de afazeres
+    // Dados para gráfico de tarefa - mostrar todas as tarefas ativas
     const todosChartData = useMemo(() => {
-        const completed = todos?.filter(todo => todo.lastCompletedDate).length || 0;
-        const pending = todos?.filter(todo => !todo.lastCompletedDate).length || 0;
+        const allTodos = todos || [];
+        const completed = allTodos.filter(todo => todo.lastCompletedDate).length;
+        const pending = allTodos.filter(todo => !todo.lastCompletedDate).length;
 
         return [
             { name: 'Concluídos', value: completed, color: '#10b981' },
@@ -107,7 +259,7 @@ export function IndicatorsDashboard() {
             </div>
 
             {/* 🔥 Seção 1 — Resumo do Dia */}
-            <div className="gap-4 grid grid-cols-1 md:grid-cols-4">
+            <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
                 <Card className="bg-gradient-to-br from-slate-50 to-slate-100 hover:shadow-md border-slate-200 transition-shadow">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-3">
@@ -171,6 +323,22 @@ export function IndicatorsDashboard() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md border-purple-200 transition-shadow">
+                    <CardContent className="p-6">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-purple-200 p-3 rounded-xl">
+                                <Target className="w-6 h-6 text-purple-600" />
+                            </div>
+                            <div>
+                                <p className="font-medium text-purple-600 text-sm">Produtividade</p>
+                                <p className="font-bold text-purple-900 text-2xl">
+                                    {dailySummary.generalProductivity.toFixed(0)}%
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Mensagem motivacional */}
@@ -182,17 +350,25 @@ export function IndicatorsDashboard() {
                         </div>
                         <div className="flex-1">
                             <p className="font-medium text-yellow-800">
-                                {dailySummary.completionRate >= 80
-                                    ? "🎉 Parabéns! Você está arrasando hoje!"
-                                    : dailySummary.completionRate >= 60
-                                        ? "🚀 Você está no caminho certo! Continue assim!"
-                                        : "💪 Cada passo conta! Vamos completar mais tarefas hoje!"}
+                                {dailySummary.completionRate >= 85
+                                    ? "🎉 Excelente! Você está dominando suas rotinas!"
+                                    : dailySummary.completionRate >= 70
+                                        ? "🚀 Muito bom! Continue com esse ritmo!"
+                                        : dailySummary.completionRate >= 50
+                                            ? "💪 Bom progresso! Vamos aumentar um pouco mais!"
+                                            : "🎯 Cada pequena vitória conta! Vamos começar!"}
                             </p>
                             <p className="mt-1 text-yellow-600 text-sm">
-                                {dailySummary.totalTasks - dailySummary.completedTasks > 0
-                                    ? `Faltam ${dailySummary.totalTasks - dailySummary.completedTasks} tarefas para fechar o dia 100%!`
-                                    : "Dia perfeito! Todas as tarefas concluídas! 🎯"}
+                                {dailySummary.pendingTasks > 0
+                                    ? `Você tem ${dailySummary.pendingTasks} tarefa${dailySummary.pendingTasks !== 1 ? 's' : ''} ativa${dailySummary.pendingTasks !== 1 ? 's' : ''} pendente${dailySummary.pendingTasks !== 1 ? 's' : ''}. Continue assim! 💪`
+                                    : "Incrível! Todas as tarefas ativas foram concluídas! 🎯"}
                             </p>
+                            <div className="flex flex-wrap gap-4 mt-2 text-yellow-700 text-xs">
+                                <span>✅ Todos: {dailySummary.breakdown.todos.completed}/{dailySummary.breakdown.todos.total}</span>
+                                <span>📅 Diárias: {dailySummary.breakdown.dailies.completed}/{dailySummary.breakdown.dailies.total}</span>
+                                <span>🏃 Hábitos: {dailySummary.breakdown.habits.completionRate.toFixed(0)}%</span>
+                                <span>🎯 Metas: {dailySummary.breakdown.goals.completed}/{dailySummary.breakdown.goals.total}</span>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
@@ -293,12 +469,12 @@ export function IndicatorsDashboard() {
                 </CardContent>
             </Card>
 
-            {/* 📌 Seção 4 — Afazeres */}
+            {/* 📌 Seção 4 — Tarefa */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <CheckCircle className="w-5 h-5 text-orange-500" />
-                        Afazeres
+                        Tarefa
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -307,13 +483,13 @@ export function IndicatorsDashboard() {
                             <p className="font-bold text-orange-600 text-2xl">
                                 {todos?.filter(todo => todo.lastCompletedDate).length || 0}
                             </p>
-                            <p className="text-gray-600 text-sm">Concluídos na semana</p>
+                            <p className="text-gray-600 text-sm">Total concluídos</p>
                         </div>
                         <div className="text-center">
                             <p className="font-bold text-red-600 text-2xl">
                                 {todos?.filter(todo => !todo.lastCompletedDate).length || 0}
                             </p>
-                            <p className="text-gray-600 text-sm">Pendentes</p>
+                            <p className="text-gray-600 text-sm">Ativos pendentes</p>
                         </div>
                         <div className="text-center">
                             <p className="font-bold text-blue-600 text-2xl">
@@ -321,11 +497,11 @@ export function IndicatorsDashboard() {
                                     ? ((todos.filter(todo => todo.lastCompletedDate).length || 0) / todos.length * 100).toFixed(0)
                                     : 0}%
                             </p>
-                            <p className="text-gray-600 text-sm">Taxa de conclusão</p>
+                            <p className="text-gray-600 text-sm">Taxa geral</p>
                         </div>
                     </div>
 
-                    {/* Gráfico de pizza para afazeres */}
+                    {/* Gráfico de pizza para tarefa */}
                     <div className="mt-6 h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -396,48 +572,110 @@ export function IndicatorsDashboard() {
                     <div className="space-y-4">
                         <div className="text-center">
                             <p className="font-bold text-yellow-600 text-3xl">
-                                Nível {Math.floor(dailySummary.dailyScore / 100) + 1}
+                                Nível {Math.floor(dailySummary.dailyScore / 150) + 1}
                             </p>
                             <p className="text-yellow-700">
-                                Construtor de Rotina
+                                {dailySummary.dailyScore >= 500 ? "Mestre da Produtividade" :
+                                    dailySummary.dailyScore >= 300 ? "Especialista em Hábitos" :
+                                        dailySummary.dailyScore >= 150 ? "Construtor de Rotina" : "Iniciante Produtivo"}
                             </p>
                             <p className="mt-2 text-yellow-600 text-sm">
-                                {dailySummary.dailyScore % 100}/100 pontos para o próximo nível
+                                {dailySummary.dailyScore % 150}/150 pontos para o próximo nível
                             </p>
+                            <div className="flex justify-center gap-4 mt-2 text-yellow-700 text-xs">
+                                <span>Streak: {dailySummary.activeStreak} dias</span>
+                                <span>Taxa: {dailySummary.completionRate.toFixed(0)}%</span>
+                            </div>
                         </div>
 
                         <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                             <div className="bg-white p-4 border rounded-lg">
-                                <h4 className="mb-2 font-medium text-gray-900">🏅 Medalhas Recentes</h4>
+                                <h4 className="mb-2 font-medium text-gray-900">🏅 Conquistas Recentes</h4>
                                 <ul className="space-y-1 text-gray-600 text-sm">
-                                    {dailySummary.activeStreak >= 5 && (
-                                        <li>• 5 dias perfeitos seguidos</li>
+                                    {dailySummary.activeStreak >= 7 && (
+                                        <li>• 🔥 Mestre dos Streaks (7+ dias)</li>
                                     )}
-                                    {dailySummary.completionRate >= 80 && (
-                                        <li>• Dia quase perfeito!</li>
+                                    {dailySummary.activeStreak >= 5 && dailySummary.activeStreak < 7 && (
+                                        <li>• 🔥 5 dias perfeitos seguidos</li>
                                     )}
-                                    {goals.filter(goal => goal.status === "COMPLETED").length > 0 && (
-                                        <li>• Primeira meta concluída</li>
+                                    {dailySummary.completionRate >= 90 && (
+                                        <li>• 🎯 Dia quase perfeito! (90%+)</li>
                                     )}
-                                    {habitsAnalytics?.completionRate && habitsAnalytics.completionRate >= 70 && (
-                                        <li>• Hábito consistente</li>
+                                    {dailySummary.completionRate >= 80 && dailySummary.completionRate < 90 && (
+                                        <li>• 💪 Dia produtivo! (80%+)</li>
+                                    )}
+                                    {/* Conquistas baseadas nos 4 tipos de tarefas */}
+                                    {dailySummary.completedGoals.length >= 3 && (
+                                        <li>• 🎯 Conquistador de Metas (3+ concluídas)</li>
+                                    )}
+                                    {dailySummary.completedGoals.length > 0 && dailySummary.completedGoals.length < 3 && (
+                                        <li>• 🎯 Primeira meta concluída</li>
+                                    )}
+                                    {habitsAnalytics?.completionRate && habitsAnalytics.completionRate >= 80 && (
+                                        <li>• 🏃 Hábito excepcional (80%+)</li>
+                                    )}
+                                    {habitsAnalytics?.completionRate && habitsAnalytics.completionRate >= 70 &&
+                                        habitsAnalytics.completionRate < 80 && (
+                                            <li>• 🏃 Hábito consistente (70%+)</li>
+                                        )}
+                                    {dailySummary.breakdown.dailies.completed === dailySummary.breakdown.dailies.total &&
+                                        dailySummary.breakdown.dailies.total > 0 && (
+                                            <li>• 📅 Dia perfeito nas diárias!</li>
+                                        )}
+                                    {dailySummary.breakdown.todos.completed >= 5 && (
+                                        <li>• ✅ Mestre das Tarefas (5+ concluídas)</li>
+                                    )}
+                                    {dailySummary.breakdown.todos.completed > 0 && dailySummary.breakdown.todos.completed < 5 && (
+                                        <li>• ✅ Primeira tarefa concluída</li>
+                                    )}
+                                    {dailySummary.completedGoals.length >= 1 && dailySummary.inProgressGoals.length >= 2 && (
+                                        <li>• 🎯 Equilibrista (1+ meta + 2+ ativas)</li>
+                                    )}
+                                    {dailySummary.breakdown.dailies.completed >= 3 && (
+                                        <li>• 📅 Especialista em Rotina (3+ diárias)</li>
                                     )}
                                 </ul>
+                                {(!dailySummary.activeStreak || dailySummary.activeStreak < 5) &&
+                                    dailySummary.completionRate < 80 &&
+                                    goals.filter(goal => goal.status === "COMPLETED").length === 0 && (
+                                        <p className="mt-2 text-gray-500 text-xs italic">Continue praticando para desbloquear medalhas! 💪</p>
+                                    )}
                             </div>
 
                             <div className="bg-white p-4 border rounded-lg">
                                 <h4 className="mb-2 font-medium text-gray-900">🎯 Próximas Conquistas</h4>
                                 <ul className="space-y-1 text-gray-600 text-sm">
                                     {dailySummary.activeStreak < 7 && (
-                                        <li>• 7 dias seguidos ({7 - dailySummary.activeStreak} dias restantes)</li>
+                                        <li>• 🔥 7 dias seguidos (+{7 - dailySummary.activeStreak} dias)</li>
                                     )}
-                                    {dailySummary.completionRate < 100 && (
-                                        <li>• Dia 100% perfeito</li>
+                                    {dailySummary.activeStreak < 5 && dailySummary.activeStreak >= 3 && (
+                                        <li>• 🔥 5 dias perfeitos (+{5 - dailySummary.activeStreak} dias)</li>
+                                    )}
+                                    {dailySummary.completionRate < 90 && (
+                                        <li>• 🎯 Dia 90% perfeito (+{Math.ceil(90 - dailySummary.completionRate)}%)</li>
+                                    )}
+                                    {dailySummary.completionRate < 100 && dailySummary.completionRate >= 90 && (
+                                        <li>• 🎯 Dia 100% perfeito (+{Math.ceil(100 - dailySummary.completionRate)}%)</li>
                                     )}
                                     {goals.filter(goal => goal.status === "COMPLETED").length < 5 && (
-                                        <li>• 5 metas concluídas</li>
+                                        <li>• 🎯 5 metas concluídas (+{5 - goals.filter(goal => goal.status === "COMPLETED").length} restantes)</li>
+                                    )}
+                                    {goals.filter(goal => goal.status === "COMPLETED").length < 3 &&
+                                        goals.filter(goal => goal.status === "COMPLETED").length > 0 && (
+                                            <li>• 🎯 3 metas concluídas (+{3 - goals.filter(goal => goal.status === "COMPLETED").length} restantes)</li>
+                                        )}
+                                    {habitsAnalytics?.completionRate && habitsAnalytics.completionRate < 80 && (
+                                        <li>• 🏃 Hábito excepcional (+{Math.ceil(80 - habitsAnalytics.completionRate)}%)</li>
+                                    )}
+                                    {dailySummary.breakdown.dailies.completed < dailySummary.breakdown.dailies.total && (
+                                        <li>• 📅 Completar todas as diárias (+{dailySummary.breakdown.dailies.total - dailySummary.breakdown.dailies.completed} restantes)</li>
                                     )}
                                 </ul>
+                                {dailySummary.activeStreak >= 7 &&
+                                    dailySummary.completionRate >= 90 &&
+                                    goals.filter(goal => goal.status === "COMPLETED").length >= 5 && (
+                                        <p className="mt-2 text-green-600 text-xs italic">🎉 Você desbloqueou todas as conquistas básicas! Continue evoluindo! 🚀</p>
+                                    )}
                             </div>
                         </div>
                     </div>

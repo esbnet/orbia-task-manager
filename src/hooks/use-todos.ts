@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import type { Todo } from "@/types";
 
 export const todoKeys = {
@@ -20,7 +21,9 @@ export function useTodos() {
       const data = await response.json();
       return data.todos || [];
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -115,6 +118,8 @@ export function useCompleteTodo() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: todoKeys.all });
+      // Invalidate cache do gráfico de evolução semanal
+      queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
     },
   });
 }

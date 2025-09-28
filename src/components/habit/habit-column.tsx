@@ -1,15 +1,16 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAvailableHabits, useCreateHabit, useDeleteHabit, useUpdateHabit } from "@/hooks/use-habits";
-import { AlertTriangle, Dumbbell, Plus, TrendingUp } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAvailableHabits, useCreateHabit, useDeleteHabit, useRegisterHabit, useUpdateHabit } from "@/hooks/use-habits";
+import { Dumbbell, Info, Plus, RefreshCcw, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
+import { useMultipleHabitStats } from "@/hooks/use-habit-stats";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "../ui/badge";
 import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
 
@@ -18,32 +19,20 @@ export function HabitColumn() {
 	const createHabitMutation = useCreateHabit();
 	const updateHabitMutation = useUpdateHabit();
 	const deleteHabitMutation = useDeleteHabit();
+	const registerHabitMutation = useRegisterHabit();
 
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
-	const [habitStats, setHabitStats] = useState<Record<string, Habit>>({});
-
 	// Usar dados do React Query
 	const availableHabits = habitsData?.availableHabits || [];
 	const completedInCurrentPeriod = habitsData?.completedInCurrentPeriod || [];
 	const totalHabits = habitsData?.totalHabits || 0;
 
-	// Função para carregar estatísticas de um hábito específico
-	const loadHabitStats = useCallback(async (habitId: string) => {
-		try {
-			const response = await fetch(`/api/habits/${habitId}/stats`);
-			if (response.ok) {
-				const stats = await response.json();
-				setHabitStats(prev => ({
-					...prev,
-					[habitId]: stats,
-				}));
-			}
-		} catch (error) {
-		}
-	}, []);
+	// Carregar estatísticas para todos os hábitos disponíveis
+	const habitIds = availableHabits.map(habit => habit.id);
+	const { data: habitStats = {} } = useMultipleHabitStats(habitIds);
 
 	const handleCreateHabit = async (habitData: any) => {
 		try {
@@ -94,8 +83,8 @@ export function HabitColumn() {
 		habitId: string,
 		status: Habit["status"],
 	) => {
-		const habit = availableHabits.find((h) => h.id === habitId) || 
-						 completedInCurrentPeriod.find((h) => h.id === habitId);
+		const habit = availableHabits.find((h) => h.id === habitId) ||
+			completedInCurrentPeriod.find((h) => h.id === habitId);
 		if (habit) {
 			try {
 				await updateHabitMutation.mutateAsync({
@@ -121,36 +110,21 @@ export function HabitColumn() {
 		setEditingHabit(null);
 	};
 
-	const handleRegisterHabit = async (habitId: string, note?: string,) => {
+	const handleRegisterHabit = async (habitId: string, note?: string) => {
 		try {
-			const response = await fetch(`/api/habits/${habitId}/register`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ note }),
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to register habit');
-			}
-
-			const result = await response.json();
+			const result = await registerHabitMutation.mutateAsync({ id: habitId, note });
 			const habit = availableHabits.find(h => h.id === habitId);
 
 			toast.success(`Hábito "${habit?.title}" registrado! Total: ${result.currentCount}`);
-
-			// Carregar estatísticas atualizadas
-			await loadHabitStats(habitId);
 		} catch (error) {
 			toast.error('Erro ao registrar hábito. Tente novamente.');
 		}
 	};
 
 	return (
-		<div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border border-green-100/50 dark:border-green-800/30">
+		<div className="flex flex-col gap-4 bg-gradient-to-br from-green-50/30 dark:from-green-950/20 to-emerald-50/30 dark:to-emerald-950/20 p-4 border border-green-100/50 dark:border-green-800/30 rounded-xl">
 			{/* Header */}
-			<Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/50 dark:to-blue-900/50 border-green-200 dark:border-green-700">
+			<Card className="bg-gradient-to-r from-green-50 dark:from-green-900/50 to-blue-50 dark:to-blue-900/50 border-green-200 dark:border-green-700">
 				<CardHeader className="pb-3">
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
@@ -159,23 +133,34 @@ export function HabitColumn() {
 								Hábitos
 							</CardTitle>
 						</div>
-						<Button
-							onClick={() => setIsFormOpen(true)}
-							size="sm"
-							className="bg-green-600 hover:bg-green-700 text-white"
-
-						>
-							<Plus className="mr-1 w-4 h-4" />
-							Novo Hábito
-						</Button>
+						<div className="flex items-center gap-2">
+							<Button
+								onClick={() => setIsFormOpen(true)}
+								size="sm"
+								className="bg-green-600 hover:bg-green-700 text-white"
+							>
+								<Plus className="mr-1 w-4 h-4" />
+								Novo Hábito
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<div className="flex items-center gap-4 text-green-700 text-sm">
+					<div className="flex justify-between items-center gap-4 text-green-700 text-sm">
 						<div className="flex items-center gap-1">
 							<TrendingUp className="w-4 h-4" />
 							<span>{availableHabits.length} hábitos ativos</span>
 						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Info className="w-4 h-4 text-green-500 hover:text-green-700 transition-colors cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="end" className="max-w-xs">
+								<h1><RefreshCcw className="inline-block mr-1 w-3 h-3" />Foco: consistência</h1>
+								<p>Comportamentos repetitivos que você deseja cultivar ou eliminar. São ações realizadas diariamente para criar consistência e disciplina na sua rotina.</p>
+							</TooltipContent>
+						</Tooltip>
+
 					</div>
 				</CardContent>
 			</Card>
@@ -206,12 +191,12 @@ export function HabitColumn() {
 									currentCount={stats?.currentPeriod?.period.count || 0}
 									target={stats?.currentPeriod?.period.target}
 									todayCount={stats?.todayEntries || 0}
+									streak={stats?.streak}
 								/>
 							);
 						})}
-				</div>
+					</div>
 				)}
-
 
 				{!isLoading && totalHabits === 0 && (
 					<Card className="bg-gray-50 border-gray-300 border-dashed">

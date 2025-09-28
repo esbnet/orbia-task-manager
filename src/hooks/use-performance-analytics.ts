@@ -28,10 +28,35 @@ export interface CategoryPerformance {
   totalTasks: number;
 }
 
+export interface TagAnalysis {
+  tag: string;
+  color: string;
+  count: number;
+  efficiency: number;
+  trend: "up" | "down" | "stable";
+}
+
+export interface PriorityAnalysis {
+  priority: string;
+  count: number;
+  efficiency: number;
+  trend: "up" | "down" | "stable";
+}
+
+export interface DifficultyAnalysis {
+  difficulty: string;
+  count: number;
+  efficiency: number;
+  trend: "up" | "down" | "stable";
+}
+
 export interface PerformanceAnalyticsData {
   metrics: PerformanceMetrics;
   timeSeries: TimeSeriesPoint[];
   categoryPerformance: CategoryPerformance[];
+  tagAnalysis: TagAnalysis[];
+  priorityAnalysis: PriorityAnalysis[];
+  difficultyAnalysis: DifficultyAnalysis[];
   insights: Array<{
     type: "positive" | "improvement" | "warning";
     title: string;
