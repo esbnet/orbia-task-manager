@@ -200,7 +200,7 @@ export function WeeklyEvolutionChart() {
                         <div className="text-center">
                             <div className="mx-auto mb-3 text-red-500">
                                 <svg className="mx-auto w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <p className="mb-3 text-red-600">Erro ao carregar dados da evolução semanal</p>

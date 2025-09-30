@@ -10,8 +10,8 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useTaskCounts } from "@/hooks/use-task-counts";
 import { useState } from "react";
+import { useTaskCounts } from "@/hooks/use-task-counts";
 
 type ColumnType = "all" | "habits" | "dailies" | "todos" | "goals";
 
@@ -95,7 +95,7 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
               className={`flex xl:flex-1 p-1 rounded-full items-center gap-1 h-6 text-xs ${filter.color} ${activeFilter === filter.id ? "w-auto px-2" : "w-6"}`}
             >
               <Icon className="w-3 h-3" />
-              <span className="hidden xl:inline">{filter.label}</span>
+              {/* <span className="hidden xl:inline">{filter.label}</span> */}
             </Button>
             {count > 0 && (
               <Badge

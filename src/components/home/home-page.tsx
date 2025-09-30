@@ -1,17 +1,17 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, HeartPulse } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/hooks/use-translation";
-import { useUserConfig } from "@/hooks/use-user-config";
-import { useSession } from "next-auth/react";
-import { WeeklyEvolutionChart } from '../dashboard/weekly-evolution-chart';
+import { ClientProviders } from '../providers/client-providers';
 import { ColumnFilter } from '../navigation/column-filter';
 import { QuickMenu } from '../navigation/quick-menu';
-import { ClientProviders } from '../providers/client-providers';
 import { TasksOverviewDialog } from './tasks-overview-dialog';
+import { WeeklyEvolutionChart } from '../dashboard/weekly-evolution-chart';
+import { useSession } from "next-auth/react";
+import { useTranslation } from "@/hooks/use-translation";
+import { useUserConfig } from "@/hooks/use-user-config";
 
 export default function HomePage() {
     const { data: session, status } = useSession();
@@ -47,11 +47,10 @@ export default function HomePage() {
     return [
         <section className="relative flex flex-col mx-auto p-6 min-h-screen">
             {/* Header Section */}
-            <div className="flex shadow-sm mb-8 p-8 border rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
-                <div className="flex justify-between items-center w-full">
-                    <div className="flex-1 font-bold text-4xl md:text-6xl text-center">
-                        {t("home.title")}
-                    </div>
+            <div className="flex py-2 rounded-lg animate-[fadeIn_1s_ease-in-out_forwards]">
+                <div className="flex flex-1 items-center gap-2 font-bold text-4xl md:text-6xl">
+                    {t("home.title")}
+                    <HeartPulse className="w-12 h-12 font-bold text-red-500 animate-caret-blink" />
                 </div>
             </div>
 
