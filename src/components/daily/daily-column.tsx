@@ -1,4 +1,6 @@
+import { CalendarCheck, Info, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Daily, DailyDifficulty } from "@/types/daily";
 import {
 	Dialog,
 	DialogContent,
@@ -9,15 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
-import type { Daily, DailyDifficulty } from "@/types/daily";
-import { CalendarCheck, Info, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/hooks/use-translation";
-import { toast } from "sonner";
 import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
+import { toast } from "sonner";
+import { useTranslation } from "@/hooks/use-translation";
 
 const defaultDaily: Daily = {
 	id: "",

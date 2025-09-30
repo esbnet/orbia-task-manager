@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
 	Archive,
@@ -13,16 +12,17 @@ import {
 	Tag,
 	TrendingUp
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { memo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 
 const priorityColors = {
 	"Baixa": "border-gray-300 text-gray-600",
@@ -110,12 +110,14 @@ export const HabitCard = memo(function HabitCard({
 	};
 
 	const handleComplete = async () => {
+		if (completeLoading.isLoading) return;
+
 		try {
 			await completeLoading.executeAsync(async () => {
 				// Chama o callback que já está conectado com a mutation no habit-column
-				onStatusChange?.(habit.id, "Completo");
-				toast.success(`Hábito "${habit.title}" arquivado com sucesso!`);
+				await onStatusChange?.(habit.id, "Completo");
 			});
+			toast.success(`Hábito "${habit.title}" arquivado com sucesso!`);
 		} catch (error) {
 			toast.error("Erro ao arquivar hábito. Tente novamente.");
 		}

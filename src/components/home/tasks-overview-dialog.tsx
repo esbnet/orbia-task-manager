@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle, CalendarCheck, CheckCircle, Clock, Dumbbell, ListChecks, Target } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -7,21 +8,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, CalendarCheck, CheckCircle, Clock, Dumbbell, ListChecks, Target } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTodayTasks } from "@/hooks/use-today-tasks";
 import { useTranslation } from "@/hooks/use-translation";
-
-interface TaskItem {
-    id: string;
-    title: string;
-    type: "habit" | "daily" | "todo" | "goal";
-    status: string;
-    isOverdue: boolean;
-    dueDate?: Date;
-}
 
 interface TasksOverviewDialogProps {
     open: boolean;
@@ -30,101 +21,11 @@ interface TasksOverviewDialogProps {
 
 export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogProps) {
     const { t } = useTranslation();
-    const [tasks, setTasks] = useState<TaskItem[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const { categorizedTasks, isLoading, overdueCount, pendingCount, totalCount } = useTodayTasks();
 
-    useEffect(() => {
-        if (open) {
-            fetchAllTasks();
-        }
-    }, [open]);
-
-    const fetchAllTasks = async () => {
-        setIsLoading(true);
-        try {
-            const [habitsRes, dailiesRes, todosRes, goalsRes] = await Promise.all([
-                fetch("/api/habits"),
-                fetch("/api/daily"),
-                fetch("/api/todos"),
-                fetch("/api/goals"),
-            ]);
-
-            const [habitsData, dailiesData, todosData, goalsData] = await Promise.all([
-                habitsRes.json(),
-                dailiesRes.json(),
-                todosRes.json(),
-                goalsRes.json(),
-            ]);
-
-            const habits = habitsData.habits || [];
-            const dailies = dailiesData.daily || [];
-            const todos = todosData.todos || [];
-            const goals = Array.isArray(goalsData) ? goalsData : [];
-
-            const allTasks: TaskItem[] = [];
-
-            // Process habits
-            habits.forEach((habit: any) => {
-                const isOverdue = habit.status === "Em Andamento" && habit.todayEntries === 0;
-                allTasks.push({
-                    id: habit.id,
-                    title: habit.title,
-                    type: "habit",
-                    status: habit.status,
-                    isOverdue,
-                });
-            });
-
-            // Process dailies
-            dailies.forEach((daily: any) => {
-                const today = new Date().toDateString();
-                const lastCompleted = daily.lastCompletedDate ? new Date(daily.lastCompletedDate).toDateString() : null;
-                const isOverdue = !lastCompleted || lastCompleted !== today;
-                allTasks.push({
-                    id: daily.id,
-                    title: daily.title,
-                    type: "daily",
-                    status: "Ativa", // Dailies don't have status, assume active
-                    isOverdue,
-                });
-            });
-
-            // Process todos
-            todos.forEach((todo: any) => {
-                const isOverdue = !todo.lastCompletedDate; // If not completed, consider overdue
-                allTasks.push({
-                    id: todo.id,
-                    title: todo.title,
-                    type: "todo",
-                    status: todo.lastCompletedDate ? "Completa" : "Pendente",
-                    isOverdue,
-                });
-            });
-
-            // Process goals
-            goals.forEach((goal: any) => {
-                const isOverdue = goal.status === "IN_PROGRESS" &&
-                    new Date(goal.targetDate) < new Date();
-                allTasks.push({
-                    id: goal.id,
-                    title: goal.title,
-                    type: "goal",
-                    status: goal.status,
-                    isOverdue,
-                    dueDate: new Date(goal.targetDate),
-                });
-            });
-
-            setTasks(allTasks);
-        } catch (error) {
-            console.error("Erro ao buscar tarefas:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const overdueTasks = tasks.filter(task => task.isOverdue);
-    const pendingTasks = tasks.filter(task => !task.isOverdue && task.status === "IN_PROGRESS");
+    const overdueTasks = categorizedTasks.overdue || [];
+    const pendingTasks = categorizedTasks.pending || [];
+    const allTasks = Object.values(categorizedTasks).flat();
 
     const getTaskIcon = (type: string) => {
         switch (type) {
@@ -213,7 +114,7 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
                                 </div>
                             )}
 
-                            {tasks.length === 0 && (
+                            {allTasks.length === 0 && (
                                 <div className="py-8 text-center">
                                     <CheckCircle className="mx-auto mb-4 w-12 h-12 text-green-500" />
                                     <p className="text-gray-600">{t("tasks.noActiveTasks")}</p>
