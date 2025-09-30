@@ -1,39 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from "@/auth";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 import { PrismaClient } from "@prisma/client";
+import { auth } from "@/auth";
 
 const prisma = new PrismaClient();
-
-// Calcula a data de fim do próximo período baseado no tipo de repetição
-function calculateNextPeriodEnd(repeatType: string, startDate: Date, frequency: number): Date {
-    const endDate = new Date(startDate);
-
-    switch (repeatType) {
-        case "Diariamente":
-            endDate.setDate(endDate.getDate() + frequency);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case "Semanalmente":
-            endDate.setDate(endDate.getDate() + (7 * frequency));
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case "Mensalmente":
-            endDate.setMonth(endDate.getMonth() + frequency);
-            endDate.setDate(0); // Último dia do mês
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case "Anualmente":
-            endDate.setFullYear(endDate.getFullYear() + frequency);
-            endDate.setMonth(11, 31); // 31 de dezembro
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        default:
-            endDate.setHours(23, 59, 59, 999);
-    }
-
-    return endDate;
-}
 
 export async function POST(
     request: NextRequest,
@@ -107,8 +78,8 @@ export async function POST(
         }
 
         // Criar novo período para o próximo ciclo
-        const nextPeriodStart = new Date(completedAt);
-        const nextPeriodEnd = calculateNextPeriodEnd(daily.repeatType, nextPeriodStart, daily.repeatFrequency);
+        const nextPeriodStart = DailyPeriodCalculator.calculateNextStartDate(daily.repeatType as "Diariamente" | "Semanalmente" | "Mensalmente" | "Anualmente", completedAt, daily.repeatFrequency);
+        const nextPeriodEnd = DailyPeriodCalculator.calculatePeriodEnd(daily.repeatType as "Diariamente" | "Semanalmente" | "Mensalmente" | "Anualmente", nextPeriodStart, daily.repeatFrequency);
 
         const newPeriod = await prisma.dailyPeriod.create({
             data: {

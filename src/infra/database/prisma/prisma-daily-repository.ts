@@ -165,15 +165,21 @@ export class PrismaDailyRepository implements DailyRepository {
 				break;
 			case "Semanalmente":
 				nextStart.setDate(nextStart.getDate() + (7 * frequency));
+				nextStart.setHours(0, 0, 0, 0);
 				break;
 			case "Mensalmente":
 				nextStart.setMonth(nextStart.getMonth() + frequency);
+				nextStart.setDate(1); // Primeiro dia do mês
+				nextStart.setHours(0, 0, 0, 0);
 				break;
 			case "Anualmente":
 				nextStart.setFullYear(nextStart.getFullYear() + frequency);
+				nextStart.setMonth(0, 1); // 1 de janeiro
+				nextStart.setHours(0, 0, 0, 0);
 				break;
 			default:
 				nextStart.setDate(nextStart.getDate() + frequency);
+				nextStart.setHours(0, 0, 0, 0);
 		}
 		return nextStart;
 	}

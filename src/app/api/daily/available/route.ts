@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from "@/auth";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 import { PrismaClient } from "@prisma/client";
+import { auth } from "@/auth";
 
 const prisma = new PrismaClient();
 
@@ -66,12 +67,15 @@ export async function GET(request: NextRequest) {
             // Se não tem período ativo mas deveria ter (baseado na data de início e tipo de repetição)
             else if (shouldHaveActivePeriod(daily)) {
                 // Criar período automaticamente
-                const endDate = calculatePeriodEnd(daily.repeatType, now, daily.repeatFrequency);
+                const nextStartDate = daily.lastCompletedDate
+                    ? DailyPeriodCalculator.calculateNextStartDate(daily.repeatType as "Diariamente" | "Semanalmente" | "Mensalmente" | "Anualmente", new Date(daily.lastCompletedDate), daily.repeatFrequency)
+                    : now;
+                const endDate = DailyPeriodCalculator.calculatePeriodEnd(daily.repeatType as "Diariamente" | "Semanalmente" | "Mensalmente" | "Anualmente", nextStartDate, daily.repeatFrequency);
                 const newPeriod = await prisma.dailyPeriod.create({
                     data: {
                         dailyId: daily.id,
                         periodType: daily.repeatType,
-                        startDate: now,
+                        startDate: nextStartDate,
                         endDate,
                         isCompleted: false,
                         isActive: true,
@@ -149,6 +153,36 @@ function shouldHaveActivePeriod(daily: any): boolean {
         default:
             return true;
     }
+}
+
+// Calcula a próxima data de início baseada no tipo de repetição e última data de conclusão
+function calculateNextStartDate(repeatType: string, lastCompleted: Date, frequency: number): Date {
+    const nextStart = new Date(lastCompleted);
+
+    switch (repeatType) {
+        case "Diariamente":
+            nextStart.setDate(lastCompleted.getDate() + frequency);
+            nextStart.setHours(0, 0, 0, 0);
+            break;
+        case "Semanalmente":
+            nextStart.setDate(lastCompleted.getDate() + (7 * frequency));
+            nextStart.setHours(0, 0, 0, 0);
+            break;
+        case "Mensalmente":
+            nextStart.setMonth(lastCompleted.getMonth() + frequency);
+            nextStart.setDate(1); // Primeiro dia do mês
+            nextStart.setHours(0, 0, 0, 0);
+            break;
+        case "Anualmente":
+            nextStart.setFullYear(lastCompleted.getFullYear() + frequency);
+            nextStart.setMonth(0, 1); // 1 de janeiro
+            nextStart.setHours(0, 0, 0, 0);
+            break;
+        default:
+            nextStart.setHours(0, 0, 0, 0);
+    }
+
+    return nextStart;
 }
 
 // Calcula a data de fim do período baseado no tipo de repetição
