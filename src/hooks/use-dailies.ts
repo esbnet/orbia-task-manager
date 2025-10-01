@@ -105,6 +105,9 @@ export function useCompleteDaily() {
 			// Invalidate cache de contagens de tarefas
 			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 
@@ -138,6 +141,8 @@ export function useCreateDaily() {
 			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
 			// Invalidate cache de contagens de tarefas
 			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 			// Invalidate cache de metas para atualizar tarefas disponíveis
 			queryClient.invalidateQueries({ queryKey: ["goals"] });
 			// Invalidate cache de tarefas anexadas
@@ -173,6 +178,10 @@ export function useUpdateDaily() {
 			// Update cache
 			queryClient.setQueryData(dailyKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 		},
 	});
 }
@@ -197,6 +206,8 @@ export function useDeleteDaily() {
 			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
 			// Invalidate cache de contagens de tarefas
 			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 		},
 	});
 }

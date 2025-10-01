@@ -1,9 +1,9 @@
 import type { Daily } from "@/domain/entities/daily";
 import type { DailyRepository } from "@/domain/repositories/all-repository";
-import { PrismaDailyLogRepository } from './prisma-daily-log-repository';
-import { PrismaDailyPeriodRepository } from './prisma-daily-period-repository';
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
+import { PrismaDailyLogRepository } from './prisma-daily-log-repository';
+import { PrismaDailyPeriodRepository } from './prisma-daily-period-repository';
 
 export class PrismaDailyRepository implements DailyRepository {
 	private dailyPeriodRepository = new PrismaDailyPeriodRepository();
@@ -383,6 +383,19 @@ export class PrismaDailyRepository implements DailyRepository {
 				userId,
 			},
 		});
+
+		// Criar período inicial ativo para a diária
+		const now = new Date();
+		const endDate = this.calculatePeriodEnd(data.repeat.type, now, data.repeat.frequency);
+		await this.dailyPeriodRepository.create({
+			dailyId: daily.id,
+			periodType: data.repeat.type,
+			startDate: now,
+			endDate,
+			isCompleted: false,
+			isActive: true,
+		});
+
 		return this.toDomain(daily);
 	}
 

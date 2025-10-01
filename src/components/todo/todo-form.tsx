@@ -99,6 +99,14 @@ export function TodoForm({
 					startDate,
 					tags,
 				} as Omit<Todo, "id" | "createdAt">);
+
+				// ✅ Limpar formulário após criação bem-sucedida
+				setTitle("");
+				setObservations("");
+				setDifficult("Fácil");
+				setStartDate(new Date());
+				setTags([]);
+
 				setInternalOpen(false);
 				if (onCancel) onCancel();
 				return;
@@ -284,7 +292,7 @@ export function TodoForm({
 						</div>
 					</form>
 					<div className="flex justify-right items-center">
-						<DialogConfirmDelete id={todo.id} />
+						<DialogConfirmDelete id={todo.id} onDeleted={onCancel} />
 					</div>
 				</DialogContent>
 			</Dialog>
@@ -292,9 +300,10 @@ export function TodoForm({
 	);
 }
 
-function DialogConfirmDelete({ id }: { id: string }) {
+function DialogConfirmDelete({ id, onDeleted }: { id: string; onDeleted?: () => void }) {
 	const deleteTodoMutation = useDeleteTodo();
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [open, setOpen] = useState(false);
 
 	const onDelete = async () => {
 		if (isDeleting) return;
@@ -302,13 +311,15 @@ function DialogConfirmDelete({ id }: { id: string }) {
 		try {
 			await deleteTodoMutation.mutateAsync(id);
 			toast.success("Tarefa excluída com sucesso!");
+			setOpen(false); // Fechar o dialog após exclusão bem-sucedida
+			onDeleted?.(); // Notificar componente pai para fechar o form
 		} finally {
 			setIsDeleting(false);
 		}
 	};
 
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				<div className="flex justify-center items-center mt-4 w-full">
 					<Button

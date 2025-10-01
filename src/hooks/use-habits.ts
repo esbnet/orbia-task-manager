@@ -143,6 +143,10 @@ export function useUpdateHabit() {
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
 			// Invalidate hábitos disponíveis para refletir mudanças de status
 			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito atualizado
+			queryClient.removeQueries({ queryKey: ["habit-stats", variables.id] });
 			// Invalidate tarefas do dia para atualizar coração
 			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 			// Invalidate cache de contagens de tarefas para atualizar badges de filtro
@@ -170,6 +174,12 @@ export function useDeleteHabit() {
 			queryClient.removeQueries({ queryKey: habitKeys.detail(id) });
 			// Invalidate lista
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate hábitos disponíveis (usado pelo habit-column)
+			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito excluído
+			queryClient.removeQueries({ queryKey: ["habit-stats", id] });
 			// Invalidate tarefas do dia para atualizar coração
 			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 			// Invalidate cache de contagens de tarefas para atualizar badges de filtro
@@ -199,6 +209,10 @@ export function useCompleteHabit() {
 			// Update cache
 			queryClient.setQueryData(habitKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito
+			queryClient.removeQueries({ queryKey: ["habit-stats", id] });
 			// Invalidate tarefas do dia para atualizar coração
 			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 			// Invalidate cache de contagens de tarefas
@@ -246,6 +260,10 @@ export function useRegisterHabit() {
 			queryClient.invalidateQueries({ queryKey: habitKeys.detail(variables.id) });
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito
+			queryClient.removeQueries({ queryKey: ["habit-stats", variables.id] });
 			// Invalidate tarefas do dia para atualizar coração
 			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 			// Invalidate cache de contagens de tarefas

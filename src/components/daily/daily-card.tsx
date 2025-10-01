@@ -43,8 +43,7 @@ export function DailyCard({
 	daily,
 	onEdit,
 	onComplete,
-	isCompleted = false,
-	nextAvailableAt
+	isCompleted = false
 }: DailyCardProps) {
 	const completeLoading = useButtonLoading();
 	const [isCompleting, setIsCompleting] = useState(false);
@@ -142,11 +141,62 @@ export function DailyCard({
 	const calculatedNextAvailableAt = calculateNextAvailableDate();
 
 	return (
-		<Card className={`hover:shadow-md transition-shadow duration-200 ${(completeLoading.isLoading || isCompleting) ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="">
-				<div className="flex justify-between items-start gap-3">
-					<div className="flex-1 min-w-0">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
+		<Card className={`hover:shadow-md transition-shadow duration-200 relative overflow-hidden ${(completeLoading.isLoading || isCompleting) ? "opacity-50 pointer-events-none" : ""}`}>
+			<CardHeader className="pb-1 sm:pb-2">
+				{/* Layout MOBILE - Ultra-compacto */}
+				<div className="sm:hidden block">
+					<div className="flex items-start">
+						<div className="flex-1 pr-1 min-w-0">
+							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
+								{daily.title}
+							</CardTitle>
+						</div>
+						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
+							{!isCompleted && (
+								<Button
+									className="hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full w-5 h-5 text-amber-600"
+									title={t("actions.complete")}
+									onClick={handleComplete}
+									size="icon"
+									variant="ghost"
+									disabled={completeLoading.isLoading || isCompleting}
+								>
+									{(completeLoading.isLoading || isCompleting) ? (
+										<LoaderCircle className="w-2.5 h-2.5 text-amber-600 animate-spin" />
+									) : (
+										<CheckCircle className="w-2.5 h-2.5" />
+									)}
+								</Button>
+							)}
+
+							{onEdit && (
+								<Button
+									className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+									title={t("actions.edit")}
+									onClick={() => onEdit(daily)}
+									variant="ghost"
+									size="icon"
+								>
+									<Edit className="w-2.5 h-2.5" />
+								</Button>
+							)}
+
+							<Button
+								size="sm"
+								variant="ghost"
+								onClick={() => setIsExpanded(!isExpanded)}
+								className="p-0 w-5 h-5"
+							>
+								{isExpanded ? <ChevronDown className="w-2.5 h-2.5 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-2.5 h-2.5 rotate-0 transition-all duration-200" />}
+							</Button>
+						</div>
+					</div>
+				</div>
+
+				{/* Layout DESKTOP - título e botões na mesma linha */}
+				<div className="hidden sm:flex justify-between items-start gap-1">
+					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
+						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
 							{daily.title}
 						</CardTitle>
 					</div>
@@ -154,7 +204,7 @@ export function DailyCard({
 					<div className="flex flex-shrink-0 items-center gap-1">
 						{!isCompleted && (
 							<Button
-								className="hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full w-8 h-8 text-amber-600 hover:text-orange-600"
+								className="flex-shrink-0 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full w-8 h-8 text-amber-600 hover:text-orange-600"
 								title={t("actions.complete")}
 								onClick={handleComplete}
 								size="icon"
@@ -171,7 +221,7 @@ export function DailyCard({
 
 						{onEdit && (
 							<Button
-								className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
+								className="flex-shrink-0 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
 								title={t("actions.edit")}
 								onClick={() => onEdit(daily)}
 								variant="ghost"
@@ -181,14 +231,13 @@ export function DailyCard({
 							</Button>
 						)}
 
-						{/* Botão para expandir/ocultar detalhes */}
 						<Button
 							size="sm"
 							variant="ghost"
 							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-0 w-8 h-8"
+							className="flex-shrink-0 p-1 w-8 h-8"
 						>
-							{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
+							{isExpanded ? <ChevronDown className="w-4 h-4 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-4 h-4 rotate-0 transition-all duration-200" />}
 						</Button>
 					</div>
 				</div>
@@ -198,7 +247,7 @@ export function DailyCard({
 
 				{/* Conteúdo expandido */}
 				{isExpanded && (
-					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">
 						{/* Informações básicas */}
 						<div className="space-y-3">
 							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
@@ -214,13 +263,12 @@ export function DailyCard({
 								</Badge>
 							</div>
 							<div className="flex flex-wrap items-center gap-2">
-
-								<Badge className={`text-xs ${difficulty.color} dark:text-gray-300`}>
-									{difficulty.stars} {getDifficultyLabel(daily.difficulty)}
+								<Badge className={`text-xs ${difficulty.color} dark:text-gray-300 truncate max-w-24`}>
+									<span className="flex-shrink-0">{difficulty.stars}</span> <span className="truncate">{getDifficultyLabel(daily.difficulty)}</span>
 								</Badge>
-								<div className={`flex items-center gap-1 text-sm ${repeatConfig.color} dark:text-gray-300`}>
-									<RepeatIcon className="w-4 h-4" />
-									<span>{getRepeatLabel(daily.repeat?.type || "")}</span>
+								<div className={`flex items-center gap-1 text-sm ${repeatConfig.color} dark:text-gray-300 min-w-0`}>
+									<RepeatIcon className="flex-shrink-0 w-4 h-4" />
+									<span className="truncate">{getRepeatLabel(daily.repeat?.type || "")}</span>
 								</div>
 							</div>
 						</div>
@@ -231,8 +279,11 @@ export function DailyCard({
 								<div className="mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
 									Observações
 								</div>
-								<p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-									{daily.observations}
+								<p className="max-h-16 overflow-hidden text-gray-600 dark:text-gray-400 break-words leading-relaxed">
+									{daily.observations.length > 80
+										? `${daily.observations.substring(0, 80)}...`
+										: daily.observations
+									}
 								</p>
 							</div>
 						)}
@@ -240,24 +291,24 @@ export function DailyCard({
 						{/* Status do período */}
 						{isCompleted && calculatedNextAvailableAt && (
 							<div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-								<Clock className="w-4 h-4" />
-								<span>{t("actions.availableIn")} {formatNextAvailable(calculatedNextAvailableAt)}</span>
+								<Clock className="flex-shrink-0 w-4 h-4" />
+								<span className="break-words">{t("actions.availableIn")} {formatNextAvailable(calculatedNextAvailableAt)}</span>
 							</div>
 						)}
 
 						{/* Próxima disponibilidade */}
 						{!isCompleted && calculatedNextAvailableAt && (
 							<div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm">
-								<Clock className="w-4 h-4" />
-								<span>Próxima: {calculatedNextAvailableAt.toLocaleDateString('pt-BR')}</span>
+								<Clock className="flex-shrink-0 w-4 h-4" />
+								<span className="break-words">Próxima: {calculatedNextAvailableAt.toLocaleDateString('pt-BR')}</span>
 							</div>
 						)}
 
 						{/* Informações da repetição */}
 						{daily.repeat && (
 							<div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-								<RepeatIcon className="w-4 h-4" />
-								<span>
+								<RepeatIcon className="flex-shrink-0 w-4 h-4" />
+								<span className="break-words">
 									{daily.repeat.frequency > 1 ? `A cada ${daily.repeat.frequency} ` : ''}
 									{getRepeatLabel(daily.repeat.type)}
 								</span>
@@ -267,19 +318,20 @@ export function DailyCard({
 						{/* Tags */}
 						{daily.tags && daily.tags.length > 0 && (
 							<div className="flex flex-wrap gap-1">
-								{daily.tags.slice(0, 3).map((tag) => (
+								{daily.tags.slice(0, 2).map((tag) => (
 									<Badge
 										key={tag}
 										variant="secondary"
-										className="bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+										className="bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-600 max-w-20 text-slate-700 dark:text-slate-300 text-xs truncate"
+										title={tag}
 									>
-										<Tag className="mr-1 w-3 h-3" />
-										{tag}
+										<Tag className="flex-shrink-0 mr-1 w-3 h-3" />
+										<span className="truncate">{tag}</span>
 									</Badge>
 								))}
-								{daily.tags.length > 3 && (
+								{daily.tags.length > 2 && (
 									<Badge variant="outline" className="bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs">
-										+{daily.tags.length - 3}
+										+{daily.tags.length - 2}
 									</Badge>
 								)}
 							</div>

@@ -70,7 +70,7 @@ export function DailyForm({
 		daily.startDate || new Date(),
 	);
 	const [repeatType, setRepeatType] = useState<DailyRepeatType>(
-		daily.repeat.type || t('repeat.weekly'),
+		daily.repeat?.type || t('repeat.weekly'),
 	);
 	const [repeatFrequency, setRepeatFrequency] = useState<number>(
 		daily.repeat.frequency || 1,
@@ -102,28 +102,6 @@ export function DailyForm({
 
 		setIsLoading(true);
 		try {
-			// Se for um daily mock, criar um novo daily real
-			if (daily.id.startsWith('mock-')) {
-				if (onSubmit) {
-					await onSubmit({
-						title,
-						observations,
-						tasks,
-						difficulty,
-						startDate,
-						repeat: {
-							type: repeatType as DailyRepeatType,
-							frequency: repeatFrequency,
-						},
-						tags,
-					} as Omit<Daily, "id" | "createdAt">);
-					toast.success(t("messages.dailyCreated"));
-					setInternalOpen(false);
-					if (onCancel) onCancel();
-					return;
-				}
-			}
-
 			// Para todos os casos (criação e edição), usar a função onSubmit se fornecida
 			if (onSubmit) {
 				await onSubmit({
@@ -139,8 +117,19 @@ export function DailyForm({
 					tags,
 				} as Omit<Daily, "id" | "createdAt">);
 
-				// console.log('DailyForm: onSubmit executado com sucesso');
-				toast.success(daily.id.startsWith('mock-') || !daily.id ? t("messages.dailyCreated") : t("messages.dailyUpdated"));
+				// ✅ Limpar formulário após criação bem-sucedida (se não for edição)
+				const isCreating = daily.id.startsWith('mock-') || !daily.id;
+				if (isCreating) {
+					setTitle("");
+					setObservations("");
+					setDifficulty(t('difficulty.easy') as DailyDifficulty);
+					setStartDate(new Date());
+					setRepeatType(t('repeat.weekly') as DailyRepeatType);
+					setRepeatFrequency(1);
+					setTags([]);
+				}
+
+				toast.success(isCreating ? t("messages.dailyCreated") : t("messages.dailyUpdated"));
 				setInternalOpen(false);
 				if (onCancel) onCancel();
 				return;

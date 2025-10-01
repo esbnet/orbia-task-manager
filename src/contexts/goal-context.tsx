@@ -1,8 +1,11 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useCreateGoal, useDeleteGoal, useGoals as useGoalsQuery, useUpdateGoal } from "@/hooks/use-goals";
+import React, { createContext, useContext } from "react";
 
 import type { Goal } from "@/domain/entities/goal";
+import { taskCountKeys } from "@/hooks/use-task-counts";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface GoalFormData {
@@ -27,56 +30,36 @@ interface GoalContextType {
 const GoalContext = createContext<GoalContextType | undefined>(undefined);
 
 export function GoalProvider({ children }: { children: React.ReactNode }) {
-	const [goals, setGoals] = useState<Goal[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const queryClient = useQueryClient();
 
-	const fetchGoals = useCallback(async () => {
-		try {
-			setLoading(true);
-			setError(null);
+	// Usar o hook useGoals para obter dados e estado
+	const { data: goals = [], isLoading: loading, error: queryError } = useGoalsQuery();
 
-			const response = await fetch("/api/goals");
+	// Usar as mutations do React Query
+	const createMutation = useCreateGoal();
+	const updateMutation = useUpdateGoal();
+	const deleteMutation = useDeleteGoal();
 
-			if (!response.ok) {
-				throw new Error("Erro ao carregar metas");
-			}
-
-			const goals = await response.json();
-			setGoals(goals);
-		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "Erro ao carregar metas",
-			);
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+	// Converter erro do React Query para formato compatível
+	const error = queryError?.message || null;
 
 	const createGoal = async (data: GoalFormData) => {
 		try {
-			setError(null);
+			// Converter GoalFormData para o formato esperado pela mutation
+			const goalData = {
+				title: data.title,
+				description: data.description,
+				targetDate: data.targetDate,
+				priority: data.priority,
+				tags: data.tags,
+				status: "IN_PROGRESS" as const,
+				userId: "", // Será preenchido pelo servidor
+				category: "PERSONAL" as const, // Valor padrão
+			};
 
-			const response = await fetch("/api/goals", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					...data,
-					attachedTasks: data.attachedTasks || [],
-				}),
-			});
-
-			if (!response.ok) {
-				throw new Error("Erro ao criar meta");
-			}
-
-			const newGoal = await response.json();
-			setGoals((prev) => [newGoal, ...prev]);
+			await createMutation.mutateAsync(goalData);
 			toast.success("Meta criada com sucesso!");
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Erro ao criar meta");
 			toast.error("Erro ao criar meta");
 			throw err;
 		}
@@ -84,29 +67,15 @@ export function GoalProvider({ children }: { children: React.ReactNode }) {
 
 	const updateGoal = async (id: string, data: Partial<Goal>) => {
 		try {
-			setError(null);
+			await updateMutation.mutateAsync({ id, data });
 
-			const response = await fetch(`/api/goals/${id}`, {
-				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(data),
-			});
+			// Invalidação adicional para garantir que task-counts seja atualizado
+			// especialmente importante quando mudamos o status de IN_PROGRESS para CANCELLED
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 
-			if (!response.ok) {
-				throw new Error("Erro ao atualizar meta");
-			}
-
-			const updatedGoal = await response.json();
-			setGoals((prev) =>
-				prev.map((goal) => (goal.id === id ? updatedGoal : goal)),
-			);
 			toast.success("Meta atualizada com sucesso!");
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "Erro ao atualizar meta",
-			);
 			toast.error("Erro ao atualizar meta");
 			throw err;
 		}
@@ -114,34 +83,22 @@ export function GoalProvider({ children }: { children: React.ReactNode }) {
 
 	const deleteGoal = async (id: string) => {
 		try {
-			setError(null);
+			await deleteMutation.mutateAsync(id);
 
-			const response = await fetch(`/api/goals/${id}`, {
-				method: "DELETE",
-			});
+			// Invalidação adicional para garantir que task-counts seja atualizado
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 
-			if (!response.ok) {
-				throw new Error("Erro ao excluir meta");
-			}
-
-			setGoals((prev) => prev.filter((goal) => goal.id !== id));
 			toast.success("Meta excluída com sucesso!");
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "Erro ao excluir meta",
-			);
 			toast.error("Erro ao excluir meta");
 			throw err;
 		}
 	};
 
 	const refreshGoals = async () => {
-		await fetchGoals();
+		queryClient.invalidateQueries({ queryKey: ["goals"] });
 	};
-
-	useEffect(() => {
-		fetchGoals();
-	}, [fetchGoals]);
 
 	const value: GoalContextType = {
 		goals,

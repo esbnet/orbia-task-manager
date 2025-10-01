@@ -59,14 +59,16 @@ export function useTodayTasks() {
 				});
 			});
 
-			// Processar todos pendentes
+			// Processar todos pendentes (não completados hoje)
 			todos.forEach((todo: any) => {
-				const isOverdue = !todo.lastCompletedDate;
+				const today = new Date().toISOString().split("T")[0];
+				const isCompletedToday = todo.lastCompletedDate === today;
+				const isOverdue = !isCompletedToday;
 				allTasks.push({
 					id: todo.id,
 					title: todo.title,
 					type: "todo",
-					status: todo.lastCompletedDate ? "Completa" : "Pendente",
+					status: isCompletedToday ? "Completa" : "Pendente",
 					isOverdue,
 				});
 			});

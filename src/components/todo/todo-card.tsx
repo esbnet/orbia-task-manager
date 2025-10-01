@@ -62,9 +62,59 @@ export function TodoCard({
 	};
 
 	return (
-		<Card className={`hover:shadow-md transition-shadow duration-200 ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="px-4">
-				<div className="flex justify-between items-start gap-3">
+		<Card className={`hover:shadow-md transition-shadow duration-200 relative overflow-hidden ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
+			<CardHeader className="pb-1 sm:pb-2">
+				{/* Layout MOBILE - Ultra-compacto */}
+				<div className="sm:hidden block">
+					<div className="flex items-start">
+						<div className="flex-1 pr-1 min-w-0">
+							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
+								{todo.title}
+							</CardTitle>
+						</div>
+						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
+							{!isCompleted && (
+								<Button
+									title="Marcar como concluído"
+									variant="ghost"
+									onClick={handleComplete}
+									size="icon"
+									className="hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full w-5 h-5 text-blue-600"
+									disabled={completeLoading.isLoading}
+								>
+									{completeLoading.isLoading ? (
+										<div className="border-2 border-t-transparent border-blue-600 rounded-full w-2.5 h-2.5 animate-spin" />
+									) : (
+										<CheckCircle className="w-2.5 h-2.5" />
+									)}
+								</Button>
+							)}
+
+							{onEdit && (
+								<Button
+									onClick={() => onEdit(todo)}
+									variant="ghost"
+									size="icon"
+									className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+								>
+									<Edit className="w-2.5 h-2.5" />
+								</Button>
+							)}
+
+							<Button
+								size="sm"
+								variant="ghost"
+								onClick={() => setIsExpanded(!isExpanded)}
+								className="p-0 w-5 h-5"
+							>
+								<ChevronDown className={`w-2.5 h-2.5 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+							</Button>
+						</div>
+					</div>
+				</div>
+
+				{/* Layout DESKTOP - título e botões na mesma linha */}
+				<div className="hidden sm:flex justify-between items-start gap-3">
 					<div className="flex-1 min-w-0">
 						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
 							{todo.title}
@@ -113,7 +163,7 @@ export function TodoCard({
 				</div>
 			</CardHeader>
 
-			<CardContent className="px-4 pt-0">
+			<CardContent className="pt-0">
 				{/* Conteúdo expandido */}
 				{isExpanded && (
 					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t">

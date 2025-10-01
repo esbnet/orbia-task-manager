@@ -15,15 +15,15 @@ export class CreateDailyUseCase {
 		const daily = await this.dailyRepository.create({
 			userId: inputDaily.userId,
 			title: inputDaily.title,
-			observations: "",
-			tasks: [],
+			observations: inputDaily.observations || "",
+			tasks: inputDaily.tasks || [],
 			difficulty: (inputDaily.difficulty as DailyDifficulty) ?? "Fácil",
-			startDate: new Date(),
-			repeat: {
+			startDate: inputDaily.startDate || new Date(),
+			repeat: inputDaily.repeat || {
 				type: "Diariamente",
 				frequency: 1,
 			},
-			tags: [],
+			tags: inputDaily.tags || [],
 		});
 
 		return {

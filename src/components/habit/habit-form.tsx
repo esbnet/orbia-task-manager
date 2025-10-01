@@ -27,6 +27,7 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Habit } from "@/domain/entities/habit";
 import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useDeleteHabit } from "@/hooks/use-habits";
 import { useTags } from "@/hooks/use-tags";
 import type { HabitFormData } from "@/types/habit";
 import { useQueryClient } from "@tanstack/react-query";
@@ -56,13 +57,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 		reset: "Diariamente",
 	});
 	const queryClient = useQueryClient();
-
-	// Função para invalidar queries após exclusão
-	const handleDeleteSuccess = () => {
-		queryClient.invalidateQueries({ queryKey: ["habits", "list"] });
-		queryClient.invalidateQueries({ queryKey: ["habits", "detail", habit?.id] });
-		onCancel();
-	};
+	const deleteHabitMutation = useDeleteHabit();
 
 	useEffect(() => {
 		if (habit) {
@@ -95,6 +90,18 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 		if (formData.title.trim()) {
 			await saveLoading.executeAsync(async () => {
 				await onSubmit(formData);
+				// ✅ Limpar formulário após criação bem-sucedida
+				if (!habit) {
+					setFormData({
+						userId: "",
+						title: "",
+						observations: "",
+						difficulty: "Fácil",
+						priority: "Média",
+						tags: [],
+						reset: "Diariamente",
+					});
+				}
 			});
 		}
 	};
@@ -252,7 +259,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 					<div className="flex justify-center items-center mt-4 w-full">
 						<DialogConfirmDelete
 							id={habit.id}
-							onDeleteSuccess={handleDeleteSuccess}
+							onDeleted={onCancel}
 						/>
 					</div>
 				)}
@@ -261,27 +268,18 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 	);
 }
 
-function DialogConfirmDelete({ id, onDeleteSuccess }: { id: string; onDeleteSuccess?: () => void }) {
-	const [isDeleting, setIsDeleting] = useState(false);
-	// const deleteHabitMutation = useDeleteHabit();
+function DialogConfirmDelete({ id, onDeleted }: { id: string; onDeleted?: () => void }) {
+	const [open, setOpen] = useState(false);
+	const deleteHabitMutation = useDeleteHabit();
 
 	const onDelete = async () => {
-		if (isDeleting) return;
-		setIsDeleting(true);
 		try {
-			const response = await fetch(`/api/habits?id=${id}`, {
-				method: "DELETE",
-			});
-			if (!response.ok) {
-				throw new Error("Erro ao excluir hábito");
-			}
-
+			await deleteHabitMutation.mutateAsync(id);
 			toast.success("Hábito excluído com sucesso!");
-			onDeleteSuccess?.();
+			setOpen(false); // Fechar dialog após exclusão bem-sucedida
+			onDeleted?.(); // Notificar componente pai
 		} catch (error) {
 			toast.error("Erro ao excluir hábito. Tente novamente.");
-		} finally {
-			setIsDeleting(false);
 		}
 	};
 
@@ -308,9 +306,9 @@ function DialogConfirmDelete({ id, onDeleteSuccess }: { id: string; onDeleteSucc
 						type="submit"
 						variant="destructive"
 						onClick={onDelete}
-						disabled={isDeleting}
+						disabled={deleteHabitMutation.isPending}
 					>
-						{isDeleting ? "Excluindo..." : "Excluir"}
+						{deleteHabitMutation.isPending ? "Excluindo..." : "Excluir"}
 					</Button>
 					<DialogClose asChild>
 						<Button variant="outline">Cancelar</Button>

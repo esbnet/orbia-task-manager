@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	AlertTriangle,
 	Archive,
@@ -12,17 +13,16 @@ import {
 	Tag,
 	TrendingUp
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { memo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 
 const priorityColors = {
 	"Baixa": "border-gray-300 text-gray-600",
@@ -90,10 +90,6 @@ export const HabitCard = memo(function HabitCard({
 		difficultyConfig[habit.difficulty as DifficultyLevel] ||
 		difficultyConfig["Fácil"];
 
-	const handleStatusChange = (newStatus: Habit["status"]) => {
-		onStatusChange?.(habit.id, newStatus);
-	};
-
 	const handleRegister = async () => {
 		if (isRegistering || registerLoading.isLoading) return;
 
@@ -125,13 +121,88 @@ export const HabitCard = memo(function HabitCard({
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""
+			className={`transition-all duration-200 hover:shadow-lg overflow-hidden relative ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""
 				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="">
-				<div className="flex justify-between items-start gap-3">
-					<div className="flex-1 min-w-0">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
+			<CardHeader className="pb-1 sm:pb-2">
+				{/* Layout MOBILE - Ultra-compacto */}
+				<div className="sm:hidden block">
+					<div className="flex items-start">
+						<div className="flex-1 pr-1 min-w-0">
+							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
+								{habit.title}
+							</CardTitle>
+						</div>
+						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
+							{habit.status === "Em Andamento" && (
+								<>
+									{/* Botão principal de registro */}
+									<Button
+										title="Registrar ocorrência"
+										size="icon"
+										variant="ghost"
+										onClick={handleRegister}
+										className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-5 h-5 text-green-600"
+										disabled={registerLoading.isLoading || isRegistering}
+									>
+										{(registerLoading.isLoading || isRegistering) ? (
+											<LoaderCircle className="w-2.5 h-2.5 text-green-600 animate-spin" />
+										) : (
+											<CheckCircle className="w-2.5 h-2.5" />
+										)}
+									</Button>
+
+									{onEdit && (
+										<Button
+											title="Editar"
+											size="icon"
+											variant="ghost"
+											onClick={() => onEdit(habit)}
+											disabled={editLoading.isLoading}
+											className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+										>
+											{editLoading.isLoading ? (
+												<div className="border-2 border-t-transparent rounded-full w-2.5 h-2.5 text-gray-400 animate-spin" />
+											) : (
+												<Edit className="w-2.5 h-2.5" />
+											)}
+										</Button>
+									)}
+
+									{/* Botão de arquivar hábito */}
+									<Button
+										className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-5 h-5 text-red-600"
+										title="Arquivar hábito"
+										size="icon"
+										variant="ghost"
+										onClick={() => setIsCompleteDialogOpen(true)}
+										disabled={completeLoading.isLoading}
+									>
+										{completeLoading.isLoading ? (
+											<LoaderCircle className="w-2.5 h-2.5 text-red-600 animate-spin" />
+										) : (
+											<Archive className="w-2.5 h-2.5" />
+										)}
+									</Button>
+								</>
+							)}
+
+							<Button
+								size="sm"
+								variant="ghost"
+								onClick={() => setIsExpanded(!isExpanded)}
+								className="p-0 w-5 h-5"
+							>
+								{isExpanded ? <ChevronDown className="w-2.5 h-2.5 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-2.5 h-2.5 rotate-0 transition-all duration-200" />}
+							</Button>
+						</div>
+					</div>
+				</div>
+
+				{/* Layout DESKTOP - título e botões na mesma linha */}
+				<div className="hidden sm:flex justify-between items-start gap-1">
+					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
+						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
 							{habit.title}
 						</CardTitle>
 					</div>
@@ -182,7 +253,7 @@ export const HabitCard = memo(function HabitCard({
 									disabled={completeLoading.isLoading}
 								>
 									{completeLoading.isLoading ? (
-										<LoaderCircle className="border-2 border-t-transparent w-4 h-4 text-red-600 animate-spin duration-200" />
+										<LoaderCircle className="w-4 h-4 text-red-600 animate-spin duration-200" />
 									) : (
 										<Archive className="w-4 h-4" />
 									)}
@@ -206,7 +277,7 @@ export const HabitCard = memo(function HabitCard({
 			<CardContent className="pt-0">
 				{/* Conteúdo expandido */}
 				{isExpanded && (
-					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">
 						{/* Informações básicas */}
 						<div className="space-y-3">
 							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
@@ -215,18 +286,19 @@ export const HabitCard = memo(function HabitCard({
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge
 									variant="outline"
-									className={priorityColors[habit.priority]}
+									className={`${priorityColors[habit.priority]} truncate max-w-20`}
+									title={habit.priority}
 								>
 									{habit.priority}
 								</Badge>
 								<Badge
 									variant="outline"
-									className={statusColors[habit.status]}
+									className={`${statusColors[habit.status]} flex items-center gap-1 min-w-0`}
 								>
-									{habit.status === "Em Andamento" && <TrendingUp className="w-3 h-3" />}
-									{habit.status === "Completo" && <CheckCircle className="w-3 h-3" />}
-									{habit.status === "Cancelado" && <AlertTriangle className="w-3 h-3" />}
-									{habit.status}
+									{habit.status === "Em Andamento" && <TrendingUp className="flex-shrink-0 w-3 h-3" />}
+									{habit.status === "Completo" && <CheckCircle className="flex-shrink-0 w-3 h-3" />}
+									{habit.status === "Cancelado" && <AlertTriangle className="flex-shrink-0 w-3 h-3" />}
+									<span className="truncate">{habit.status}</span>
 								</Badge>
 							</div>
 						</div>
@@ -239,21 +311,21 @@ export const HabitCard = memo(function HabitCard({
 								</div>
 								<div className="flex flex-wrap gap-3 text-gray-600 text-sm">
 									{currentCount > 0 && (
-										<div className="flex items-center gap-1">
-											<TrendingUp className="w-4 h-4" />
-											<span>Registros: {currentCount}</span>
+										<div className="flex items-center gap-1 min-w-0">
+											<TrendingUp className="flex-shrink-0 w-4 h-4" />
+											<span className="truncate">Registros: {currentCount}</span>
 										</div>
 									)}
 									{todayCount > 0 && (
-										<div className="flex items-center gap-1">
-											<Calendar className="w-4 h-4" />
-											<span>Hoje: {todayCount}</span>
+										<div className="flex items-center gap-1 min-w-0">
+											<Calendar className="flex-shrink-0 w-4 h-4" />
+											<span className="truncate">Hoje: {todayCount}</span>
 										</div>
 									)}
 									{streak && streak.currentStreak > 0 && (
-										<div className="flex items-center gap-1">
-											<span className="text-orange-600 dark:text-orange-400">🔥</span>
-											<span className="font-medium text-orange-600 dark:text-orange-400">{streak.currentStreak} dias</span>
+										<div className="flex items-center gap-1 min-w-0">
+											<span className="flex-shrink-0 text-orange-600 dark:text-orange-400">🔥</span>
+											<span className="font-medium text-orange-600 dark:text-orange-400 truncate">{streak.currentStreak} dias</span>
 										</div>
 									)}
 								</div>
@@ -263,8 +335,8 @@ export const HabitCard = memo(function HabitCard({
 						{/* Próximo período disponível */}
 						{nextAvailableAt && (
 							<div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 text-sm">
-								<RotateCcw className="w-4 h-4" />
-								<span>Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+								<RotateCcw className="flex-shrink-0 w-4 h-4" />
+								<span className="break-words">Disponível em: {format(nextAvailableAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
 							</div>
 						)}
 
@@ -274,8 +346,11 @@ export const HabitCard = memo(function HabitCard({
 								<div className="mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
 									Observações
 								</div>
-								<p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-									{habit.observations}
+								<p className="max-h-20 overflow-hidden text-gray-600 dark:text-gray-400 break-words leading-relaxed">
+									{habit.observations.length > 100
+										? `${habit.observations.substring(0, 100)}...`
+										: habit.observations
+									}
 								</p>
 							</div>
 						)}
@@ -287,38 +362,48 @@ export const HabitCard = memo(function HabitCard({
 							</div>
 
 							<div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-								<Calendar className="w-4 h-4" />
-								<span>
+								<Calendar className="flex-shrink-0 w-4 h-4" />
+								<span className="break-words">
 									Criado em {format(habit.createdAt, "dd 'de' MMMM 'de' yyyy", {
 										locale: ptBR,
 									})}
 								</span>
 								{isOverdue && (
-									<AlertTriangle className="w-4 h-4 text-red-500 dark:text-red-400" />
+									<AlertTriangle className="flex-shrink-0 w-4 h-4 text-red-500 dark:text-red-400" />
 								)}
 							</div>
 
-							<div className="flex items-center gap-2">
-								<Badge className={`text-xs ${difficultyBadge.color}`}>
-									{difficultyBadge.stars} {habit.difficulty}
+							<div className="flex flex-wrap items-center gap-2">
+								<Badge className={`text-xs ${difficultyBadge.color} truncate max-w-24`}>
+									<span className="flex-shrink-0">{difficultyBadge.stars}</span> <span className="truncate">{habit.difficulty}</span>
 								</Badge>
-								<Badge className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-xs">
-									<RotateCcw className="w-3 h-3" /> {habit.reset}
+								<Badge className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 min-w-0 text-purple-700 dark:text-purple-300 text-xs">
+									<RotateCcw className="flex-shrink-0 w-3 h-3" />
+									<span className="truncate">{habit.reset}</span>
 								</Badge>
 							</div>
 
 							{habit.tags.length > 0 && (
 								<div className="flex flex-wrap gap-1">
-									{habit.tags.map((tag) => (
+									{habit.tags.slice(0, 3).map((tag) => (
 										<Badge
 											key={tag}
 											variant="secondary"
-											className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+											className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 max-w-24 text-slate-700 dark:text-slate-300 text-xs truncate"
+											title={tag}
 										>
-											<Tag className="mr-1 w-3 h-3" />
-											{tag}
+											<Tag className="flex-shrink-0 mr-1 w-3 h-3" />
+											<span className="truncate">{tag}</span>
 										</Badge>
 									))}
+									{habit.tags.length > 3 && (
+										<Badge
+											variant="secondary"
+											className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs"
+										>
+											+{habit.tags.length - 3}
+										</Badge>
+									)}
 								</div>
 							)}
 						</div>
@@ -350,9 +435,11 @@ export const HabitCard = memo(function HabitCard({
 						{/* Última atualização */}
 						<div className="pt-2 border-gray-100 dark:border-gray-700 border-t text-gray-600 dark:text-gray-400 text-sm">
 							<strong>Última atualização:</strong>{" "}
-							{format(habit.updatedAt, "dd/MM/yyyy 'às' HH:mm", {
-								locale: ptBR,
-							})}
+							<span className="break-words">
+								{format(habit.updatedAt, "dd/MM/yyyy 'às' HH:mm", {
+									locale: ptBR,
+								})}
+							</span>
 						</div>
 					</div>
 				)}

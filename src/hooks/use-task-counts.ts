@@ -48,73 +48,75 @@ export function useInvalidateTaskCounts() {
 
 // Hook para buscar contagens de tarefas por tipo
 export function useTaskCounts() {
-  return useQuery({
-    queryKey: taskCountKeys.counts(),
-    queryFn: async (): Promise<TaskCountsResponse> => {
-      // Buscar contagens em paralelo
-      const [habitsResponse, dailiesResponse, todosActiveResponse, goalsResponse] = await Promise.all([
-        fetch("/api/habits/available"),
-        fetch("/api/daily/available"),
-        fetch("/api/todos"), 
-        fetch("/api/goals?status=IN_PROGRESS")
-      ]);
+	return useQuery({
+		queryKey: taskCountKeys.counts(),
+		staleTime: 0, // Sempre considerar dados como stale para forçar refetch
+		gcTime: 30 * 1000, // Manter cache por 30 segundos
+		refetchOnWindowFocus: true,
+		queryFn: async (): Promise<TaskCountsResponse> => {
+			// Buscar contagens em paralelo
+			const [habitsResponse, dailiesResponse, todosActiveResponse, goalsResponse] = await Promise.all([
+				fetch("/api/habits/available"),
+				fetch("/api/daily/available"),
+				fetch("/api/todos"),
+				fetch("/api/goals?status=IN_PROGRESS")
+			]);
 
-      // Verificar se todas as respostas são OK com tratamento de erro específico
-      const responses = [
-        { name: "habits", response: habitsResponse },
-        { name: "dailies", response: dailiesResponse },
-        { name: "todosActive", response: todosActiveResponse },
-        { name: "goals", response: goalsResponse }
-      ];
+			// Verificar se todas as respostas são OK com tratamento de erro específico
+			const responses = [
+				{ name: "habits", response: habitsResponse },
+				{ name: "dailies", response: dailiesResponse },
+				{ name: "todosActive", response: todosActiveResponse },
+				{ name: "goals", response: goalsResponse }
+			];
 
-      const failedRequests = responses.filter(({ response }) => !response.ok);
+			const failedRequests = responses.filter(({ response }) => !response.ok);
 
-      if (failedRequests.length > 0) {
-        const errorMessages = await Promise.all(
-          failedRequests.map(async ({ name, response }) => {
-            const errorData = await response.json().catch(() => ({}));
-            return `${name}: ${response.status} - ${errorData.message || "Erro desconhecido"}`;
-          })
-        );
+			if (failedRequests.length > 0) {
+				const errorMessages = await Promise.all(
+					failedRequests.map(async ({ name, response }) => {
+						const errorData = await response.json().catch(() => ({}));
+						return `${name}: ${response.status} - ${errorData.message || "Erro desconhecido"}`;
+					})
+				);
 
-        throw new Error(`Falha ao buscar contagens: ${errorMessages.join(", ")}`);
-      }
+				throw new Error(`Falha ao buscar contagens: ${errorMessages.join(", ")}`);
+			}
 
-      // Extrair dados das respostas
-      const [habitsData, dailiesData, todosActiveData, goalsData] = await Promise.all([
-        habitsResponse.json(),
-        dailiesResponse.json(),
-        todosActiveResponse.json(),
-        goalsResponse.json()
-      ]);
+			// Extrair dados das respostas
+			const [habitsData, dailiesData, todosActiveData, goalsData] = await Promise.all([
+				habitsResponse.json(),
+				dailiesResponse.json(),
+				todosActiveResponse.json(),
+				goalsResponse.json()
+			]);
 
-      // Calcular contagens com validação
-      const habitsCount = habitsData?.availableHabits?.length || 0;
-      const dailiesCount = dailiesData?.availableDailies?.length || 0;
+			// Calcular contagens com validação
+			const habitsCount = habitsData?.availableHabits?.length || 0;
+			const dailiesCount = dailiesData?.availableDailies?.length || 0;
 
-      // Todos: combinar logs (completados) + ativos (sem lastCompletedDate)
-      const todosActive = todosActiveData?.todos || [];
-      const todosActiveCount = todosActive.filter((todo: any) => !todo.lastCompletedDate).length;
-      const todosCount = todosActiveCount;
+			// Todos: contar apenas os ativos (não completados hoje)
+			const todosActive = todosActiveData?.todos || [];
+			const today = new Date().toISOString().split("T")[0];
+			const todosActiveCount = todosActive.filter((todo: any) => todo.lastCompletedDate !== today).length;
+			const todosCount = todosActiveCount;
 
-      const goalsCount = Array.isArray(goalsData) ? goalsData.length : (goalsData?.goals?.length || 0);
+			const goalsCount = Array.isArray(goalsData) ? goalsData.length : (goalsData?.goals?.length || 0);
 
-      const total = habitsCount + dailiesCount + todosCount + goalsCount;
+			const total = habitsCount + dailiesCount + todosCount + goalsCount;
 
-      // Log detalhado para debug
-      console.log('[TASK-COUNTS] 📊 Todos active count:', todosActiveCount);
-      console.log('[TASK-COUNTS] 📊 Todos total count:', todosCount);
+			// Log detalhado para debug
+			console.log('[TASK-COUNTS] 📊 Todos active count (not completed today):', todosActiveCount);
+			console.log('[TASK-COUNTS] 📊 Todos total count:', todosCount);
 
-      return {
-        habits: habitsCount,
-        dailies: dailiesCount,
-        todos: todosCount,
-        goals: goalsCount,
-        total
-      };
-    },
-    staleTime: 30 * 1000, // 30 segundos
-    refetchOnWindowFocus: true,
+			return {
+				habits: habitsCount,
+				dailies: dailiesCount,
+				todos: todosCount,
+				goals: goalsCount,
+				total
+			};
+		},
     retry: (failureCount, error) => {
       // Não retry para erros de autenticação (401, 403)
       if (error instanceof Error && error.message.includes("401")) {
@@ -160,10 +162,11 @@ export function useDetailedTaskCounts() {
       const dailiesCount = dailiesData?.availableDailies?.length || 0;
       const goalsCount = Array.isArray(goalsData) ? goalsData.length : (goalsData?.goals?.length || 0);
 
-      // Todos: separar logs (completados) e ativos
+      // Todos: separar logs (completados) e ativos (não completados hoje)
       const todosLogsCount = todosLogsData?.todos?.length || 0;
       const todosActive = todosActiveData?.todos || [];
-      const todosActiveCount = todosActive.filter((todo: any) => !todo.lastCompletedDate).length;
+      const today = new Date().toISOString().split("T")[0];
+      const todosActiveCount = todosActive.filter((todo: any) => todo.lastCompletedDate !== today).length;
       const todosCount = todosLogsCount + todosActiveCount;
 
       const total = habitsCount + dailiesCount + todosCount + goalsCount;

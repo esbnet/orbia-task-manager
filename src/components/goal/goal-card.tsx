@@ -143,10 +143,77 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${(isCompleting || isCanceling) ? "opacity-50 pointer-events-none" : ""}`}
+			className={`transition-all duration-200 hover:shadow-lg relative overflow-hidden ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${(isCompleting || isCanceling) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="pb-3">
-				<div className="flex justify-between items-start gap-3">
+			<CardHeader className="pb-1 sm:pb-2">
+				{/* Layout MOBILE - Ultra-compacto */}
+				<div className="sm:hidden block">
+					<div className="flex items-start">
+						<div className="flex-1 pr-1 min-w-0">
+							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
+								{goal.title}
+							</CardTitle>
+						</div>
+						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
+							{goal.status === "IN_PROGRESS" && (
+								<>
+									<Button
+										title="Concluído"
+										size="icon"
+										variant="ghost"
+										onClick={() => handleStatusChange("COMPLETED")}
+										className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-5 h-5 text-green-600"
+										disabled={isCompleting}
+									>
+										{isCompleting ? (
+											<div className="border-2 border-green-600 border-t-transparent rounded-full w-2.5 h-2.5 animate-spin" />
+										) : (
+											<CheckCircle className="w-2.5 h-2.5" />
+										)}
+									</Button>
+									{onEdit && (
+										<Button
+											title="Editar"
+											size="icon"
+											variant="ghost"
+											onClick={() => onEdit(goal)}
+											className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+										>
+											<Edit className="w-2.5 h-2.5" />
+										</Button>
+									)}
+
+									<Button
+										title="Cancelar"
+										size="icon"
+										variant="ghost"
+										onClick={() => setIsCancelDialogOpen(true)}
+										className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-5 h-5 text-red-600"
+										disabled={isCanceling}
+									>
+										{isCanceling ? (
+											<div className="border-2 border-t-transparent border-red-600 rounded-full w-2.5 h-2.5 animate-spin" />
+										) : (
+											<XCircle className="w-2.5 h-2.5" />
+										)}
+									</Button>
+								</>
+							)}
+
+							<Button
+								size="sm"
+								variant="ghost"
+								onClick={() => setIsExpanded(!isExpanded)}
+								className="p-0 w-5 h-5"
+							>
+								<ChevronDown className={`w-2.5 h-2.5 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+							</Button>
+						</div>
+					</div>
+				</div>
+
+				{/* Layout DESKTOP - título e botões na mesma linha */}
+				<div className="hidden sm:flex justify-between items-start gap-3">
 					<div className="flex-1 min-w-0">
 						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
 							{goal.title}

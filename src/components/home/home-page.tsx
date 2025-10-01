@@ -3,15 +3,15 @@
 import { Eye, EyeOff, HeartCrackIcon, HeartPulse } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ClientProviders } from '../providers/client-providers';
-import { ColumnFilter } from '../navigation/column-filter';
-import { QuickMenu } from '../navigation/quick-menu';
-import { TasksOverviewDialog } from './tasks-overview-dialog';
-import { WeeklyEvolutionChart } from '../dashboard/weekly-evolution-chart';
 import { useInitialDialog } from "@/hooks/use-initial-dialog";
-import { useState } from "react";
 import { useTodayTasks } from "@/hooks/use-today-tasks";
 import { useTranslation } from "@/hooks/use-translation";
+import { useState } from "react";
+import { WeeklyEvolutionChart } from '../dashboard/weekly-evolution-chart';
+import { ColumnFilter } from '../navigation/column-filter';
+import { QuickMenu } from '../navigation/quick-menu';
+import { ClientProviders } from '../providers/client-providers';
+import { TasksOverviewDialog } from './tasks-overview-dialog';
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -39,11 +39,11 @@ export default function HomePage() {
 
                         {!tasksLoading && (<>
                             {hasActivitiesToday ? (
-                                <HeartPulse className={`w-12 h-12 font-bold transition-all duration-300 ${hasActivitiesToday
+                                <HeartPulse className={`w-10 h-10 font-bold transition-all duration-300 ${hasActivitiesToday
                                     ? "text-red-500 drop-shadow-lg scale-110 animate-caret-blink"
                                     : "text-gray-400 opacity-50 grayscale scale-90"
                                     }`} />
-                            ) : (<HeartCrackIcon className={`w-12 h-12 font-bold transition-all duration-300 ${hasActivitiesToday
+                            ) : (<HeartCrackIcon className={`w-10 h-10 font-bold transition-all duration-300 ${hasActivitiesToday
                                 ? "text-red-500 drop-shadow-lg scale-110 animate-caret-blink"
                                 : "text-green-400 opacity-50  scale-90"
                                 }`} />)}

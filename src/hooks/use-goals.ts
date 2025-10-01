@@ -115,8 +115,18 @@ export function useCreateGoal() {
 		onSuccess: () => {
 			// Invalidate all goal queries
 			queryClient.invalidateQueries({ queryKey: goalKeys.all });
-			// Invalidate cache de contagens de tarefas
-			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+
+			// Invalidate cache de contagens de tarefas com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: taskCountKeys.counts(),
+				refetchType: 'active' // Força refetch imediato
+			});
+
+			// Invalidate cache de tarefas de hoje com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: ["today-tasks"],
+				refetchType: 'active' // Força refetch imediato
+			});
 		},
 	});
 }
@@ -128,7 +138,7 @@ export function useUpdateGoal() {
 	return useMutation({
 		mutationFn: async ({ id, data }: { id: string; data: Partial<Goal> }): Promise<Goal> => {
 			const response = await fetch(`/api/goals/${id}`, {
-				method: "PATCH",
+				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -146,8 +156,19 @@ export function useUpdateGoal() {
 			// Update cache
 			queryClient.setQueryData(goalKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
-			// Invalidate cache de contagens de tarefas
-			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+
+			// Invalidate cache de contagens de tarefas com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: taskCountKeys.counts(),
+				refetchType: 'active' // Força refetch imediato
+			});
+
+			// Invalidate cache de tarefas de hoje com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: ["today-tasks"],
+				refetchType: 'active' // Força refetch imediato
+			});
+
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
@@ -172,8 +193,18 @@ export function useDeleteGoal() {
 			// Remove from cache
 			queryClient.removeQueries({ queryKey: goalKeys.detail(id) });
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
-			// Invalidate cache de contagens de tarefas
-			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+
+			// Invalidate cache de contagens de tarefas com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: taskCountKeys.counts(),
+				refetchType: 'active' // Força refetch imediato
+			});
+
+			// Invalidate cache de tarefas de hoje com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: ["today-tasks"],
+				refetchType: 'active' // Força refetch imediato
+			});
 		},
 	});
 }
