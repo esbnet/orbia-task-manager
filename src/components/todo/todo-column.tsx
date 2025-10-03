@@ -21,6 +21,7 @@ const defaultTodo: Todo = {
 	difficulty: "Fácil" as TodoDifficulty,
 	startDate: new Date(),
 	createdAt: new Date(),
+	recurrence: "none" as const,
 };
 
 export const TodoColumn = () => {
@@ -35,9 +36,49 @@ export const TodoColumn = () => {
 
 
 	const today = new Date().toISOString().split("T")[0];
-	const inProgressTodos = todos.filter(
-		(todo) => todo.lastCompletedDate !== today
-	).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+	// Função auxiliar para determinar se uma tarefa deve aparecer na lista
+	const shouldShowTodo = (todo: Todo): boolean => {
+		// Se não foi concluída hoje, sempre mostrar
+		if (todo.lastCompletedDate !== today) {
+			return true;
+		}
+
+		// Se foi concluída hoje, verificar recorrência
+		if (todo.recurrence === "none") {
+			return false; // Tarefas únicas concluídas hoje não reaparecem
+		}
+
+		// Para tarefas recorrentes, verificar se devem reaparecer hoje
+		const lastCompleted = todo.lastCompletedDate ? new Date(todo.lastCompletedDate) : null;
+		if (!lastCompleted) return true;
+
+		const todayDate = new Date(today);
+		let shouldRecur = false;
+
+		switch (todo.recurrence) {
+			case "daily":
+				shouldRecur = true; // Aparece todos os dias
+				break;
+			case "weekly":
+				const daysSinceCompletion = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				shouldRecur = daysSinceCompletion >= 7;
+				break;
+			case "monthly":
+				shouldRecur = todayDate.getDate() === lastCompleted.getDate();
+				break;
+			case "custom":
+				if (todo.recurrenceInterval) {
+					const daysSinceCompletion = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+					shouldRecur = daysSinceCompletion >= todo.recurrenceInterval;
+				}
+				break;
+		}
+
+		return shouldRecur;
+	};
+
+	const inProgressTodos = todos.filter(shouldShowTodo).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 	// Funções de controle do formulário
 	const openEditForm = (todo: Todo) => {
@@ -86,6 +127,17 @@ export const TodoColumn = () => {
 			toast.success(`Todo "${todo?.title}" concluído com sucesso!`);
 		} catch (error) {
 			toast.error("Erro ao completar todo. Tente novamente.");
+		}
+	};
+
+	// Desmarcar todo como incompleto
+	const handleIncompleteTodo = async (id: string) => {
+		try {
+			await completeTodoMutation.mutateAsync(id);
+			const todo = inProgressTodos.find(t => t.id === id);
+			toast.success(`Todo "${todo?.title}" marcado como em andamento!`);
+		} catch (error) {
+			toast.error("Erro ao desmarcar todo. Tente novamente.");
 		}
 	};
 
@@ -162,6 +214,7 @@ export const TodoColumn = () => {
 							todo={todo}
 							onEdit={openEditForm}
 							onComplete={handleCompleteTodo}
+							onIncomplete={handleIncompleteTodo}
 							onDelete={handleDeleteTodo}
 						/>
 					))

@@ -23,6 +23,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useDeleteTodo, useUpdateTodo } from "@/hooks/use-todos";
+import type { TodoDifficulty, TodoRecurrence } from "@/types/todo";
 import { format, setDefaultOptions } from "date-fns";
 import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -32,7 +33,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTags } from "@/hooks/use-tags";
-import type { TodoDifficulty } from "@/types/todo";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import type { Todo } from "../../types";
@@ -66,6 +66,12 @@ export function TodoForm({
 	);
 	const [startDate, setStartDate] = useState(todo.startDate || new Date());
 	const [tags, setTags] = useState<string[]>(todo.tags || []);
+	const [recurrence, setRecurrence] = useState<TodoRecurrence>(
+		todo.recurrence || "none",
+	);
+	const [recurrenceInterval, setRecurrenceInterval] = useState<number | undefined>(
+		todo.recurrenceInterval || undefined,
+	);
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +86,8 @@ export function TodoForm({
 		setDifficult(todo.difficulty || "Fácil");
 		setStartDate(todo.startDate || new Date());
 		setTags(todo.tags || []);
+		setRecurrence(todo.recurrence || "none");
+		setRecurrenceInterval(todo.recurrenceInterval || undefined);
 	}, [todo]);
 
 	async function handleUpdateTodo(e: React.FormEvent<HTMLFormElement>) {
@@ -98,6 +106,8 @@ export function TodoForm({
 					difficulty,
 					startDate,
 					tags,
+					recurrence,
+					recurrenceInterval: recurrence === "custom" ? recurrenceInterval : undefined,
 				} as Omit<Todo, "id" | "createdAt">);
 
 				// ✅ Limpar formulário após criação bem-sucedida
@@ -106,6 +116,8 @@ export function TodoForm({
 				setDifficult("Fácil");
 				setStartDate(new Date());
 				setTags([]);
+				setRecurrence("none");
+				setRecurrenceInterval(undefined);
 
 				setInternalOpen(false);
 				if (onCancel) onCancel();
@@ -120,6 +132,8 @@ export function TodoForm({
 					difficulty: difficulty,
 					startDate: startDate || new Date(),
 					tags: tags || [],
+					recurrence,
+					recurrenceInterval: recurrence === "custom" ? recurrenceInterval : undefined,
 				}
 			});
 
@@ -246,6 +260,56 @@ export function TodoForm({
 								</SelectContent>
 							</Select>
 						</div>
+
+						<div className="flex flex-col gap-1">
+							<Label className="font-bold">Recorrência</Label>
+							<Select
+								onValueChange={(value) => {
+									setRecurrence(value as TodoRecurrence);
+									if (value !== "custom") {
+										setRecurrenceInterval(undefined);
+									}
+								}}
+								value={recurrence || "none"}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue
+										placeholder="Tipo de recorrência"
+										className="text-zinc-300"
+									/>
+								</SelectTrigger>
+								<SelectContent className="w-full">
+									<SelectItem value="none">
+										Nenhuma (tarefa única)
+									</SelectItem>
+									<SelectItem value="daily">
+										Diária
+									</SelectItem>
+									<SelectItem value="weekly">
+										Semanal
+									</SelectItem>
+									<SelectItem value="monthly">
+										Mensal
+									</SelectItem>
+									<SelectItem value="custom">
+										Personalizada
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						{recurrence === "custom" && (
+							<div className="flex flex-col gap-1">
+								<Label className="font-bold">Intervalo (dias)</Label>
+								<Input
+									type="number"
+									min="1"
+									value={recurrenceInterval || ""}
+									onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || undefined)}
+									placeholder="Ex: 3 para cada 3 dias"
+								/>
+							</div>
+						)}
 
 						<div className="flex flex-col gap-1">
 							<Label className="font-bold">Data de início</Label>

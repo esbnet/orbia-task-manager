@@ -143,18 +143,18 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg relative overflow-hidden ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${(isCompleting || isCanceling) ? "opacity-50 pointer-events-none" : ""}`}
+			className={`hover:shadow-md gap-0 transition-shadow duration-200 relative overflow-hidden ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${(isCompleting || isCanceling) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="pb-1 sm:pb-2">
+			<CardHeader className="items-center pb-0">
 				{/* Layout MOBILE - Ultra-compacto */}
-				<div className="sm:hidden block">
+				<div className="sm:hidden block items-center">
 					<div className="flex items-start">
 						<div className="flex-1 pr-1 min-w-0">
 							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
 								{goal.title}
 							</CardTitle>
 						</div>
-						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
+						<div className="flex flex-shrink-0 items-center gap-2 ml-1">
 							{goal.status === "IN_PROGRESS" && (
 								<>
 									<Button
@@ -162,7 +162,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 										size="icon"
 										variant="ghost"
 										onClick={() => handleStatusChange("COMPLETED")}
-										className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-5 h-5 text-green-600"
+										className="hover:bg-green-100 dark:hover:bg-green-900/30 p-2 rounded-full w-7 h-7 text-green-600"
 										disabled={isCompleting}
 									>
 										{isCompleting ? (
@@ -177,7 +177,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 											size="icon"
 											variant="ghost"
 											onClick={() => onEdit(goal)}
-											className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+											className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-7 h-7 text-gray-600"
 										>
 											<Edit className="w-2.5 h-2.5" />
 										</Button>
@@ -188,7 +188,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 										size="icon"
 										variant="ghost"
 										onClick={() => setIsCancelDialogOpen(true)}
-										className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-5 h-5 text-red-600"
+										className="hover:bg-red-100 dark:hover:bg-red-900/30 p-2 rounded-full w-7 h-7 text-red-600"
 										disabled={isCanceling}
 									>
 										{isCanceling ? (
@@ -204,7 +204,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 								size="sm"
 								variant="ghost"
 								onClick={() => setIsExpanded(!isExpanded)}
-								className="p-0 w-5 h-5"
+								className="p-0 w-7 h-7"
 							>
 								<ChevronDown className={`w-2.5 h-2.5 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
 							</Button>
@@ -213,14 +213,14 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 				</div>
 
 				{/* Layout DESKTOP - título e botões na mesma linha */}
-				<div className="hidden sm:flex justify-between items-start gap-3">
-					<div className="flex-1 min-w-0">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
+				<div className="hidden sm:flex justify-between items-center gap-1">
+					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
+						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
 							{goal.title}
 						</CardTitle>
 					</div>
 
-					<div className="flex flex-shrink-0 items-center gap-1">
+					<div className="flex flex-shrink-0 items-center gap-2">
 						{goal.status === "IN_PROGRESS" && (
 							<>
 								<Button
@@ -228,7 +228,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 									size="icon"
 									variant="ghost"
 									onClick={() => handleStatusChange("COMPLETED")}
-									className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
+									className="hover:bg-green-100 dark:hover:bg-green-900/30 p-2 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
 									disabled={isCompleting}
 								>
 									{isCompleting ? (
@@ -243,7 +243,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 										size="icon"
 										variant="ghost"
 										onClick={() => onEdit(goal)}
-										className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
+										className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-10 h-10 text-gray-600 dark:text-gray-400"
 									>
 										<Edit className="w-4 h-4" />
 									</Button>
@@ -254,7 +254,7 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 									size="icon"
 									variant="ghost"
 									onClick={() => setIsCancelDialogOpen(true)}
-									className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
+									className="hover:bg-red-100 dark:hover:bg-red-900/30 p-2 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
 									disabled={isCanceling}
 								>
 									{isCanceling ? (
@@ -266,24 +266,23 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 							</>
 						)}
 
-						{/* Botão para expandir/ocultar detalhes */}
 						<Button
 							size="sm"
 							variant="ghost"
 							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-0 w-8 h-8"
+							className="flex-shrink-0 p-1 w-8 h-8"
 						>
-							<ChevronDown className={`transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+							<ChevronDown className={`w-4 h-4 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
 						</Button>
 					</div>
 				</div>
 			</CardHeader>
 
-			<CardContent className="pt-0">
+			<CardContent className="py-0">
 
 				{/* Conteúdo expandido */}
 				{isExpanded && (
-					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">
 						{/* Informações básicas */}
 						<div className="space-y-3">
 							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">

@@ -121,19 +121,19 @@ export const HabitCard = memo(function HabitCard({
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg overflow-hidden relative ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""
+			className={`hover:shadow-md gap-0 transition-shadow duration-200 overflow-hidden relative ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""
 				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="pb-1 sm:pb-2">
+			<CardHeader className="items-center pb-0">
 				{/* Layout MOBILE - Ultra-compacto */}
-				<div className="sm:hidden block">
+				<div className="sm:hidden block items-center">
 					<div className="flex items-start">
 						<div className="flex-1 pr-1 min-w-0">
 							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
 								{habit.title}
 							</CardTitle>
 						</div>
-						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
+						<div className="flex flex-shrink-0 items-center gap-2 ml-1">
 							{habit.status === "Em Andamento" && (
 								<>
 									{/* Botão principal de registro */}
@@ -142,7 +142,7 @@ export const HabitCard = memo(function HabitCard({
 										size="icon"
 										variant="ghost"
 										onClick={handleRegister}
-										className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-5 h-5 text-green-600"
+										className="hover:bg-green-100 dark:hover:bg-green-900/30 p-2 rounded-full w-7 h-7 text-green-600"
 										disabled={registerLoading.isLoading || isRegistering}
 									>
 										{(registerLoading.isLoading || isRegistering) ? (
@@ -159,7 +159,7 @@ export const HabitCard = memo(function HabitCard({
 											variant="ghost"
 											onClick={() => onEdit(habit)}
 											disabled={editLoading.isLoading}
-											className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+											className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-7 h-7 text-gray-600"
 										>
 											{editLoading.isLoading ? (
 												<div className="border-2 border-t-transparent rounded-full w-2.5 h-2.5 text-gray-400 animate-spin" />
@@ -171,7 +171,7 @@ export const HabitCard = memo(function HabitCard({
 
 									{/* Botão de arquivar hábito */}
 									<Button
-										className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-5 h-5 text-red-600"
+										className="hover:bg-red-100 dark:hover:bg-red-900/30 p-2 rounded-full w-7 h-7 text-red-600"
 										title="Arquivar hábito"
 										size="icon"
 										variant="ghost"
@@ -191,7 +191,7 @@ export const HabitCard = memo(function HabitCard({
 								size="sm"
 								variant="ghost"
 								onClick={() => setIsExpanded(!isExpanded)}
-								className="p-0 w-5 h-5"
+								className="p-0 w-7 h-7"
 							>
 								{isExpanded ? <ChevronDown className="w-2.5 h-2.5 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-2.5 h-2.5 rotate-0 transition-all duration-200" />}
 							</Button>
@@ -200,14 +200,14 @@ export const HabitCard = memo(function HabitCard({
 				</div>
 
 				{/* Layout DESKTOP - título e botões na mesma linha */}
-				<div className="hidden sm:flex justify-between items-start gap-1">
+				<div className="hidden sm:flex justify-between items-center gap-1">
 					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
 						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
 							{habit.title}
 						</CardTitle>
 					</div>
 
-					<div className="flex flex-shrink-0 items-center gap-1">
+					<div className="flex flex-shrink-0 items-center gap-2">
 						{habit.status === "Em Andamento" && (
 							<>
 								{/* Botão principal de registro */}
@@ -216,7 +216,7 @@ export const HabitCard = memo(function HabitCard({
 									size="icon"
 									variant="ghost"
 									onClick={handleRegister}
-									className="hover:bg-green-100 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
+									className="hover:bg-green-100 dark:hover:bg-green-900/30 p-2 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
 									disabled={registerLoading.isLoading || isRegistering}
 								>
 									{(registerLoading.isLoading || isRegistering) ? (
@@ -233,7 +233,7 @@ export const HabitCard = memo(function HabitCard({
 										variant="ghost"
 										onClick={() => onEdit(habit)}
 										disabled={editLoading.isLoading}
-										className="hover:bg-gray-100 rounded-full w-8 h-8 text-gray-600"
+										className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-10 h-10 text-gray-600"
 									>
 										{editLoading.isLoading ? (
 											<div className="border-2 border-t-transparent rounded-full w-4 h-4 text-gray-400 animate-spin" />
@@ -245,7 +245,7 @@ export const HabitCard = memo(function HabitCard({
 
 								{/* Botão de arquivar hábito */}
 								<Button
-									className="hover:bg-red-100 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
+									className="hover:bg-red-100 dark:hover:bg-red-900/30 p-2 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
 									title="Arquivar hábito"
 									size="icon"
 									variant="ghost"
@@ -261,20 +261,19 @@ export const HabitCard = memo(function HabitCard({
 							</>
 						)}
 
-						{/* Botão para expandir/ocultar detalhes */}
 						<Button
 							size="sm"
 							variant="ghost"
 							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-0 w-8 h-8"
+							className="flex-shrink-0 p-1 w-8 h-8"
 						>
-							{isExpanded ? <ChevronDown className="rotate-180 transition-all duration-200" /> : <ChevronDown className="rotate-0 transition-all duration-200" />}
+							{isExpanded ? <ChevronDown className="w-4 h-4 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-4 h-4 rotate-0 transition-all duration-200" />}
 						</Button>
 					</div>
 				</div>
 			</CardHeader>
 
-			<CardContent className="pt-0">
+			<CardContent className="py-0">
 				{/* Conteúdo expandido */}
 				{isExpanded && (
 					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">

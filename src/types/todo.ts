@@ -1,4 +1,5 @@
 export type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
+export type TodoRecurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
 
 export interface Todo {
 	id: string;
@@ -12,6 +13,8 @@ export interface Todo {
 	createdAt: Date;
 	order?: number;
 	lastCompletedDate?: string;
+	recurrence: TodoRecurrence;
+	recurrenceInterval?: number; // Para recorrência customizada (ex: a cada 3 dias)
 	subtasks?: TodoSubtask[];
 }
 

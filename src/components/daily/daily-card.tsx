@@ -141,20 +141,20 @@ export function DailyCard({
 	const calculatedNextAvailableAt = calculateNextAvailableDate();
 
 	return (
-		<Card className={`hover:shadow-md transition-shadow duration-200 relative overflow-hidden ${(completeLoading.isLoading || isCompleting) ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="pb-1 sm:pb-2">
+		<Card className={`hover:shadow-md gap-0  transition-shadow duration-200 relative overflow-hidden ${(completeLoading.isLoading || isCompleting) ? "opacity-50 pointer-events-none" : ""}`}>
+			<CardHeader className="items-center pb-0">
 				{/* Layout MOBILE - Ultra-compacto */}
-				<div className="sm:hidden block">
+				<div className="sm:hidden block items-center">
 					<div className="flex items-start">
 						<div className="flex-1 pr-1 min-w-0">
 							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
 								{daily.title}
 							</CardTitle>
 						</div>
-						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
+						<div className="flex flex-shrink-0 items-center gap-2 ml-1">
 							{!isCompleted && (
 								<Button
-									className="hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full w-5 h-5 text-amber-600"
+									className="hover:bg-amber-100 dark:hover:bg-amber-900/30 p-2 rounded-full w-7 h-7 text-amber-600"
 									title={t("actions.complete")}
 									onClick={handleComplete}
 									size="icon"
@@ -171,7 +171,7 @@ export function DailyCard({
 
 							{onEdit && (
 								<Button
-									className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+									className="hover:bg-gray-100 dark:hover:bg-gray-800 p-1 rounded-full w-7 h-7 text-gray-600"
 									title={t("actions.edit")}
 									onClick={() => onEdit(daily)}
 									variant="ghost"
@@ -185,7 +185,7 @@ export function DailyCard({
 								size="sm"
 								variant="ghost"
 								onClick={() => setIsExpanded(!isExpanded)}
-								className="p-0 w-5 h-5"
+								className="p-0 w-7 h-7"
 							>
 								{isExpanded ? <ChevronDown className="w-2.5 h-2.5 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-2.5 h-2.5 rotate-0 transition-all duration-200" />}
 							</Button>
@@ -194,17 +194,17 @@ export function DailyCard({
 				</div>
 
 				{/* Layout DESKTOP - título e botões na mesma linha */}
-				<div className="hidden sm:flex justify-between items-start gap-1">
+				<div className="hidden sm:flex justify-between items-center gap-1">
 					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
 						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
 							{daily.title}
 						</CardTitle>
 					</div>
 
-					<div className="flex flex-shrink-0 items-center gap-1">
+					<div className="flex flex-shrink-0 items-center gap-2">
 						{!isCompleted && (
 							<Button
-								className="flex-shrink-0 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full w-8 h-8 text-amber-600 hover:text-orange-600"
+								className="flex-shrink-0 hover:bg-amber-100 dark:hover:bg-amber-900/30 p-2 rounded-full w-8 h-8 text-amber-600 hover:text-orange-600"
 								title={t("actions.complete")}
 								onClick={handleComplete}
 								size="icon"
@@ -221,7 +221,7 @@ export function DailyCard({
 
 						{onEdit && (
 							<Button
-								className="flex-shrink-0 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
+								className="flex-shrink-0 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-10 h-10 text-gray-600 dark:text-gray-400"
 								title={t("actions.edit")}
 								onClick={() => onEdit(daily)}
 								variant="ghost"
@@ -243,11 +243,10 @@ export function DailyCard({
 				</div>
 			</CardHeader>
 
-			<CardContent className="pt-0">
-
+			<CardContent className="py-0">
 				{/* Conteúdo expandido */}
 				{isExpanded && (
-					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">
+					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">
 						{/* Informações básicas */}
 						<div className="space-y-3">
 							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">

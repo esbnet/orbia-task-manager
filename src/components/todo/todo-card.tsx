@@ -4,6 +4,7 @@ import {
 	CheckCircle,
 	ChevronDown,
 	Edit,
+	LoaderCircle,
 	Tag
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ interface TodoCardProps {
 	todo: Todo;
 	onEdit?: (todo: Todo) => void;
 	onComplete?: (id: string) => Promise<void>;
+	onIncomplete?: (id: string) => Promise<void>;
 	onDelete?: (id: string) => void;
 	isCompleted?: boolean;
 }
@@ -39,6 +41,7 @@ export function TodoCard({
 	todo,
 	onEdit,
 	onComplete,
+	onIncomplete,
 	onDelete,
 	isCompleted = false
 }: TodoCardProps) {
@@ -61,31 +64,58 @@ export function TodoCard({
 		}
 	};
 
+	const handleIncomplete = async () => {
+		if (onIncomplete) {
+			await completeLoading.executeAsync(
+				async () => {
+					await onIncomplete(todo.id);
+				},
+				undefined,
+				() => toast.error("Erro ao desmarcar tarefa. Tente novamente.")
+			);
+		}
+	};
+
 	return (
-		<Card className={`hover:shadow-md transition-shadow duration-200 relative overflow-hidden ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="pb-1 sm:pb-2">
+		<Card className={`hover:shadow-md gap-0  transition-shadow duration-200 relative overflow-hidden ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
+			<CardHeader className="items-center mb-0 pb-0">
 				{/* Layout MOBILE - Ultra-compacto */}
-				<div className="sm:hidden block">
+				<div className="sm:hidden block items-center">
 					<div className="flex items-start">
 						<div className="flex-1 pr-1 min-w-0">
 							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
 								{todo.title}
 							</CardTitle>
 						</div>
-						<div className="flex flex-shrink-0 items-center gap-0.5 ml-1">
-							{!isCompleted && (
+						<div className="flex flex-shrink-0 items-center gap-2 ml-1">
+							{isCompleted ? (
+								<Button
+									title="Desmarcar como concluído"
+									variant="ghost"
+									onClick={handleIncomplete}
+									size="icon"
+									className="hover:bg-orange-100 dark:hover:bg-orange-900/30 p-2 rounded-full w-7 h-7 text-orange-600"
+									disabled={completeLoading.isLoading}
+								>
+									{completeLoading.isLoading ? (
+										<LoaderCircle className="w-2.5 h-2.5 text-blue-600 animate-spin" />
+									) : (
+										<CheckCircle className="opacity-50 w-2.5 h-2.5" />
+									)}
+								</Button>
+							) : (
 								<Button
 									title="Marcar como concluído"
 									variant="ghost"
 									onClick={handleComplete}
 									size="icon"
-									className="hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full w-5 h-5 text-blue-600"
+									className="hover:bg-blue-100 dark:hover:bg-blue-900/30 p-2 rounded-full w-7 h-7 text-blue-600"
 									disabled={completeLoading.isLoading}
 								>
 									{completeLoading.isLoading ? (
-										<div className="border-2 border-t-transparent border-blue-600 rounded-full w-2.5 h-2.5 animate-spin" />
+										<LoaderCircle className="w-2.5 h-2.5 text-blue-600 animate-spin" />
 									) : (
-										<CheckCircle className="w-2.5 h-2.5" />
+										<CheckCircle className="opacity-50 w-2.5 h-2.5" />
 									)}
 								</Button>
 							)}
@@ -95,7 +125,7 @@ export function TodoCard({
 									onClick={() => onEdit(todo)}
 									variant="ghost"
 									size="icon"
-									className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-5 h-5 text-gray-600"
+									className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-7 h-7 text-gray-600"
 								>
 									<Edit className="w-2.5 h-2.5" />
 								</Button>
@@ -105,7 +135,7 @@ export function TodoCard({
 								size="sm"
 								variant="ghost"
 								onClick={() => setIsExpanded(!isExpanded)}
-								className="p-0 w-5 h-5"
+								className="p-0 w-7 h-7"
 							>
 								<ChevronDown className={`w-2.5 h-2.5 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
 							</Button>
@@ -114,21 +144,36 @@ export function TodoCard({
 				</div>
 
 				{/* Layout DESKTOP - título e botões na mesma linha */}
-				<div className="hidden sm:flex justify-between items-start gap-3">
-					<div className="flex-1 min-w-0">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
+				<div className="hidden sm:flex justify-between items-center gap-1">
+					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
+						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
 							{todo.title}
 						</CardTitle>
 					</div>
 
-					<div className="flex flex-shrink-0 items-center gap-1">
-						{!isCompleted && (
+					<div className="flex flex-shrink-0 items-center gap-2">
+						{isCompleted ? (
+							<Button
+								title="Desmarcar como concluído"
+								variant="ghost"
+								onClick={handleIncomplete}
+								size="icon"
+								className="hover:bg-orange-100 dark:hover:bg-orange-900/30 p-2 rounded-full w-8 h-8 text-orange-600"
+								disabled={completeLoading.isLoading}
+							>
+								{completeLoading.isLoading ? (
+									<div className="border-2 border-orange-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
+								) : (
+									<CheckCircle className="opacity-50 w-4 h-4" />
+								)}
+							</Button>
+						) : (
 							<Button
 								title="Marcar como concluído"
 								variant="ghost"
 								onClick={handleComplete}
 								size="icon"
-								className="hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full w-8 h-8 text-blue-600 hover:text-blue-600"
+								className="hover:bg-blue-100 dark:hover:bg-blue-900/30 p-2 rounded-full w-8 h-8 text-blue-600 hover:text-blue-600"
 								disabled={completeLoading.isLoading}
 							>
 								{completeLoading.isLoading ? (
@@ -144,29 +189,28 @@ export function TodoCard({
 								onClick={() => onEdit(todo)}
 								variant="ghost"
 								size="icon"
-								className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
+								className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-10 h-10 text-gray-600 dark:text-gray-400"
 							>
 								<Edit className="w-4 h-4" />
 							</Button>
 						)}
 
-						{/* Botão para expandir/ocultar detalhes */}
 						<Button
 							size="sm"
 							variant="ghost"
 							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-0 w-8 h-8"
+							className="flex-shrink-0 p-1 w-8 h-8"
 						>
-							<ChevronDown className={`transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+							<ChevronDown className={`w-4 h-4 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
 						</Button>
 					</div>
 				</div>
 			</CardHeader>
 
-			<CardContent className="pt-0">
+			<CardContent className="py-0">
 				{/* Conteúdo expandido */}
 				{isExpanded && (
-					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">
 						{/* Informações básicas */}
 						<div className="space-y-3">
 							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
@@ -199,6 +243,21 @@ export function TodoCard({
 									<Badge className="bg-indigo-50/80 dark:bg-indigo-900/30 border border-indigo-200/80 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs" title="Data de início">
 										<Calendar className="w-3 h-3" />
 										{new Date(todo.startDate).toLocaleDateString()}
+									</Badge>
+								)}
+
+								{todo.recurrence !== "none" && (
+									<Badge className="bg-blue-50/80 dark:bg-blue-900/30 border border-blue-200/80 dark:border-blue-700 text-blue-700 dark:text-blue-300 text-xs" title="Tipo de recorrência">
+										<div className="bg-blue-500 mr-1 rounded-full w-2 h-2" />
+										{(() => {
+											switch (todo.recurrence) {
+												case "daily": return "Diária";
+												case "weekly": return "Semanal";
+												case "monthly": return "Mensal";
+												case "custom": return `A cada ${todo.recurrenceInterval} dia${todo.recurrenceInterval !== 1 ? 's' : ''}`;
+												default: return todo.recurrence;
+											}
+										})()}
 									</Badge>
 								)}
 							</div>
