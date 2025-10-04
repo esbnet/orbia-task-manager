@@ -1,7 +1,8 @@
-import { BaseEntityService, handleServiceError } from "./base/entity-service";
 import type { DailyLogRepository, DailyPeriodRepository, DailyRepository } from "@/domain/repositories/all-repository";
+import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 import type { Daily } from "@/domain/entities/daily";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 
 // Daily form data interface
 export interface DailyFormData {
@@ -169,31 +170,11 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 	}
 
 	private calculateNextPeriodStart(type: string, fromDate: Date, frequency: number): Date {
-		const nextStart = new Date(fromDate);
-		switch (type) {
-			case "Diariamente":
-				nextStart.setDate(nextStart.getDate() + frequency);
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			case "Semanalmente":
-				nextStart.setDate(nextStart.getDate() + (7 * frequency));
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			case "Mensalmente":
-				nextStart.setMonth(nextStart.getMonth() + frequency);
-				nextStart.setDate(1); // Primeiro dia do mês
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			case "Anualmente":
-				nextStart.setFullYear(nextStart.getFullYear() + frequency);
-				nextStart.setMonth(0, 1); // 1 de janeiro
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			default:
-				nextStart.setDate(nextStart.getDate() + frequency);
-				nextStart.setHours(0, 0, 0, 0);
-		}
-		return nextStart;
+		return DailyPeriodCalculator.calculateNextStartDate(
+			type as "Diariamente" | "Semanalmente" | "Mensalmente" | "Anualmente",
+			fromDate,
+			frequency
+		);
 	}
 
 	async reorderDailies(dailyIds: string[]): Promise<void> {

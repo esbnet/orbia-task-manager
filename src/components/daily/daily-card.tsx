@@ -11,6 +11,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 import { useButtonLoading } from "@/hooks/use-button-loading";
 import { useTranslation } from "@/hooks/use-translation";
 import { useState } from "react";
@@ -112,30 +113,14 @@ export function DailyCard({
 	const calculateNextAvailableDate = () => {
 		if (!daily.repeat) return null;
 
-		const now = new Date();
-		const { type, frequency } = daily.repeat;
+		// Usar a última data de conclusão se disponível, senão usar a data atual
+		const referenceDate = daily.lastCompletedDate ? new Date(daily.lastCompletedDate) : new Date();
 
-		switch (type) {
-			case "Diariamente":
-				const tomorrow = new Date(now);
-				tomorrow.setDate(now.getDate() + frequency);
-				tomorrow.setHours(0, 0, 0, 0);
-				return tomorrow;
-			case "Semanalmente":
-				const nextWeek = new Date(now);
-				nextWeek.setDate(now.getDate() + (7 * frequency));
-				return nextWeek;
-			case "Mensalmente":
-				const nextMonth = new Date(now);
-				nextMonth.setMonth(now.getMonth() + frequency);
-				return nextMonth;
-			case "Anualmente":
-				const nextYear = new Date(now);
-				nextYear.setFullYear(now.getFullYear() + frequency);
-				return nextYear;
-			default:
-				return null;
-		}
+		return DailyPeriodCalculator.calculateNextStartDate(
+			daily.repeat.type as "Diariamente" | "Semanalmente" | "Mensalmente" | "Anualmente",
+			referenceDate,
+			daily.repeat.frequency
+		);
 	};
 
 	const calculatedNextAvailableAt = calculateNextAvailableDate();

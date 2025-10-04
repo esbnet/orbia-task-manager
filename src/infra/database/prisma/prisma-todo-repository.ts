@@ -135,6 +135,8 @@ export class PrismaTodoRepository implements TodoRepository {
 				tags: todo.tags,
 				order: todo.order,
 				lastCompletedDate: todo.lastCompletedDate,
+				recurrence: todo.recurrence,
+				recurrenceInterval: todo.recurrenceInterval,
 			},
 		});
 		return this.toDomain(updated);
@@ -173,6 +175,8 @@ export class PrismaTodoRepository implements TodoRepository {
 		order: number;
 		lastCompletedDate: string | null;
 		createdAt: Date;
+		recurrence: string;
+		recurrenceInterval: number | null;
 		subtasks?: Array<{
 			id: string;
 			title: string;
@@ -194,6 +198,8 @@ export class PrismaTodoRepository implements TodoRepository {
 			order: todo.order,
 			lastCompletedDate: todo.lastCompletedDate || undefined,
 			createdAt: todo.createdAt,
+			recurrence: todo.recurrence as Todo["recurrence"],
+			recurrenceInterval: todo.recurrenceInterval || undefined,
 			subtasks:
 				todo.subtasks?.map((s) => ({
 					id: s.id,

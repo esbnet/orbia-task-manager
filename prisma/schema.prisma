@@ -153,6 +153,8 @@ model Todo {
     tags              String[]
     order             Int      @default(0)
     lastCompletedDate String?
+    recurrence        String   @default("none") // "none", "daily", "weekly", "monthly", "custom"
+    recurrenceInterval Int?    // Para recorrência customizada (ex: a cada 3 dias)
     userId            String
     createdAt         DateTime @default(now())
 

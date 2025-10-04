@@ -18,7 +18,10 @@ export class DailyPeriodCalculator {
 				nextStart.setHours(0, 0, 0, 0);
 				break;
 			case "Semanalmente":
-				nextStart.setDate(completedAt.getDate() + (7 * frequency));
+				// Para tarefas semanais, reaparecer no início da próxima semana (segunda-feira)
+				const daysUntilNextWeek = (7 - completedAt.getDay() + 1) % 7; // 1 = segunda-feira
+				const daysToAdd = daysUntilNextWeek === 0 ? 7 : daysUntilNextWeek;
+				nextStart.setDate(completedAt.getDate() + daysToAdd + (7 * (frequency - 1)));
 				nextStart.setHours(0, 0, 0, 0);
 				break;
 			case "Mensalmente":

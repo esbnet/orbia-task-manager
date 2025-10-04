@@ -1,8 +1,8 @@
+import { TodoInputValidator } from "@/application/dto/todo-dto";
 import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
 import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo/delete-todo-use-case";
 import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
 import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
-import { TodoInputValidator } from "@/application/dto/todo-dto";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import type { NextRequest } from "next/server";
 
@@ -153,7 +153,9 @@ export async function PATCH(request: NextRequest) {
 			difficulty: rawData.difficulty || "Fácil",
 			startDate: rawData.startDate ? new Date(rawData.startDate) : new Date(),
 			tags: validatedInput.tags || [],
-			createdAt: rawData.createdAt ? new Date(rawData.createdAt) : new Date()
+			createdAt: rawData.createdAt ? new Date(rawData.createdAt) : new Date(),
+			recurrence: rawData.recurrence || "none",
+			recurrenceInterval: rawData.recurrenceInterval || undefined,
 		};
 		
 		const updatedTodo = await updateTodoUseCase.execute(todoData);
