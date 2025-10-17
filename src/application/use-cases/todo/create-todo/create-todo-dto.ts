@@ -1,4 +1,6 @@
 export type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
+export type TodoRecurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
+export type TodoType = "pontual" | "recorrente";
 
 export type TodoReset = "Diária" | "Semanal" | "Mensal";
 
@@ -11,6 +13,8 @@ export type CreateTodoInput = {
 	startDate: Date;
 	tags: string[];
 	createdAt: Date;
+	recurrence?: TodoRecurrence;
+	todoType?: TodoType;
 };
 
 export type CreateTodoOutput = {
@@ -24,5 +28,7 @@ export type CreateTodoOutput = {
 		startDate: Date;
 		tags: string[];
 		createdAt: Date;
+		recurrence: TodoRecurrence;
+		todoType: TodoType;
 	};
 };

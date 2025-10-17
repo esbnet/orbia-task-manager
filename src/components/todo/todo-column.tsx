@@ -22,6 +22,7 @@ const defaultTodo: Todo = {
 	startDate: new Date(),
 	createdAt: new Date(),
 	recurrence: "none" as const,
+	todoType: "pontual" as const,
 };
 
 export const TodoColumn = () => {

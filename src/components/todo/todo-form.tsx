@@ -72,6 +72,7 @@ export function TodoForm({
 	const [recurrenceInterval, setRecurrenceInterval] = useState<number | undefined>(
 		todo.recurrenceInterval || undefined,
 	);
+	const [todoType, setTodoType] = useState(todo.todoType || "pontual");
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -88,6 +89,7 @@ export function TodoForm({
 		setTags(todo.tags || []);
 		setRecurrence(todo.recurrence || "none");
 		setRecurrenceInterval(todo.recurrenceInterval || undefined);
+		setTodoType(todo.todoType || "pontual");
 	}, [todo]);
 
 	async function handleUpdateTodo(e: React.FormEvent<HTMLFormElement>) {
@@ -108,6 +110,7 @@ export function TodoForm({
 					tags,
 					recurrence,
 					recurrenceInterval: recurrence === "custom" ? recurrenceInterval : undefined,
+					todoType: todoType,
 				} as Omit<Todo, "id" | "createdAt">);
 
 				// ✅ Limpar formulário após criação bem-sucedida
@@ -134,6 +137,7 @@ export function TodoForm({
 					tags: tags || [],
 					recurrence,
 					recurrenceInterval: recurrence === "custom" ? recurrenceInterval : undefined,
+					todoType: todoType,
 				}
 			});
 

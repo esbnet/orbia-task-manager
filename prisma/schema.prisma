@@ -144,19 +144,20 @@ model DailyLog {
 }
 
 model Todo {
-    id                String   @id @default(cuid())
-    title             String
-    observations      String   @default("")
-    tasks             String[]
-    difficulty        String
-    startDate         DateTime
-    tags              String[]
-    order             Int      @default(0)
-    lastCompletedDate String?
-    recurrence        String   @default("none") // "none", "daily", "weekly", "monthly", "custom"
-    recurrenceInterval Int?    // Para recorrência customizada (ex: a cada 3 dias)
-    userId            String
-    createdAt         DateTime @default(now())
+    id                 String   @id @default(cuid())
+    title              String
+    observations       String   @default("")
+    tasks              String[]
+    difficulty         String
+    startDate          DateTime
+    tags               String[]
+    order              Int      @default(0)
+    lastCompletedDate  String?
+    recurrence         String   @default("none") // "none", "daily", "weekly", "monthly", "custom"
+    recurrenceInterval Int? // Para recorrência customizada (ex: a cada 3 dias)
+    todoType           String   @default("pontual") // "pontual", "recorrente"
+    userId             String
+    createdAt          DateTime @default(now())
 
     user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
     logs     TodoLog[]

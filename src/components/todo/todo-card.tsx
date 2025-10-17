@@ -20,6 +20,7 @@ interface TodoCardProps {
 	todo: Todo;
 	onEdit?: (todo: Todo) => void;
 	onComplete?: (id: string) => Promise<void>;
+	onCompletePontual?: (id: string) => Promise<void>;
 	onIncomplete?: (id: string) => Promise<void>;
 	onDelete?: (id: string) => void;
 	isCompleted?: boolean;
@@ -41,6 +42,7 @@ export function TodoCard({
 	todo,
 	onEdit,
 	onComplete,
+	onCompletePontual,
 	onIncomplete,
 	onDelete,
 	isCompleted = false
@@ -51,12 +53,15 @@ export function TodoCard({
 	const difficulty = difficultyConfig[todo.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 
 	const handleComplete = async () => {
-		if (onComplete) {
+		// Usar handler específico baseado no tipo de tarefa
+		const completeHandler = todo.todoType === "pontual" && onCompletePontual
+			? onCompletePontual
+			: onComplete;
+
+		if (completeHandler) {
 			await completeLoading.executeAsync(
 				async () => {
-					// TODO: Implementar mutation para todo-logs quando disponível
-					// Por enquanto, apenas chama o callback que já está conectado com a mutation
-					await onComplete(todo.id);
+					await completeHandler(todo.id);
 				},
 				undefined,
 				() => toast.error("Erro ao completar tarefa. Tente novamente.")

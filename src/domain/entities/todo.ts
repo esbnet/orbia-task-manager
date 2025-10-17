@@ -1,3 +1,5 @@
+import { TodoTypeValueObject } from "../value-objects/todo-type";
+
 type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
 type TodoRecurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
 
@@ -15,6 +17,7 @@ export interface Todo {
 	lastCompletedDate?: string;
 	recurrence: TodoRecurrence;
 	recurrenceInterval?: number;
+	todoType: TodoTypeValueObject;
 	subtasks?: TodoSubtask[];
 }
 

@@ -142,3 +142,34 @@ export function useCompleteTodo() {
 		},
 	});
 }
+
+export function useCompletePontualTodo() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (id: string): Promise<Todo> => {
+			const response = await fetch(`/api/todos/${id}/complete-pontual`, {
+				method: "POST",
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				throw new Error(errorData.error || "Erro ao completar tarefa pontual");
+			}
+
+			const result = await response.json();
+			return result.todo;
+		},
+		onSuccess: (data, variables) => {
+			// Atualizar o cache específico da tarefa
+			queryClient.setQueryData(todoKeys.detail(variables), data);
+			queryClient.invalidateQueries({ queryKey: todoKeys.all });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache do gráfico de evolução semanal
+			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
+		},
+	});
+}

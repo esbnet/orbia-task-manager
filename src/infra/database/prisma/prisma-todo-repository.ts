@@ -1,5 +1,6 @@
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoRepository } from "@/domain/repositories/all-repository";
+import { TodoTypeValueObject } from "@/domain/value-objects/todo-type";
 import { getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
@@ -109,10 +110,9 @@ export class PrismaTodoRepository implements TodoRepository {
 			create: { id: userId },
 		});
 
-		const { ...todoData } = data;
 		const todo = await prisma.todo.create({
 			data: {
-				...todoData,
+				...data,
 				order: data.order ?? 0,
 				userId,
 			},
@@ -177,6 +177,7 @@ export class PrismaTodoRepository implements TodoRepository {
 		createdAt: Date;
 		recurrence: string;
 		recurrenceInterval: number | null;
+		todoType?: string;
 		subtasks?: Array<{
 			id: string;
 			title: string;
@@ -200,6 +201,7 @@ export class PrismaTodoRepository implements TodoRepository {
 			createdAt: todo.createdAt,
 			recurrence: todo.recurrence as Todo["recurrence"],
 			recurrenceInterval: todo.recurrenceInterval || undefined,
+			todoType: TodoTypeValueObject.create((todo.todoType || "pontual") as any),
 			subtasks:
 				todo.subtasks?.map((s) => ({
 					id: s.id,

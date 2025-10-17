@@ -156,6 +156,7 @@ export async function PATCH(request: NextRequest) {
 			createdAt: rawData.createdAt ? new Date(rawData.createdAt) : new Date(),
 			recurrence: rawData.recurrence || "none",
 			recurrenceInterval: rawData.recurrenceInterval || undefined,
+			todoType: (rawData.todoType || "pontual") as "pontual" | "recorrente",
 		};
 		
 		const updatedTodo = await updateTodoUseCase.execute(todoData);
