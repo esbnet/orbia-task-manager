@@ -43,7 +43,7 @@ interface TimeEntry {
  *               date:
  *                 type: string
  *                 format: date-time
- *                 description: Data do registro - opcional, padrão: agora
+ *                 description: "Data do registro - opcional, padrão: agora"
  *     responses:
  *       201:
  *         description: Tempo registrado com sucesso

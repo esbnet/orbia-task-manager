@@ -10,20 +10,14 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import type { Todo } from "../../types";
-// import { useTodoContext } from "@/contexts/todo-context";
-import { useButtonLoading } from "@/hooks/use-button-loading";
+import type { Todo } from "@/domain/entities/todo";
+import { useCompleteTodo, useIncompleteTodo } from "@/hooks/use-complete-todo";
 import { useState } from "react";
 
 interface TodoCardProps {
 	todo: Todo;
 	onEdit?: (todo: Todo) => void;
-	onComplete?: (id: string) => Promise<void>;
-	onCompletePontual?: (id: string) => Promise<void>;
-	onIncomplete?: (id: string) => Promise<void>;
 	onDelete?: (id: string) => void;
-	isCompleted?: boolean;
 }
 
 const difficultyConfig = {
@@ -41,174 +35,124 @@ const statusConfig = {
 export function TodoCard({
 	todo,
 	onEdit,
-	onComplete,
-	onCompletePontual,
-	onIncomplete,
-	onDelete,
-	isCompleted = false
+	onDelete
 }: TodoCardProps) {
-	// Removido useTodoContext
-	const completeLoading = useButtonLoading();
+	const completeTodo = useCompleteTodo();
+	const incompleteTodo = useIncompleteTodo();
 	const [isExpanded, setIsExpanded] = useState(false);
 	const difficulty = difficultyConfig[todo.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 
-	const handleComplete = async () => {
-		// Usar handler específico baseado no tipo de tarefa
-		const completeHandler = todo.todoType === "pontual" && onCompletePontual
-			? onCompletePontual
-			: onComplete;
+	// Determinar se a tarefa está completa baseado na recorrência
+	const isCompleted = (() => {
+		if (!todo.lastCompletedDate) return false;
+		
+		const lastCompleted = new Date(todo.lastCompletedDate);
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		lastCompleted.setHours(0, 0, 0, 0);
 
-		if (completeHandler) {
-			await completeLoading.executeAsync(
-				async () => {
-					await completeHandler(todo.id);
-				},
-				undefined,
-				() => toast.error("Erro ao completar tarefa. Tente novamente.")
-			);
+		switch (todo.recurrence) {
+			case "daily":
+				return lastCompleted.getTime() === today.getTime();
+			case "weekly": {
+				const weekStart = new Date(today);
+				weekStart.setDate(today.getDate() - today.getDay());
+				return lastCompleted >= weekStart;
+			}
+			case "monthly": {
+				return lastCompleted.getMonth() === today.getMonth() && 
+					   lastCompleted.getFullYear() === today.getFullYear();
+			}
+			case "custom": {
+				const daysDiff = Math.floor((today.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				return daysDiff < (todo.recurrenceInterval || 1);
+			}
+			default: // "none" ou pontual
+				return !!todo.lastCompletedDate;
 		}
+	})();
+
+	// Determinar se a tarefa deve aparecer (não está no período de cooldown)
+	const shouldShow = (() => {
+		if (todo.recurrence === "none" || todo.todoType === "pontual") {
+			return !todo.lastCompletedDate; // Tarefas pontuais desaparecem após conclusão
+		}
+		return true; // Tarefas recorrentes sempre aparecem
+	})();
+
+	if (!shouldShow) return null;
+
+	const handleComplete = () => {
+		completeTodo.mutate(todo);
 	};
 
-	const handleIncomplete = async () => {
-		if (onIncomplete) {
-			await completeLoading.executeAsync(
-				async () => {
-					await onIncomplete(todo.id);
-				},
-				undefined,
-				() => toast.error("Erro ao desmarcar tarefa. Tente novamente.")
-			);
-		}
+	const handleIncomplete = () => {
+		incompleteTodo.mutate(todo.id);
 	};
+
+	const isLoading = completeTodo.isPending || incompleteTodo.isPending;
 
 	return (
-		<Card className={`hover:shadow-md gap-0  transition-shadow duration-200 relative overflow-hidden ${completeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="items-center mb-0 pb-0">
-				{/* Layout MOBILE - Ultra-compacto */}
-				<div className="sm:hidden block items-center">
-					<div className="flex items-start">
-						<div className="flex-1 pr-1 min-w-0">
-							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
-								{todo.title}
-							</CardTitle>
-						</div>
-						<div className="flex flex-shrink-0 items-center gap-2 ml-1">
-							{isCompleted ? (
-								<Button
-									title="Desmarcar como concluído"
-									variant="ghost"
-									onClick={handleIncomplete}
-									size="icon"
-									className="hover:bg-orange-100 dark:hover:bg-orange-900/30 p-2 rounded-full w-7 h-7 text-orange-600"
-									disabled={completeLoading.isLoading}
-								>
-									{completeLoading.isLoading ? (
-										<LoaderCircle className="w-2.5 h-2.5 text-blue-600 animate-spin" />
-									) : (
-										<CheckCircle className="opacity-50 w-2.5 h-2.5" />
-									)}
-								</Button>
-							) : (
-								<Button
-									title="Marcar como concluído"
-									variant="ghost"
-									onClick={handleComplete}
-									size="icon"
-									className="hover:bg-blue-100 dark:hover:bg-blue-900/30 p-2 rounded-full w-7 h-7 text-blue-600"
-									disabled={completeLoading.isLoading}
-								>
-									{completeLoading.isLoading ? (
-										<LoaderCircle className="w-2.5 h-2.5 text-blue-600 animate-spin" />
-									) : (
-										<CheckCircle className="opacity-50 w-2.5 h-2.5" />
-									)}
-								</Button>
-							)}
-
-							{onEdit && (
-								<Button
-									onClick={() => onEdit(todo)}
-									variant="ghost"
-									size="icon"
-									className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-7 h-7 text-gray-600"
-								>
-									<Edit className="w-2.5 h-2.5" />
-								</Button>
-							)}
-
-							<Button
-								size="sm"
-								variant="ghost"
-								onClick={() => setIsExpanded(!isExpanded)}
-								className="p-0 w-7 h-7"
-							>
-								<ChevronDown className={`w-2.5 h-2.5 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
-							</Button>
-						</div>
-					</div>
-				</div>
-
-				{/* Layout DESKTOP - título e botões na mesma linha */}
-				<div className="hidden sm:flex justify-between items-center gap-1">
-					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
-							{todo.title}
-						</CardTitle>
-					</div>
-
-					<div className="flex flex-shrink-0 items-center gap-2">
-						{isCompleted ? (
-							<Button
-								title="Desmarcar como concluído"
-								variant="ghost"
-								onClick={handleIncomplete}
-								size="icon"
-								className="hover:bg-orange-100 dark:hover:bg-orange-900/30 p-2 rounded-full w-8 h-8 text-orange-600"
-								disabled={completeLoading.isLoading}
-							>
-								{completeLoading.isLoading ? (
-									<div className="border-2 border-orange-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
-								) : (
-									<CheckCircle className="opacity-50 w-4 h-4" />
-								)}
-							</Button>
+		<Card className={`hover:shadow-md gap-0 transition-shadow duration-200 relative overflow-hidden border border-gray-200/50 dark:border-gray-700/50 ${isLoading ? "opacity-50 pointer-events-none" : ""}`}>
+			{/* Barra de controles fixa no canto superior direito */}
+			<div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+				{isCompleted ? (
+					<Button
+						title="Desmarcar como concluído"
+						variant="ghost"
+						onClick={handleIncomplete}
+						size="icon"
+						className="hover:bg-orange-100 dark:hover:bg-orange-900/30 border border-orange-200/50 dark:border-orange-700/50 p-2 rounded-full w-7 h-7 text-orange-600"
+						disabled={isLoading}
+					>
+						{isLoading ? (
+							<LoaderCircle className="w-3 h-3 text-orange-600 animate-spin" />
 						) : (
-							<Button
-								title="Marcar como concluído"
-								variant="ghost"
-								onClick={handleComplete}
-								size="icon"
-								className="hover:bg-blue-100 dark:hover:bg-blue-900/30 p-2 rounded-full w-8 h-8 text-blue-600 hover:text-blue-600"
-								disabled={completeLoading.isLoading}
-							>
-								{completeLoading.isLoading ? (
-									<div className="border-2 border-t-transparent border-blue-600 rounded-full w-4 h-4 animate-spin" />
-								) : (
-									<CheckCircle className="w-4 h-4" />
-								)}
-							</Button>
+							<CheckCircle className="opacity-50 w-3 h-3" />
 						)}
-
-						{onEdit && (
-							<Button
-								onClick={() => onEdit(todo)}
-								variant="ghost"
-								size="icon"
-								className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-10 h-10 text-gray-600 dark:text-gray-400"
-							>
-								<Edit className="w-4 h-4" />
-							</Button>
+					</Button>
+				) : (
+					<Button
+						title="Marcar como concluído"
+						variant="ghost"
+						onClick={handleComplete}
+						size="icon"
+						className="hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200/50 dark:border-blue-700/50 p-2 rounded-full w-7 h-7 text-blue-600"
+						disabled={isLoading}
+					>
+						{isLoading ? (
+							<LoaderCircle className="w-3 h-3 text-blue-600 animate-spin" />
+						) : (
+							<CheckCircle className="opacity-50 w-3 h-3" />
 						)}
+					</Button>
+				)}
 
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-1 w-8 h-8"
-						>
-							<ChevronDown className={`w-4 h-4 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
-						</Button>
-					</div>
+				{onEdit && (
+					<Button
+						onClick={() => onEdit(todo)}
+						variant="ghost"
+						size="icon"
+						className="hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/50 dark:border-gray-600/50 p-2 rounded-full w-7 h-7 text-gray-600"
+					>
+						<Edit className="w-3 h-3" />
+					</Button>
+				)}
+
+				<Button
+					size="sm"
+					variant="ghost"
+					onClick={() => setIsExpanded(!isExpanded)}
+					className="border border-gray-200/50 dark:border-gray-600/50 p-0 w-7 h-7"
+				>
+					<ChevronDown className={`w-3 h-3 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+				</Button>
+			</div>
+			<CardHeader className="pb-0">
+				<div className="pr-20">
+					<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base break-words leading-snug">
+						{todo.title}
+					</CardTitle>
 				</div>
 			</CardHeader>
 

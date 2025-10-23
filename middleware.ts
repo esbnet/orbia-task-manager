@@ -1,4 +1,4 @@
-import { LOCALE_COOKIE, detectLocaleFromHeader, normalizeLocale } from "@/i18n/shared";
+import { LOCALE_COOKIE, defaultLocale, normalizeLocale } from "@/i18n/shared";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -8,16 +8,19 @@ export function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const { pathname } = req.nextUrl;
 
-  // Configuração de idioma
-  const existing = req.cookies.get(LOCALE_COOKIE)?.value ?? null;
-  const normalized = normalizeLocale(existing);
+  // Configuração de idioma - só processa se não for uma rota de API
+  if (!pathname.startsWith("/api/")) {
+    const existing = req.cookies.get(LOCALE_COOKIE)?.value ?? null;
+    const normalized = normalizeLocale(existing);
 
-  if (!normalized) {
-    const detected = detectLocaleFromHeader(req.headers.get("accept-language"));
-    res.cookies.set(LOCALE_COOKIE, detected, {
-      path: "/",
-      sameSite: "lax",
-    });
+    if (!normalized) {
+      // Usa um valor padrão em vez de tentar detectar dinamicamente
+      const detected = defaultLocale;
+      res.cookies.set(LOCALE_COOKIE, detected, {
+        path: "/",
+        sameSite: "lax",
+      });
+    }
   }
 
   // Headers de performance
@@ -25,19 +28,21 @@ export function middleware(req: NextRequest) {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Content-Type-Options", "nosniff");
   
-  // Cache para API routes
+  // Cache para API routes - apenas em produção
   if (pathname.startsWith("/api/")) {
     if (pathname.includes("/active-tasks") || pathname.includes("/todos")) {
       res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
     }
+    // Headers específicos para deploy no Vercel
+    res.headers.set("x-vercel-skip-middleware", "true");
   }
 
   return res;
 }
 
-// Evita rodar em assets estáticos/imagens
+// Evita rodar em assets estáticos/imagens e rotas da API
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/docs).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/).*)",
   ],
 };

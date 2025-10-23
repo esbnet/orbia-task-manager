@@ -6,13 +6,14 @@ import {
 	Clock,
 	Edit,
 	LoaderCircle,
+	RotateCcw,
 	Tag
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
-import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useCompleteDaily } from "@/hooks/use-dailies";
 import { useTranslation } from "@/hooks/use-translation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,7 +22,6 @@ import type { Daily } from "../../types";
 interface DailyCardProps {
 	daily: Daily;
 	onEdit?: (daily: Daily) => void;
-	onComplete?: (id: string) => Promise<void>;
 	isCompleted?: boolean;
 	nextAvailableAt?: Date | string;
 }
@@ -34,7 +34,7 @@ const difficultyConfig = {
 };
 
 const repeatTypeConfig = {
-	"Diariamente": { icon: Calendar, color: "text-blue-600 dark:text-blue-400" },
+	"Diariamente": { icon: RotateCcw, color: "text-blue-600 dark:text-blue-400" },
 	"Semanalmente": { icon: Calendar, color: "text-green-600 dark:text-green-400" },
 	"Mensalmente": { icon: Calendar, color: "text-purple-600 dark:text-purple-400" },
 	"Anualmente": { icon: Calendar, color: "text-orange-600 dark:text-orange-400" },
@@ -43,11 +43,9 @@ const repeatTypeConfig = {
 export function DailyCard({
 	daily,
 	onEdit,
-	onComplete,
 	isCompleted = false
 }: DailyCardProps) {
-	const completeLoading = useButtonLoading();
-	const [isCompleting, setIsCompleting] = useState(false);
+	const completeDaily = useCompleteDaily();
 	const [isExpanded, setIsExpanded] = useState(false);
 	const difficulty = difficultyConfig[daily.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 	const repeatConfig = repeatTypeConfig[daily.repeat?.type as keyof typeof repeatTypeConfig] || repeatTypeConfig["Diariamente"];
@@ -76,23 +74,13 @@ export function DailyCard({
 	};
 
 	const handleComplete = async () => {
-		if (isCompleting || completeLoading.isLoading) return;
+		if (completeDaily.isPending) return;
 
-		setIsCompleting(true);
-		if (onComplete) {
-			try {
-				await completeLoading.executeAsync(
-					async () => {
-						await onComplete(daily.id);
-						// Usar mensagem fixa para evitar problemas de tradução
-						toast.success(`Tarefa "${daily.title}" concluída com sucesso!`);
-					},
-					undefined,
-					() => toast.error("Erro ao completar tarefa. Tente novamente.")
-				);
-			} finally {
-				setIsCompleting(false);
-			}
+		try {
+			await completeDaily.mutateAsync(daily.id);
+			toast.success(`Tarefa "${daily.title}" concluída com sucesso!`);
+		} catch (error) {
+			toast.error("Erro ao completar tarefa. Tente novamente.");
 		}
 	};
 
@@ -126,105 +114,53 @@ export function DailyCard({
 	const calculatedNextAvailableAt = calculateNextAvailableDate();
 
 	return (
-		<Card className={`hover:shadow-md gap-0  transition-shadow duration-200 relative overflow-hidden ${(completeLoading.isLoading || isCompleting) ? "opacity-50 pointer-events-none" : ""}`}>
-			<CardHeader className="items-center pb-0">
-				{/* Layout MOBILE - Ultra-compacto */}
-				<div className="sm:hidden block items-center">
-					<div className="flex items-start">
-						<div className="flex-1 pr-1 min-w-0">
-							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
-								{daily.title}
-							</CardTitle>
-						</div>
-						<div className="flex flex-shrink-0 items-center gap-2 ml-1">
-							{!isCompleted && (
-								<Button
-									className="hover:bg-amber-100 dark:hover:bg-amber-900/30 p-2 rounded-full w-7 h-7 text-amber-600"
-									title={t("actions.complete")}
-									onClick={handleComplete}
-									size="icon"
-									variant="ghost"
-									disabled={completeLoading.isLoading || isCompleting}
-								>
-									{(completeLoading.isLoading || isCompleting) ? (
-										<LoaderCircle className="w-2.5 h-2.5 text-amber-600 animate-spin" />
-									) : (
-										<CheckCircle className="w-2.5 h-2.5" />
-									)}
-								</Button>
-							)}
-
-							{onEdit && (
-								<Button
-									className="hover:bg-gray-100 dark:hover:bg-gray-800 p-1 rounded-full w-7 h-7 text-gray-600"
-									title={t("actions.edit")}
-									onClick={() => onEdit(daily)}
-									variant="ghost"
-									size="icon"
-								>
-									<Edit className="w-2.5 h-2.5" />
-								</Button>
-							)}
-
-							<Button
-								size="sm"
-								variant="ghost"
-								onClick={() => setIsExpanded(!isExpanded)}
-								className="p-0 w-7 h-7"
-							>
-								{isExpanded ? <ChevronDown className="w-2.5 h-2.5 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-2.5 h-2.5 rotate-0 transition-all duration-200" />}
-							</Button>
-						</div>
-					</div>
-				</div>
-
-				{/* Layout DESKTOP - título e botões na mesma linha */}
-				<div className="hidden sm:flex justify-between items-center gap-1">
-					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
-							{daily.title}
-						</CardTitle>
-					</div>
-
-					<div className="flex flex-shrink-0 items-center gap-2">
-						{!isCompleted && (
-							<Button
-								className="flex-shrink-0 hover:bg-amber-100 dark:hover:bg-amber-900/30 p-2 rounded-full w-8 h-8 text-amber-600 hover:text-orange-600"
-								title={t("actions.complete")}
-								onClick={handleComplete}
-								size="icon"
-								variant="ghost"
-								disabled={completeLoading.isLoading || isCompleting}
-							>
-								{(completeLoading.isLoading || isCompleting) ? (
-									<LoaderCircle className="w-4 h-4 text-amber-600 animate-spin" />
-								) : (
-									<CheckCircle className="w-4 h-4" />
-								)}
-							</Button>
+		<Card className={`hover:shadow-md gap-0  transition-shadow duration-200 relative overflow-hidden ${completeDaily.isPending ? "opacity-50 pointer-events-none" : ""}`}>
+			{/* Barra de controles fixa no canto superior direito */}
+			<div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+				{!isCompleted && (
+					<Button
+						className="hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200/50 dark:border-amber-700/50 p-2 rounded-full w-7 h-7 text-amber-600"
+						title={t("actions.complete")}
+						onClick={handleComplete}
+						size="icon"
+						variant="ghost"
+						disabled={completeDaily.isPending}
+					>
+						{completeDaily.isPending ? (
+							<LoaderCircle className="w-3 h-3 text-amber-600 animate-spin" />
+						) : (
+							<CheckCircle className="w-3 h-3" />
 						)}
+					</Button>
+				)}
 
-						{onEdit && (
-							<Button
-								className="flex-shrink-0 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-10 h-10 text-gray-600 dark:text-gray-400"
-								title={t("actions.edit")}
-								onClick={() => onEdit(daily)}
-								variant="ghost"
-								size="icon"
-							>
-								<Edit className="w-4 h-4" />
-							</Button>
-						)}
+				{onEdit && (
+					<Button
+						className="hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/50 dark:border-gray-600/50 p-2 rounded-full w-7 h-7 text-gray-600"
+						title={t("actions.edit")}
+						onClick={() => onEdit(daily)}
+						variant="ghost"
+						size="icon"
+					>
+						<Edit className="w-3 h-3" />
+					</Button>
+				)}
 
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-1 w-8 h-8"
-						>
-							{isExpanded ? <ChevronDown className="w-4 h-4 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-4 h-4 rotate-0 transition-all duration-200" />}
-						</Button>
-					</div>
+				<Button
+					size="sm"
+					variant="ghost"
+					onClick={() => setIsExpanded(!isExpanded)}
+					className="border border-gray-200/50 dark:border-gray-600/50 p-0 w-7 h-7"
+				>
+					{isExpanded ? <ChevronDown className="w-3 h-3 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-3 h-3 rotate-0 transition-all duration-200" />}
+				</Button>
+			</div>
+			<CardHeader className="pb-0">
+				<div className="pr-20 flex items-center gap-2">
+					<RepeatIcon className={`w-4 h-4 flex-shrink-0 ${repeatConfig.color}`} />
+					<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base break-words leading-snug">
+						{daily.title}
+					</CardTitle>
 				</div>
 			</CardHeader>
 
@@ -323,6 +259,8 @@ export function DailyCard({
 					</div>
 				)}
 			</CardContent>
+			
+
 		</Card>
 	);
 }

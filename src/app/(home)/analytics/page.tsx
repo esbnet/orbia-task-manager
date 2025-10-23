@@ -3,8 +3,11 @@ export const metadata: Metadata = {
     description: "Análise detalhada do seu desempenho e progresso"
 };
 
-import AnalyticsPage from "./analytics-page";
 import type { Metadata } from "next";
+import AnalyticsPage from "./analytics-page";
+
+// Força a página a ser dinâmica devido ao uso de useSearchParams e dados dinâmicos
+export const dynamic = 'force-dynamic';
 
 export default function Page() {
     return (

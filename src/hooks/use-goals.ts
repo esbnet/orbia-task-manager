@@ -14,49 +14,20 @@ export const goalKeys = {
 
 // Hook para buscar todos os goals
 export function useGoals(status?: string) {
+	console.log('[USE-GOALS] Hook called with status:', status);
+	const queryKey = status ? ["goals", status] : ["goals"];
+	
 	return useQuery({
-		queryKey: goalKeys.list({ status }),
-		enabled: true, // Force enable
+		queryKey,
 		queryFn: async (): Promise<Goal[]> => {
-			const params = new URLSearchParams();
-			if (status) {
-				params.append('status', status);
-			}
-			const url = `/api/goals${params.toString() ? `?${params.toString()}` : ''}`;
+			const url = status ? `/api/goals?status=${status}` : '/api/goals';
+			console.log('[USE-GOALS] Fetching:', url);
 			const response = await fetch(url);
-			if (!response.ok) {
-				throw new Error("Erro ao buscar goals");
-			}
+			if (!response.ok) throw new Error("Erro ao buscar goals");
 			const data = await response.json();
-
-			// Debug: verificar estrutura da resposta
-			if (process.env.NODE_ENV === 'development') {
-				console.log('[USE-GOALS] 📡 Resposta da API:', data);
-				console.log('[USE-GOALS] 📡 Tipo da resposta:', typeof data);
-				console.log('[USE-GOALS] 📡 É array?', Array.isArray(data));
-			}
-
-			// A API pode retornar array diretamente ou objeto com propriedade goals
-			if (Array.isArray(data)) {
-				if (process.env.NODE_ENV === 'development') {
-					console.log('[USE-GOALS] ✅ API retornou array diretamente:', data.length, 'metas');
-				}
-				return data;
-			} else if (data.goals && Array.isArray(data.goals)) {
-				if (process.env.NODE_ENV === 'development') {
-					console.log('[USE-GOALS] ✅ API retornou objeto com goals:', data.goals.length, 'metas');
-				}
-				return data.goals;
-			} else {
-				if (process.env.NODE_ENV === 'development') {
-					console.log('[USE-GOALS] ❌ Estrutura inesperada:', Object.keys(data));
-				}
-				return [];
-			}
-		},
-		staleTime: 0, // Force fresh data
-		gcTime: 0, // No cache
-		refetchOnWindowFocus: true,
+			console.log('[USE-GOALS] Response:', data);
+			return Array.isArray(data) ? data : (data.goals || []);
+		}
 	});
 }
 

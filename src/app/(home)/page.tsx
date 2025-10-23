@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 	description: "Rotina, foco e progresso em um só lugar"
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
 	const session = await auth();
 	return (!session ? <SignInForm /> : <HomePage />)

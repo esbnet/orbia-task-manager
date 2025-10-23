@@ -201,7 +201,7 @@ export class PrismaTodoRepository implements TodoRepository {
 			createdAt: todo.createdAt,
 			recurrence: todo.recurrence as Todo["recurrence"],
 			recurrenceInterval: todo.recurrenceInterval || undefined,
-			todoType: TodoTypeValueObject.create((todo.todoType || "pontual") as any),
+			todoType: TodoTypeValueObject.create("pontual"),
 			subtasks:
 				todo.subtasks?.map((s) => ({
 					id: s.id,

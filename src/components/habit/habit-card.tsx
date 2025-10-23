@@ -124,153 +124,75 @@ export const HabitCard = memo(function HabitCard({
 			className={`hover:shadow-md gap-0 transition-shadow duration-200 overflow-hidden relative ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""
 				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="items-center pb-0">
-				{/* Layout MOBILE - Ultra-compacto */}
-				<div className="sm:hidden block items-center">
-					<div className="flex items-start">
-						<div className="flex-1 pr-1 min-w-0">
-							<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-xs break-words leading-tight">
-								{habit.title}
-							</CardTitle>
-						</div>
-						<div className="flex flex-shrink-0 items-center gap-2 ml-1">
-							{habit.status === "Em Andamento" && (
-								<>
-									{/* Botão principal de registro */}
-									<Button
-										title="Registrar ocorrência"
-										size="icon"
-										variant="ghost"
-										onClick={handleRegister}
-										className="hover:bg-green-100 dark:hover:bg-green-900/30 p-2 rounded-full w-7 h-7 text-green-600"
-										disabled={registerLoading.isLoading || isRegistering}
-									>
-										{(registerLoading.isLoading || isRegistering) ? (
-											<LoaderCircle className="w-2.5 h-2.5 text-green-600 animate-spin" />
-										) : (
-											<CheckCircle className="w-2.5 h-2.5" />
-										)}
-									</Button>
-
-									{onEdit && (
-										<Button
-											title="Editar"
-											size="icon"
-											variant="ghost"
-											onClick={() => onEdit(habit)}
-											disabled={editLoading.isLoading}
-											className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-7 h-7 text-gray-600"
-										>
-											{editLoading.isLoading ? (
-												<div className="border-2 border-t-transparent rounded-full w-2.5 h-2.5 text-gray-400 animate-spin" />
-											) : (
-												<Edit className="w-2.5 h-2.5" />
-											)}
-										</Button>
-									)}
-
-									{/* Botão de arquivar hábito */}
-									<Button
-										className="hover:bg-red-100 dark:hover:bg-red-900/30 p-2 rounded-full w-7 h-7 text-red-600"
-										title="Arquivar hábito"
-										size="icon"
-										variant="ghost"
-										onClick={() => setIsCompleteDialogOpen(true)}
-										disabled={completeLoading.isLoading}
-									>
-										{completeLoading.isLoading ? (
-											<LoaderCircle className="w-2.5 h-2.5 text-red-600 animate-spin" />
-										) : (
-											<Archive className="w-2.5 h-2.5" />
-										)}
-									</Button>
-								</>
+			{/* Barra de controles fixa no canto superior direito */}
+			<div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+				{habit.status === "Em Andamento" && (
+					<>
+						<Button
+							title="Registrar ocorrência"
+							size="icon"
+							variant="ghost"
+							onClick={handleRegister}
+							className="hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200/50 dark:border-green-700/50 p-2 rounded-full w-7 h-7 text-green-600"
+							disabled={registerLoading.isLoading || isRegistering}
+						>
+							{(registerLoading.isLoading || isRegistering) ? (
+								<LoaderCircle className="w-3 h-3 text-green-600 animate-spin" />
+							) : (
+								<CheckCircle className="w-3 h-3" />
 							)}
+						</Button>
 
+						{onEdit && (
 							<Button
-								size="sm"
+								title="Editar"
+								size="icon"
 								variant="ghost"
-								onClick={() => setIsExpanded(!isExpanded)}
-								className="p-0 w-7 h-7"
+								onClick={() => onEdit(habit)}
+								disabled={editLoading.isLoading}
+								className="hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/50 dark:border-gray-600/50 p-2 rounded-full w-7 h-7 text-gray-600"
 							>
-								{isExpanded ? <ChevronDown className="w-2.5 h-2.5 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-2.5 h-2.5 rotate-0 transition-all duration-200" />}
-							</Button>
-						</div>
-					</div>
-				</div>
-
-				{/* Layout DESKTOP - título e botões na mesma linha */}
-				<div className="hidden sm:flex justify-between items-center gap-1">
-					<div className="flex-1 min-w-0 max-w-[calc(100%-140px)]">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-base md:text-lg break-words leading-snug">
-							{habit.title}
-						</CardTitle>
-					</div>
-
-					<div className="flex flex-shrink-0 items-center gap-2">
-						{habit.status === "Em Andamento" && (
-							<>
-								{/* Botão principal de registro */}
-								<Button
-									title="Registrar ocorrência"
-									size="icon"
-									variant="ghost"
-									onClick={handleRegister}
-									className="hover:bg-green-100 dark:hover:bg-green-900/30 p-2 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
-									disabled={registerLoading.isLoading || isRegistering}
-								>
-									{(registerLoading.isLoading || isRegistering) ? (
-										<LoaderCircle className="w-4 h-4 animate-spin duration-200" />
-									) : (
-										<CheckCircle className="w-4 h-4" />
-									)}
-								</Button>
-
-								{onEdit && (
-									<Button
-										title="Editar"
-										size="icon"
-										variant="ghost"
-										onClick={() => onEdit(habit)}
-										disabled={editLoading.isLoading}
-										className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full w-10 h-10 text-gray-600"
-									>
-										{editLoading.isLoading ? (
-											<div className="border-2 border-t-transparent rounded-full w-4 h-4 text-gray-400 animate-spin" />
-										) : (
-											<Edit className="w-4 h-4" />
-										)}
-									</Button>
+								{editLoading.isLoading ? (
+									<div className="border-2 border-t-transparent rounded-full w-3 h-3 text-gray-400 animate-spin" />
+								) : (
+									<Edit className="w-3 h-3" />
 								)}
-
-								{/* Botão de arquivar hábito */}
-								<Button
-									className="hover:bg-red-100 dark:hover:bg-red-900/30 p-2 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
-									title="Arquivar hábito"
-									size="icon"
-									variant="ghost"
-									onClick={() => setIsCompleteDialogOpen(true)}
-									disabled={completeLoading.isLoading}
-								>
-									{completeLoading.isLoading ? (
-										<LoaderCircle className="w-4 h-4 text-red-600 animate-spin duration-200" />
-									) : (
-										<Archive className="w-4 h-4" />
-									)}
-								</Button>
-							</>
+							</Button>
 						)}
 
 						<Button
-							size="sm"
+							className="hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200/50 dark:border-red-700/50 p-2 rounded-full w-7 h-7 text-red-600"
+							title="Arquivar hábito"
+							size="icon"
 							variant="ghost"
-							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-1 w-8 h-8"
+							onClick={() => setIsCompleteDialogOpen(true)}
+							disabled={completeLoading.isLoading}
 						>
-							{isExpanded ? <ChevronDown className="w-4 h-4 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-4 h-4 rotate-0 transition-all duration-200" />}
+							{completeLoading.isLoading ? (
+								<LoaderCircle className="w-3 h-3 text-red-600 animate-spin" />
+							) : (
+								<Archive className="w-3 h-3" />
+							)}
 						</Button>
-					</div>
+				</>
+			)}
+
+				<Button
+					size="sm"
+					variant="ghost"
+					onClick={() => setIsExpanded(!isExpanded)}
+					className="border border-gray-200/50 dark:border-gray-600/50 p-0 w-7 h-7"
+				>
+					{isExpanded ? <ChevronDown className="w-3 h-3 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-3 h-3 rotate-0 transition-all duration-200" />}
+				</Button>
+			</div>
+			<CardHeader className="pb-0">
+				<div className="pr-20">
+					<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base break-words leading-snug">
+						{habit.title}
+					</CardTitle>
 				</div>
+	
 			</CardHeader>
 
 			<CardContent className="py-0">

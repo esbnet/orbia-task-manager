@@ -1,0 +1,29 @@
+{
+    "version": 2,
+    "buildCommand": "pnpm run build",
+    "devCommand": "pnpm run dev",
+    "installCommand": "pnpm install",
+    "framework": "nextjs",
+    "regions": [
+        "iad1"
+    ],
+    "functions": {
+        "src/app/api/**/*.ts": {
+            "runtime": "@vercel/node@18.19.0"
+        }
+    },
+    "env": {
+        "NODE_ENV": "production"
+    },
+    "headers": [
+        {
+            "source": "/api/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate"
+                }
+            ]
+        }
+    ]
+}
