@@ -1,4 +1,5 @@
 import { createDailySchema, idSchema, updateDailySchema } from "@/infra/validation/schemas";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 
 import { CreateDailyUseCase } from "@/application/use-cases/daily/create-daily/create-daily-use-case";
 import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily/delete-daily-use-case";
@@ -77,23 +78,27 @@ export async function GET() {
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
+		// Validate with Zod schema to prevent code injection
 		const validated = createDailySchema.parse(body);
 		
-		const useCase = new CreateDailyUseCase(dailyRepo);
-		const result = await useCase.execute({
-			userId: validated.userId,
-			title: validated.title,
-			observations: validated.observations,
-			tasks: validated.tasks,
+		// Ensure all fields are properly typed and sanitized
+		const sanitizedInput = {
+			userId: String(validated.userId),
+			title: String(validated.title),
+			observations: String(validated.observations),
+			tasks: Array.isArray(validated.tasks) ? validated.tasks.map(String) : [],
 			difficulty: validated.difficulty,
 			repeat: {
 				type: validated.repeat?.type || "Diariamente",
-				frequency: validated.repeat?.frequency || 1,
+				frequency: Number(validated.repeat?.frequency || 1),
 			},
-			startDate: new Date(),			
-			tags: validated.tags,
+			startDate: new Date(),
+			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
 			createdAt: new Date(),
-		});
+		};
+		
+		const useCase = new CreateDailyUseCase(dailyRepo);
+		const result = await useCase.execute(sanitizedInput);
 
 		return Response.json(result, { status: 201 });
 	} catch (error) {
@@ -142,14 +147,33 @@ export async function PATCH(request: NextRequest) {
 			return Response.json({ error: "Daily not found" }, { status: 404 });
 		}
 
-		// Merge existing record with the validated partial update so UpdateDailyUseCase receives a full input
+		// Sanitize validated input to prevent code injection
+		const sanitizedUpdate = {
+			...(validated.daily.title && { title: String(validated.daily.title) }),
+			...(validated.daily.observations && { observations: String(validated.daily.observations) }),
+			...(validated.daily.tasks && { tasks: Array.isArray(validated.daily.tasks) ? validated.daily.tasks.map(String) : [] }),
+			...(validated.daily.difficulty && { difficulty: validated.daily.difficulty }),
+			...(validated.daily.tags && { tags: Array.isArray(validated.daily.tags) ? validated.daily.tags.map(String) : [] }),
+			...(validated.daily.repeat && {
+				repeat: {
+					type: validated.daily.repeat.type,
+					frequency: Number(validated.daily.repeat.frequency ?? 1)
+				}
+			})
+		};
+
+		// Merge existing record with sanitized update and ensure all fields are sanitized
 		const input = { 
-			...existing, 
-			...validated.daily,
-			repeat: validated.daily.repeat ? {
-				type: validated.daily.repeat.type,
-				frequency: validated.daily.repeat.frequency ?? 1
-			} : existing.repeat
+			id: String(validated.daily.id),
+			userId: String(existing.userId),
+			title: String(sanitizedUpdate.title ?? existing.title),
+			observations: String(sanitizedUpdate.observations ?? existing.observations),
+			tasks: sanitizedUpdate.tasks ?? existing.tasks,
+			difficulty: sanitizedUpdate.difficulty ?? existing.difficulty,
+			repeat: sanitizedUpdate.repeat || existing.repeat,
+			startDate: existing.startDate,
+			tags: sanitizedUpdate.tags ?? existing.tags,
+			createdAt: existing.createdAt
 		};
 
 		const updatedDaily = await useCase.execute(input);
@@ -189,8 +213,9 @@ export async function DELETE(request: NextRequest) {
 		}
 
 		const validatedId = idSchema.parse(id);
+		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
 		const useCase = new DeleteDailyUseCase(dailyRepo);
-		await useCase.execute(validatedId);
+		await useCase.execute(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		if (error instanceof Error && error.message.includes('Invalid ID')) {

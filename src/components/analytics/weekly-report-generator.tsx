@@ -16,6 +16,7 @@ import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { useAdvancedAnalytics } from "@/hooks/use-advanced-analytics";
 import { useDailies } from "@/hooks/use-dailies";
 import { useGoals } from "@/hooks/use-goals";
@@ -74,7 +75,7 @@ export function WeeklyReportGenerator() {
 
       if (process.env.NODE_ENV === 'development') {
         console.log('[WEEKLY-REPORT] 🔍 Verificando meta:', {
-          title: goal.title,
+          title: InputSanitizer.sanitizeForLog(goal.title),
           updatedAt: goal.updatedAt,
           updatedAtParsed: updatedAt.toISOString(),
           weekStart: weekStart.toISOString(),
@@ -82,7 +83,7 @@ export function WeeklyReportGenerator() {
         });
 
         if (isInWeek) {
-          console.log('[WEEKLY-REPORT] ✅ Meta incluída na semana:', goal.title, updatedAt.toISOString());
+          console.log('[WEEKLY-REPORT] ✅ Meta incluída na semana:', InputSanitizer.sanitizeForLog(goal.title), updatedAt.toISOString());
         }
       }
 

@@ -47,10 +47,16 @@ export function TodoSubtaskProvider({
 		try {
 			const sanitizedTodoId = InputSanitizer.sanitizeId(todoId);
 			const taskTitle = TaskTitle.create(title);
+			const sanitizedOrder = Number(order);
+			
+			if (!Number.isFinite(sanitizedOrder)) {
+				throw new Error("Invalid order value");
+			}
+			
 			const result = await createUseCase.execute({
 				title: taskTitle.getValue(),
 				todoId: sanitizedTodoId,
-				order,
+				order: sanitizedOrder,
 			});
 			return result.subtask;
 		} catch (error) {
@@ -63,8 +69,16 @@ export function TodoSubtaskProvider({
 		subtask: TodoSubtask,
 	): Promise<TodoSubtask> => {
 		try {
-			InputSanitizer.sanitizeId(subtask.id);
-			const result = await updateUseCase.execute({ subtask });
+			const sanitizedSubtask = {
+				...subtask,
+				id: InputSanitizer.sanitizeId(subtask.id),
+				title: String(subtask.title),
+				todoId: InputSanitizer.sanitizeId(subtask.todoId),
+				order: Number(subtask.order),
+				completed: Boolean(subtask.completed),
+			};
+			
+			const result = await updateUseCase.execute({ subtask: sanitizedSubtask });
 			return result.subtask;
 		} catch (error) {
 			console.error("TodoSubtaskContext.updateSubtask:", error);
@@ -75,7 +89,7 @@ export function TodoSubtaskProvider({
 	const deleteSubtask = async (id: string): Promise<void> => {
 		try {
 			const sanitizedId = InputSanitizer.sanitizeId(id);
-			await deleteUseCase.execute({ id: sanitizedId });
+			await deleteUseCase.execute({ id: String(sanitizedId) });
 		} catch (error) {
 			console.error("TodoSubtaskContext.deleteSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");

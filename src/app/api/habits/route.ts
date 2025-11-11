@@ -1,10 +1,14 @@
+import { createHabitSchema, idSchema } from "@/infra/validation/schemas";
+
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
 import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
 import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
 import { ToggleCompleteUseCase as ToggleCompleteHabitUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 
 // Instância única do repositório
 //const habitRepository = new InJsonFileHabitRepository();
@@ -71,29 +75,36 @@ export async function GET() {
  *         description: Hábito criado
  */
 export async function POST(request: NextRequest) {
-	const {
-		userId,
-		title,
-		observations,
-		difficulty,
-		priority,
-		tags,
-		reset,
-		createdAt
-	} = await request.json();
+	try {
+		const body = await request.json();
+		const validated = createHabitSchema.parse(body);
 
-	const useCase = new CreateHabitUseCase(habitRepository);
-	const result = await useCase.execute({
-		userId,
-		title,
-		observations,
-		difficulty,
-		priority,
-		tags,
-		reset,
-		createdAt,
-	});
-	return Response.json(result, { status: 201 });
+		const resetMap = {
+			daily: "Diariamente" as const,
+			weekly: "Semanalmente" as const,
+			monthly: "Mensalmente" as const,
+		};
+
+		const sanitizedInput = {
+			userId: String(validated.userId),
+			title: String(validated.title),
+			observations: String(validated.description || ""),
+			difficulty: validated.difficulty,
+			priority: "Média" as const,
+			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
+			reset: resetMap[validated.resetType],
+			createdAt: new Date(),
+		};
+
+		const useCase = new CreateHabitUseCase(habitRepository);
+		const result = await useCase.execute(sanitizedInput);
+		return Response.json(result, { status: 201 });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json({ error: "Internal server error" }, { status: 500 });
+	}
 }
 
 /**
@@ -116,10 +127,21 @@ export async function POST(request: NextRequest) {
  *         description: Status alternado
  */
 export async function PUT(request: NextRequest) {
-	const { id } = await request.json();
-	const useCase = new ToggleCompleteHabitUseCase(habitRepository);
-	await useCase.execute(id);
-	return new Response(null, { status: 204 });
+	try {
+		const body = await request.json();
+		const schema = z.object({ id: idSchema });
+		const validated = schema.parse(body);
+		const sanitizedId = InputSanitizer.sanitizeId(validated.id);
+
+		const useCase = new ToggleCompleteHabitUseCase(habitRepository);
+		await useCase.execute(sanitizedId);
+		return new Response(null, { status: 204 });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json({ error: "Internal server error" }, { status: 500 });
+	}
 }
 
 /**

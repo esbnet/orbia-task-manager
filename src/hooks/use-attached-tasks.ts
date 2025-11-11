@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 
 export interface AttachedTask {
 	id: string;
@@ -15,17 +16,17 @@ export function useAttachedTasks(goalId?: string) {
 		queryFn: async (): Promise<AttachedTask[]> => {
 			if (!goalId) return [];
 
-			console.log("🔍 Buscando tarefas anexadas à meta:", goalId);
+			console.log("🔍 Buscando tarefas anexadas à meta:", InputSanitizer.sanitizeForLog(goalId));
 
 			const response = await fetch(`/api/goals/${goalId}/tasks`);
 
 			if (!response.ok) {
-				console.error("Erro ao buscar tarefas anexadas:", response.status);
+				console.error("Erro ao buscar tarefas anexadas:", InputSanitizer.sanitizeForLog(String(response.status)));
 				return [];
 			}
 
 			const data = await response.json();
-			console.log("✅ Tarefas anexadas encontradas:", data.length);
+			console.log("✅ Tarefas anexadas encontradas:", InputSanitizer.sanitizeForLog(String(data.length)));
 
 			return data;
 		},

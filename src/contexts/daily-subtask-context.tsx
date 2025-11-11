@@ -38,10 +38,16 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		try {
 			const sanitizedDailyId = InputSanitizer.sanitizeId(dailyId);
 			const taskTitle = TaskTitle.create(title);
+			const sanitizedOrder = Number(order);
+			
+			if (!Number.isFinite(sanitizedOrder)) {
+				throw new Error("Invalid order value");
+			}
+			
 			const result = await createUseCase.execute({
 				title: taskTitle.getValue(),
 				dailyId: sanitizedDailyId,
-				order,
+				order: sanitizedOrder,
 			});
 			return result.subtask;
 		} catch (error) {
@@ -54,8 +60,16 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		subtask: DailySubtask,
 	): Promise<DailySubtask> => {
 		try {
-			InputSanitizer.sanitizeId(subtask.id);
-			const result = await updateUseCase.execute({ subtask });
+			const sanitizedSubtask = {
+				...subtask,
+				id: InputSanitizer.sanitizeId(subtask.id),
+				title: String(subtask.title),
+				dailyId: InputSanitizer.sanitizeId(subtask.dailyId),
+				order: Number(subtask.order),
+				completed: Boolean(subtask.completed),
+			};
+			
+			const result = await updateUseCase.execute({ subtask: sanitizedSubtask });
 
 			return result.subtask;
 		} catch (error) {
@@ -67,7 +81,7 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 	const deleteSubtask = async (id: string): Promise<void> => {
 		try {
 			const sanitizedId = InputSanitizer.sanitizeId(id);
-			await deleteUseCase.execute({ id: sanitizedId });
+			await deleteUseCase.execute({ id: String(sanitizedId) });
 		} catch (error) {
 			console.error("DailySubtaskContext.deleteSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");

@@ -2,7 +2,9 @@ import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily/d
 import { UpdateDailyUseCase } from "@/application/use-cases/daily/update-daily/update-daily-use-case";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import { updateDailySchema } from "@/infra/validation/schemas";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 
 // Instância única do repositório
 const dailyRepo = new PrismaDailyRepository();
@@ -98,16 +100,35 @@ export async function PATCH(
 
 	try {
 		const sanitizedId = InputSanitizer.sanitizeId(id);
-		const updateData = await request.json();
-		const allowedFields = ['title', 'observations', 'tasks', 'difficulty', 'repeat', 'tags'];
-		const sanitizedData = InputSanitizer.sanitizeFields(updateData, allowedFields);
-		const dailyData = { ...sanitizedData, id: sanitizedId };
+		const body = await request.json();
+		
+		// Validate with Zod schema
+		const validated = updateDailySchema.parse({ daily: { ...body, id: sanitizedId } });
+		
+		// Fetch existing to ensure it exists
+		const existing = await dailyRepo.findById(sanitizedId);
+		if (!existing) {
+			return Response.json({ error: "Daily not found" }, { status: 404 });
+		}
+		
+		// Merge with validated data
+		const dailyData = { 
+			...existing, 
+			...validated.daily,
+			repeat: validated.daily.repeat ? {
+				type: validated.daily.repeat.type,
+				frequency: validated.daily.repeat.frequency ?? 1
+			} : existing.repeat
+		};
 
 		const useCase = new UpdateDailyUseCase(dailyRepo);
 		const updatedDaily = await useCase.execute(dailyData);
 
 		return Response.json({ daily: updatedDaily });
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
 		if (error instanceof Error && error.message.includes('Invalid ID')) {
 			return Response.json({ error: error.message }, { status: 400 });
 		}

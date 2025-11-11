@@ -24,7 +24,6 @@ export class PerformanceMonitor {
       if (start) {
         const duration = performance.now() - start;
         const safeLabel = InputSanitizer.sanitizeForLog(label);
-        console.log(`⏱️ ${safeLabel}: ${duration.toFixed(2)}ms`);
         this.metrics.delete(label);
         return duration;
       }

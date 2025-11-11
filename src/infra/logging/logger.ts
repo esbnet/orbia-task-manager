@@ -156,12 +156,11 @@ export class LoggerUtils {
 	): Promise<T> {
 		const startTime = Date.now();
 		const safeOperation = InputSanitizer.sanitizeForLog(operation);
-		logger.debug(`Starting operation: ${safeOperation}`);
 
 		return fn()
 			.then((result) => {
 				const duration = Date.now() - startTime;
-				logger.debug(`Operation completed: ${safeOperation}`, { duration });
+				logger.debug(`Operation completed: ${InputSanitizer.sanitizeForLog(safeOperation)}`, { duration });
 				return result;
 			})
 			.catch((error) => {

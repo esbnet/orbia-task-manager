@@ -46,6 +46,7 @@ import {
     YAxis
 } from "recharts";
 
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { useGoals } from "@/contexts/goal-context";
 import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useHabits } from "@/hooks/use-habits";
@@ -215,7 +216,7 @@ function RecommendationsDialog({
                                                                 className="h-6 text-xs"
                                                                 onClick={() => {
                                                                     // Aqui você pode implementar navegação para a tarefa
-                                                                    console.log('Navegar para:', link);
+                                                                    console.log('Navegar para:', { ...link, title: InputSanitizer.sanitizeForLog(link.title) });
                                                                 }}
                                                             >
                                                                 <ExternalLink className="mr-1 w-3 h-3" />
@@ -256,7 +257,7 @@ function RecommendationsDialog({
                                                                 size="sm"
                                                                 className="h-6 text-xs"
                                                                 onClick={() => {
-                                                                    console.log('Navegar para:', link);
+                                                                    console.log('Navegar para:', { ...link, title: InputSanitizer.sanitizeForLog(link.title) });
                                                                 }}
                                                             >
                                                                 <ExternalLink className="mr-1 w-3 h-3" />
@@ -297,7 +298,7 @@ function RecommendationsDialog({
                                                                 size="sm"
                                                                 className="h-6 text-xs"
                                                                 onClick={() => {
-                                                                    console.log('Navegar para:', link);
+                                                                    console.log('Navegar para:', { ...link, title: InputSanitizer.sanitizeForLog(link.title) });
                                                                 }}
                                                             >
                                                                 <ExternalLink className="mr-1 w-3 h-3" />

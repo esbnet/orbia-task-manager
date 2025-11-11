@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
 	try {
 		const url = new URL(request.url);
 		const timeRange = url.searchParams.get("timeRange") || "month";
-		const validatedTimeRange = InputSanitizer.sanitizeTimeRange(timeRange);
+		
+		// Validate and sanitize timeRange
+		const sanitizedTimeRange = InputSanitizer.sanitizeForLog(timeRange);
+		const validatedTimeRange = InputSanitizer.sanitizeTimeRange(sanitizedTimeRange);
 
 		const useCase = new GetHabitsAnalyticsUseCase(
 			habitRepository,
@@ -25,9 +28,12 @@ export async function GET(request: NextRequest) {
 
 		return Response.json(result);
 	} catch (error) {
-		console.error("Erro ao buscar analytics de hábitos:", error);
+		const safeError = InputSanitizer.sanitizeForLog(
+			error instanceof Error ? error.message : "Unknown error"
+		);
+		console.error("Erro ao buscar analytics de hábitos:", safeError);
 		return Response.json(
-			{ error: error instanceof Error ? error.message : "Erro interno do servidor" },
+			{ error: "Erro interno do servidor" },
 			{ status: 500 }
 		);
 	}

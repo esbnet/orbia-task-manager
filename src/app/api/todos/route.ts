@@ -1,9 +1,10 @@
+import { createTodoSchema, idSchema } from "@/infra/validation/schemas";
+
 import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
 import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo/delete-todo-use-case";
 import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
 import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
-import { createTodoSchema, idSchema } from "@/infra/validation/schemas";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -76,18 +77,20 @@ export async function POST(request: NextRequest) {
 		const body = await request.json();
 		const validated = createTodoSchema.parse(body);
 		
-		const result = await createTodoUseCase.execute({
-			userId: validated.userId,
-			title: validated.title,
-			observations: validated.observations,
+		const sanitizedInput = {
+			userId: String(validated.userId),
+			title: String(validated.title),
+			observations: String(validated.observations),
 			tasks: [],
 			difficulty: validated.difficulty,
 			startDate: new Date(),
-			tags: validated.tags,
+			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
 			recurrence: validated.recurrence,
-			recurrenceInterval: validated.recurrenceInterval,
+			recurrenceInterval: validated.recurrenceInterval ? Number(validated.recurrenceInterval) : undefined,
 			createdAt: new Date(),
-		});
+		};
+
+		const result = await createTodoUseCase.execute(sanitizedInput);
 		return Response.json(result, { status: 201 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -145,8 +148,24 @@ export async function PATCH(request: NextRequest) {
 		if (!existing) {
 			return Response.json({ error: "Todo not found" }, { status: 404 });
 		}
+
+		const sanitizedUpdate = {
+			...(validated.title && { title: String(validated.title) }),
+			...(validated.observations && { observations: String(validated.observations) }),
+			...(validated.difficulty && { difficulty: validated.difficulty }),
+			...(validated.tags && { tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [] }),
+			...(validated.recurrence && { recurrence: validated.recurrence }),
+			...(validated.recurrenceInterval && { recurrenceInterval: Number(validated.recurrenceInterval) }),
+		};
 		
-		const todoData = { ...existing, ...validated };
+		const todoData = { 
+			...existing, 
+			...sanitizedUpdate,
+			id: String(validated.id),
+			// Ensure we're passing a primitive (string) todoType to the use case,
+			// not a TodoTypeValueObject instance.
+			todoType: (existing as any)?.todoType?.getValue?.() ?? (existing as any)?.todoType,
+		};
 		const updatedTodo = await updateTodoUseCase.execute(todoData);
 		return Response.json({ todo: updatedTodo }, { status: 200 });
 	} catch (error) {

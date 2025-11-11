@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 
 // Tipos para tarefas ativas
 export interface ActiveTask {
@@ -24,17 +25,17 @@ export function useActiveTasks() {
 			try {
 				const response = await fetch("/api/active-tasks");
 
-				console.log("📡 Status da resposta:", response.status);
+				console.log("📡 Status da resposta:", InputSanitizer.sanitizeForLog(String(response.status)));
 
 				if (!response.ok) {
 					throw new Error(`Erro na API: ${response.status}`);
 				}
 
 				const data = await response.json();
-				console.log("📦 Dados recebidos:", data);
+				console.log("📦 Dados recebidos:", InputSanitizer.sanitizeForLog(JSON.stringify(data)));
 
 				const tasks: ActiveTask[] = data.tasks || [];
-				console.log("✅ Tarefas ativas encontradas:", tasks.length);
+				console.log("✅ Tarefas ativas encontradas:", InputSanitizer.sanitizeForLog(String(tasks.length)));
 
 				return tasks;
 			} catch (error) {

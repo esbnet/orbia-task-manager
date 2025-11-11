@@ -38,7 +38,7 @@ export class InputSanitizer {
 		return Object.keys(data)
 			.filter(key => allowedFields.includes(key))
 			.reduce((obj, key) => {
-				obj[key] = data[key];
+				(obj as any)[key] = data[key];
 				return obj;
 			}, {} as Partial<T>);
 	}

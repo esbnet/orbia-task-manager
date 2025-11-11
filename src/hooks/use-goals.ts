@@ -28,7 +28,7 @@ export function useGoals(status?: string) {
 			const response = await fetch(url);
 			if (!response.ok) throw new Error("Erro ao buscar goals");
 			const data = await response.json();
-			console.log('[USE-GOALS] Response:', data);
+			console.log('[USE-GOALS] Response:', InputSanitizer.sanitizeForLog(JSON.stringify(data)));
 			return Array.isArray(data) ? data : (data.goals || []);
 		}
 	});
