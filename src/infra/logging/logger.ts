@@ -128,6 +128,8 @@ export const logger = new StructuredLogger(
 	process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO
 );
 
+import { InputSanitizer } from '@/infra/validation/input-sanitizer';
+
 /**
  * Utilitários para logging
  */
@@ -153,18 +155,19 @@ export class LoggerUtils {
 		fn: () => Promise<T>
 	): Promise<T> {
 		const startTime = Date.now();
-
-		logger.debug(`Starting operation: ${operation}`);
+		const safeOperation = InputSanitizer.sanitizeForLog(operation);
+		logger.debug(`Starting operation: ${safeOperation}`);
 
 		return fn()
 			.then((result) => {
 				const duration = Date.now() - startTime;
-				logger.debug(`Operation completed: ${operation}`, { duration });
+				logger.debug(`Operation completed: ${safeOperation}`, { duration });
 				return result;
 			})
 			.catch((error) => {
 				const duration = Date.now() - startTime;
-				logger.error(`Operation failed: ${operation}`, { duration, error: error.message });
+				const safeErrorMessage = InputSanitizer.sanitizeForLog(error?.message || 'Unknown error');
+				logger.error(`Operation failed: ${safeOperation}`, { duration, error: safeErrorMessage });
 				throw error;
 			});
 	}

@@ -6,6 +6,7 @@ import { UpdateDailySubtaskUseCase } from "@/application/use-cases/daily-subtask
 import { TaskTitle } from "@/domain/value-objects/task-title";
 import { ApiDailySubtaskRepository } from "@/infra/repositories/http/api-daily-subtask-repository";
 import { ErrorHandler } from "@/infra/services/error-handler";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { DailySubtask } from "@/types";
 import { type ReactNode, createContext, useContext } from "react";
 
@@ -35,10 +36,11 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		order: number,
 	): Promise<DailySubtask> => {
 		try {
+			const sanitizedDailyId = InputSanitizer.sanitizeId(dailyId);
 			const taskTitle = TaskTitle.create(title);
 			const result = await createUseCase.execute({
 				title: taskTitle.getValue(),
-				dailyId,
+				dailyId: sanitizedDailyId,
 				order,
 			});
 			return result.subtask;
@@ -52,6 +54,7 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		subtask: DailySubtask,
 	): Promise<DailySubtask> => {
 		try {
+			InputSanitizer.sanitizeId(subtask.id);
 			const result = await updateUseCase.execute({ subtask });
 
 			return result.subtask;
@@ -63,7 +66,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 
 	const deleteSubtask = async (id: string): Promise<void> => {
 		try {
-			await deleteUseCase.execute({ id });
+			const sanitizedId = InputSanitizer.sanitizeId(id);
+			await deleteUseCase.execute({ id: sanitizedId });
 		} catch (error) {
 			console.error("DailySubtaskContext.deleteSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");

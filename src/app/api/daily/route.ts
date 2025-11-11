@@ -1,9 +1,12 @@
+import { createDailySchema, idSchema, updateDailySchema } from "@/infra/validation/schemas";
+
 import { CreateDailyUseCase } from "@/application/use-cases/daily/create-daily/create-daily-use-case";
 import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily/delete-daily-use-case";
 import { ListDailyUseCase } from "@/application/use-cases/daily/list-daily/list-daily-use-case";
 import { UpdateDailyUseCase } from "@/application/use-cases/daily/update-daily/update-daily-use-case";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 
 // Instância única do repositório
 // const dailyRepo = new InJsonFileDailyRepository();
@@ -72,24 +75,33 @@ export async function GET() {
  *         description: Atividade diária criada
  */
 export async function POST(request: NextRequest) {
-	const { userId, title, observations, tasks, difficulty, repeat, tags } =
-		await request.json();
-	const useCase = new CreateDailyUseCase(dailyRepo);
-	const result = await useCase.execute({
-		userId: userId, // Default value
-		title: title,
-		observations: observations || "", // Default value
-		tasks: tasks || [], // Default value
-		difficulty: difficulty || "Fácil", // Default value
-		startDate: new Date(),
-		repeat: {
-			type: repeat.type || "Diária",
-			frequency: 1, // Default value
-		},
-		tags: tags || [], // Default value
-		createdAt: new Date(),
-	});
-	return Response.json(result, { status: 201 });
+	try {
+		const body = await request.json();
+		const validated = createDailySchema.parse(body);
+		
+		const useCase = new CreateDailyUseCase(dailyRepo);
+		const result = await useCase.execute({
+			userId: validated.userId,
+			title: validated.title,
+			observations: validated.observations,
+			tasks: validated.tasks,
+			difficulty: validated.difficulty,
+			repeat: {
+				type: validated.repeat?.type || "Diariamente",
+				frequency: validated.repeat?.frequency || 1,
+			},
+			startDate: new Date(),			
+			tags: validated.tags,
+			createdAt: new Date(),
+		});
+
+		return Response.json(result, { status: 201 });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json({ error: "Internal server error" }, { status: 500 });
+	}
 }
 
 // export async function PUT(request: NextRequest) {
@@ -118,10 +130,36 @@ export async function POST(request: NextRequest) {
  *         description: Atividade diária atualizada
  */
 export async function PATCH(request: NextRequest) {
-	const { daily } = await request.json();
-	const useCase = new UpdateDailyUseCase(dailyRepo);
-	const updatedDaily = await useCase.execute(daily);
-	return Response.json({ daily: updatedDaily }, { status: 200 });
+	try {
+		const body = await request.json();
+		const validated = updateDailySchema.parse(body);
+		
+		const useCase = new UpdateDailyUseCase(dailyRepo);
+
+		// Fetch existing daily to ensure required fields (userId, startDate, createdAt) are present
+		const existing = await dailyRepo.findById(validated.daily.id);
+		if (!existing) {
+			return Response.json({ error: "Daily not found" }, { status: 404 });
+		}
+
+		// Merge existing record with the validated partial update so UpdateDailyUseCase receives a full input
+		const input = { 
+			...existing, 
+			...validated.daily,
+			repeat: validated.daily.repeat ? {
+				type: validated.daily.repeat.type,
+				frequency: validated.daily.repeat.frequency ?? 1
+			} : existing.repeat
+		};
+
+		const updatedDaily = await useCase.execute(input);
+		return Response.json({ daily: updatedDaily }, { status: 200 });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json({ error: "Failed to update daily" }, { status: 500 });
+	}
 }
 
 /**
@@ -142,14 +180,22 @@ export async function PATCH(request: NextRequest) {
  *         description: ID obrigatório
  */
 export async function DELETE(request: NextRequest) {
-	const url = new URL(request.url);
-	const id = url.searchParams.get("id");
+	try {
+		const url = new URL(request.url);
+		const id = url.searchParams.get("id");
 
-	if (!id) {
-		return Response.json({ error: "ID is required" }, { status: 400 });
+		if (!id) {
+			return Response.json({ error: "ID is required" }, { status: 400 });
+		}
+
+		const validatedId = idSchema.parse(id);
+		const useCase = new DeleteDailyUseCase(dailyRepo);
+		await useCase.execute(validatedId);
+		return new Response(null, { status: 204 });
+	} catch (error) {
+		if (error instanceof Error && error.message.includes('Invalid ID')) {
+			return Response.json({ error: error.message }, { status: 400 });
+		}
+		return Response.json({ error: "Failed to delete daily" }, { status: 500 });
 	}
-
-	const useCase = new DeleteDailyUseCase(dailyRepo);
-	await useCase.execute(id);
-	return new Response(null, { status: 204 });
 }

@@ -23,10 +23,13 @@ async function testConnection() {
     `;
 
 
-    for (const table of tables) {
-    }
+    console.log('✅ Database connection successful');
+    console.log('📊 Database version:', result);
+    console.log('📋 Available tables:', tables.map(t => t.table_name).join(', '));
 
   } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    process.exit(1);
   } finally {
     await prisma.$disconnect();
   }

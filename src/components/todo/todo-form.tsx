@@ -156,7 +156,13 @@ export function TodoForm({
 			{/* Só renderizar TodoCard se não estiver usando prop externa open */}
 			{open === undefined && (
 				<TodoCard
-					todo={todo}
+					todo={{
+						...todo,
+						todoType: {
+							isPontual: () => todo.todoType === "pontual",
+							isRecorrente: () => todo.todoType === "recorrente"
+						} as any
+					} as any}
 				/>
 			)}
 			<Dialog

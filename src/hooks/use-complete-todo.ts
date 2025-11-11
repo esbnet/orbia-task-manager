@@ -11,7 +11,7 @@ export function useCompleteTodo() {
 
 	return useMutation({
 		mutationFn: async (todo: Todo): Promise<Todo> => {
-			const endpoint = todo.todoType === "pontual" 
+			const endpoint = todo.todoType.isPontual() 
 				? `/api/todos/${todo.id}/complete-pontual`
 				: `/api/todos/${todo.id}/complete`;
 

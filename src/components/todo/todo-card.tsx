@@ -74,7 +74,7 @@ export function TodoCard({
 
 	// Determinar se a tarefa deve aparecer (não está no período de cooldown)
 	const shouldShow = (() => {
-		if (todo.recurrence === "none" || todo.todoType === "pontual") {
+		if (todo.recurrence === "none" || todo.todoType.isPontual()) {
 			return !todo.lastCompletedDate; // Tarefas pontuais desaparecem após conclusão
 		}
 		return true; // Tarefas recorrentes sempre aparecem

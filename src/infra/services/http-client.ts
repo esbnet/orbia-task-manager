@@ -1,3 +1,5 @@
+import { InputSanitizer } from '@/infra/validation/input-sanitizer';
+
 export interface HttpClient {
 	get<T>(url: string): Promise<T>;
 	post<T>(url: string, data: unknown): Promise<T>;
@@ -7,13 +9,15 @@ export interface HttpClient {
 
 export class FetchHttpClient implements HttpClient {
 	async get<T>(url: string): Promise<T> {
-		const response = await fetch(url);
+		const validUrl = InputSanitizer.sanitizeUrl(url);
+		const response = await fetch(validUrl);
 		if (!response.ok) throw new Error(`HTTP ${response.status}`);
 		return response.json();
 	}
 
 	async post<T>(url: string, data: unknown): Promise<T> {
-		const response = await fetch(url, {
+		const validUrl = InputSanitizer.sanitizeUrl(url);
+		const response = await fetch(validUrl, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
@@ -23,7 +27,8 @@ export class FetchHttpClient implements HttpClient {
 	}
 
 	async patch<T>(url: string, data: unknown): Promise<T> {
-		const response = await fetch(url, {
+		const validUrl = InputSanitizer.sanitizeUrl(url);
+		const response = await fetch(validUrl, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
@@ -33,7 +38,8 @@ export class FetchHttpClient implements HttpClient {
 	}
 
 	async delete(url: string): Promise<void> {
-		const response = await fetch(url, {
+		const validUrl = InputSanitizer.sanitizeUrl(url);
+		const response = await fetch(validUrl, {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },
 		});

@@ -10,8 +10,8 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
-import { useCallback, useState } from "react";
+import { useAvailableDailies, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DailyCard } from "./daily-card";
@@ -49,16 +49,7 @@ export const DailyColumn = () => {
 	const availableDailies = dailiesData?.availableDailies || [];
 	const completedDailies = dailiesData?.completedToday || [];
 
-	// Completar daily - usando React Query
-	const { mutateAsync: completeDailyMutation } = useCompleteDaily();
 
-	const handleCompleteDaily = useCallback(async (dailyId: string) => {
-		try {
-			await completeDailyMutation(dailyId);
-		} catch (error) {
-			toast.error(t("messages.errorCompletingTask"));
-		}
-	}, [completeDailyMutation]);
 
 	// Funções de controle do formulário
 	const openEditForm = async (daily: Daily) => {
@@ -218,9 +209,7 @@ export const DailyColumn = () => {
 									tasks: daily.tasks || [],
 									createdAt: new Date(),
 								}}
-								onComplete={handleCompleteDaily}
 								onEdit={openEditForm}
-								isCompleted={false}
 							/>
 						)
 					})}
