@@ -134,28 +134,34 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 		try {
 			const dailies = await this.repository.findByUserId(userId);
 			const today = new Date();
+			const todayStr = today.toISOString().split('T')[0];
 			const available: Daily[] = [];
 			const completed: (Daily & { nextAvailableAt: Date })[] = [];
 
 			for (const daily of dailies) {
+				if (new Date(daily.startDate) > today) continue;
+
+				const hasLogToday = await this.dailyLogRepository.hasLogForDate(daily.id, todayStr);
 				const activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(daily.id);
+
+				if (hasLogToday) {
+					const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
+						daily.repeat.type,
+						today,
+						daily.repeat.frequency
+					);
+					completed.push({ ...daily, nextAvailableAt });
+					continue;
+				}
+
 				if (activePeriod) {
-					if (activePeriod.isCompleted) {
-						const periodStart = new Date(activePeriod.startDate);
-						if (periodStart.toDateString() === today.toDateString()) {
-							const nextAvailableAt = this.calculateNextPeriodStart(daily.repeat.type, activePeriod.endDate || today, daily.repeat.frequency);
-							completed.push({ ...daily, nextAvailableAt });
-						} else if (today >= activePeriod.endDate!) {
-							available.push(daily);
-						}
-					} else {
+					if (!activePeriod.isCompleted) {
+						available.push(daily);
+					} else if (activePeriod.endDate && today > new Date(activePeriod.endDate)) {
 						available.push(daily);
 					}
 				} else {
-					const shouldShow = this.shouldShowToday(daily);
-					if (shouldShow) {
-						available.push(daily);
-					}
+					available.push(daily);
 				}
 			}
 
@@ -167,6 +173,18 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 		} catch (error) {
 			throw handleServiceError(error, "buscar dailies disponíveis");
 		}
+	}
+
+	private shouldCreatePeriod(daily: Daily, now: Date): boolean {
+		if (!daily.lastCompletedDate) return true;
+
+		const lastCompleted = new Date(daily.lastCompletedDate);
+		return DailyPeriodCalculator.shouldBeAvailable(
+			daily.repeat.type,
+			lastCompleted,
+			now,
+			daily.repeat.frequency
+		);
 	}
 
 	private calculateNextPeriodStart(type: string, fromDate: Date, frequency: number): Date {
@@ -216,28 +234,20 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 		}
 	}
 
-	// Helper method to determine if daily should be shown today
 	private shouldShowToday(daily: Daily): boolean {
 		const today = new Date();
 		const startDate = new Date(daily.startDate);
 		
-		// If start date is in the future, don't show
-		if (startDate > today) {
-			return false;
-		}
+		if (startDate > today) return false;
 
-		const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+		if (!daily.lastCompletedDate) return true;
 
-		switch (daily.repeat.type) {
-			case "Diariamente":
-				return daysDiff % daily.repeat.frequency === 0;
-			case "Semanalmente":
-				return daysDiff % (daily.repeat.frequency * 7) === 0;
-			case "Mensalmente":
-				// Simplified monthly calculation
-				return daysDiff % (daily.repeat.frequency * 30) === 0;
-			default:
-				return false;
-		}
+		const lastCompleted = new Date(daily.lastCompletedDate);
+		return DailyPeriodCalculator.shouldBeAvailable(
+			daily.repeat.type,
+			lastCompleted,
+			today,
+			daily.repeat.frequency
+		);
 	}
 }

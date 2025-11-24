@@ -16,7 +16,8 @@ export class UseCaseFactory {
   static createGetAvailableDailiesUseCase(): GetAvailableDailiesUseCase {
     return new GetAvailableDailiesUseCase(
       container.getDailyRepository(),
-      container.getDailyLogRepository()
+      container.getDailyLogRepository(),
+      container.getDailyPeriodRepository()
     );
   }
 
