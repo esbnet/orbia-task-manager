@@ -37,21 +37,21 @@ function loadEnvVars() {
 
 const envVars = loadEnvVars();
 
-// Validar variáveis de ambiente
-const devDatabaseUrl = envVars.DEV_DATABASE_URL;
-const devDirectUrl = envVars.DEV_DIRECT_URL;
-const prodDatabaseUrl = envVars.PROD_DATABASE_URL;
-const prodDirectUrl = envVars.PROD_DIRECT_URL;
+// Usar variáveis do sistema se .env não existir (produção)
+const devDatabaseUrl = envVars.DEV_DATABASE_URL || process.env.DEV_DATABASE_URL;
+const devDirectUrl = envVars.DEV_DIRECT_URL || process.env.DEV_DIRECT_URL;
+const prodDatabaseUrl = envVars.PROD_DATABASE_URL || process.env.DATABASE_URL;
+const prodDirectUrl = envVars.PROD_DIRECT_URL || process.env.DIRECT_URL;
 
-if (!devDatabaseUrl || !devDirectUrl) {
-	console.error('❌ Variáveis de desenvolvimento não encontradas no .env');
+if (environment === 'development' && (!devDatabaseUrl || !devDirectUrl)) {
+	console.error('❌ Variáveis de desenvolvimento não encontradas');
 	console.error('Certifique-se de que DEV_DATABASE_URL e DEV_DIRECT_URL estão definidas');
 	process.exit(1);
 }
 
-if (!prodDatabaseUrl || !prodDirectUrl) {
-	console.error('❌ Variáveis de produção não encontradas no .env');
-	console.error('Certifique-se de que PROD_DATABASE_URL e PROD_DIRECT_URL estão definidas');
+if (environment === 'production' && (!prodDatabaseUrl || !prodDirectUrl)) {
+	console.error('❌ Variáveis de produção não encontradas');
+	console.error('Certifique-se de que DATABASE_URL e DIRECT_URL estão definidas no ambiente');
 	process.exit(1);
 }
 
@@ -107,44 +107,33 @@ const newDatasource = config.hasDirectUrl
 schema = schema.replace(datasourceRegex, newDatasource);
 fs.writeFileSync(schemaPath, schema);
 
-// Atualizar .env
-let envContent = fs.readFileSync(envPath, 'utf8');
+// Atualizar .env apenas em desenvolvimento
+if (environment === 'development' && fs.existsSync(envPath)) {
+	let envContent = fs.readFileSync(envPath, 'utf8');
 
-envContent = envContent.replace(
-    /^DATABASE_URL=.*/m,
-    `DATABASE_URL="${config.envVars.DATABASE_URL}"`
-);
+	envContent = envContent.replace(
+		/^DATABASE_URL=.*/m,
+		`DATABASE_URL="${config.envVars.DATABASE_URL}"`
+	);
 
-if (config.hasDirectUrl) {
-    if (envContent.includes('DIRECT_URL=')) {
-        envContent = envContent.replace(
-            /^DIRECT_URL=.*/m,
-            `DIRECT_URL="${config.envVars.DIRECT_URL}"`
-        );
-    } else {
-        envContent += `\nDIRECT_URL="${config.envVars.DIRECT_URL}"`;
-    }
+	if (config.hasDirectUrl) {
+		if (envContent.includes('DIRECT_URL=')) {
+			envContent = envContent.replace(
+				/^DIRECT_URL=.*/m,
+				`DIRECT_URL="${config.envVars.DIRECT_URL}"`
+			);
+		} else {
+			envContent += `\nDIRECT_URL="${config.envVars.DIRECT_URL}"`;
+		}
+	}
+
+	fs.writeFileSync(envPath, envContent);
 }
-
-fs.writeFileSync(envPath, envContent);
 
 console.log(`✅ Configurado para ambiente: ${environment}`);
 console.log(`📊 Provider: ${config.provider}`);
 console.log(`🏷️  Nome: ${config.name}`);
 
-// Verificar se as variáveis foram escritas corretamente
-const updatedEnv = fs.readFileSync(envPath, 'utf8');
-const dbUrlMatch = updatedEnv.match(/^DATABASE_URL="(.*)"$/m);
-const directUrlMatch = updatedEnv.match(/^DIRECT_URL="(.*)"$/m);
-
-if (dbUrlMatch) {
-	console.log(`✅ DATABASE_URL no .env`);
-} else {
-	console.log(`❌ DATABASE_URL não encontrada no .env`);
-}
-
-if (directUrlMatch) {
-	console.log(`✅ DIRECT_URL no .env`);
-} else {
-	console.log(`❌ DIRECT_URL não encontrada no .env`);
+if (environment === 'production') {
+	console.log('✅ Usando variáveis de ambiente do sistema');
 }
