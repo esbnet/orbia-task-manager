@@ -132,19 +132,16 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 
 	async getAvailableDailies(userId: string): Promise<{ availableDailies: Daily[]; completedToday: (Daily & { nextAvailableAt: Date })[]; totalDailies: number }> {
 		try {
-			const dailies = await this.repository.findByUserId(userId);
+			const dailies = await this.repository.findByUserId(userId) as any[];
 			const today = new Date();
-			const todayStr = today.toISOString().split('T')[0];
+
 			const available: Daily[] = [];
 			const completed: (Daily & { nextAvailableAt: Date })[] = [];
 
 			for (const daily of dailies) {
 				if (new Date(daily.startDate) > today) continue;
 
-				const hasLogToday = await this.dailyLogRepository.hasLogForDate(daily.id, todayStr);
-				const activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(daily.id);
-
-				if (hasLogToday) {
+				if (daily.hasLogToday) {
 					const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
 						daily.repeat.type,
 						today,
@@ -154,6 +151,7 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 					continue;
 				}
 
+				const activePeriod = daily.activePeriod;
 				if (activePeriod) {
 					if (!activePeriod.isCompleted) {
 						available.push(daily);

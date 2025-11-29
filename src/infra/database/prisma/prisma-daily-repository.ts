@@ -10,6 +10,11 @@ export class PrismaDailyRepository implements DailyRepository {
 	private dailyLogRepository = new PrismaDailyLogRepository();
 
 	async findByUserId(userId: string): Promise<Daily[]> {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		const tomorrow = new Date(today);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+
 		const dailies = await prisma.daily.findMany({
 			where: { userId },
 			orderBy: { order: "asc" },
@@ -37,6 +42,25 @@ export class PrismaDailyRepository implements DailyRepository {
 						order: true,
 						createdAt: true,
 					},
+				},
+				periods: {
+					where: { isActive: true },
+					select: {
+						id: true,
+						startDate: true,
+						endDate: true,
+						isCompleted: true,
+						isActive: true,
+					},
+				},
+				logs: {
+					where: {
+						completedAt: {
+							gte: today,
+							lt: tomorrow,
+						},
+					},
+					select: { id: true },
 				},
 			},
 		});
@@ -465,7 +489,15 @@ export class PrismaDailyRepository implements DailyRepository {
 			order: number;
 			createdAt: Date;
 		}>;
-	}): Daily {
+		periods?: Array<{
+			id: string;
+			startDate: Date;
+			endDate: Date | null;
+			isCompleted: boolean;
+			isActive: boolean;
+		}>;
+		logs?: Array<{ id: string }>;
+	}): Daily & { activePeriod?: any; hasLogToday?: boolean } {
 		return {
 			id: daily.id,
 			userId: daily.userId,
@@ -491,6 +523,8 @@ export class PrismaDailyRepository implements DailyRepository {
 					order: s.order,
 					createdAt: s.createdAt,
 				})) || [],
+			activePeriod: daily.periods?.[0],
+			hasLogToday: (daily.logs?.length || 0) > 0,
 		};
 	}
 }
