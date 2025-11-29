@@ -82,19 +82,27 @@ export class PrismaTodoRepository implements TodoRepository {
 		}));
 	}
 	async list(): Promise<Todo[]> {
-		const userId = await getCurrentUserId();
-		if (!userId) return [];
+		try {
+			const userId = await getCurrentUserId();
+			if (!userId) {
+				console.log('No userId found in list()');
+				return [];
+			}
 
-		const todos = await prisma.todo.findMany({
-			where: { userId },
-			include: {
-				subtasks: {
-					orderBy: { order: "asc" },
+			const todos = await prisma.todo.findMany({
+				where: { userId },
+				include: {
+					subtasks: {
+						orderBy: { order: "asc" },
+					},
 				},
-			},
-			orderBy: { order: "asc" },
-		});
-		return todos.map(this.toDomain);
+				orderBy: { order: "asc" },
+			});
+			return todos.map(this.toDomain);
+		} catch (error) {
+			console.error('Error in list():', error);
+			return [];
+		}
 	}
 
 	async create(
