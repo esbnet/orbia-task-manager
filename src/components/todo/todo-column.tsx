@@ -41,17 +41,12 @@ export const TodoColumn = () => {
 
 	// Função auxiliar para determinar se uma tarefa deve aparecer na lista
 	const shouldShowTodo = (todo: any): boolean => {
-		// Se não foi concluída hoje, sempre mostrar
-		if (todo.lastCompletedDate !== today) {
+		// Tarefas pontuais sempre aparecem (não desaparecem após conclusão)
+		if (todo.recurrence === "none") {
 			return true;
 		}
 
-		// Se foi concluída hoje, verificar recorrência
-		if (todo.recurrence === "none") {
-			return false; // Tarefas únicas concluídas hoje não reaparecem
-		}
-
-		// Para tarefas recorrentes, verificar se devem reaparecer hoje
+		// Para tarefas recorrentes, verificar se devem reaparecer
 		const lastCompleted = todo.lastCompletedDate ? new Date(todo.lastCompletedDate) : null;
 		if (!lastCompleted) return true;
 
@@ -60,19 +55,21 @@ export const TodoColumn = () => {
 
 		switch (todo.recurrence) {
 			case "daily":
-				shouldRecur = true; // Aparece todos os dias
+				const daysSinceDaily = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				shouldRecur = daysSinceDaily >= 1;
 				break;
 			case "weekly":
-				const daysSinceCompletion = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				shouldRecur = daysSinceCompletion >= 7;
+				const daysSinceWeekly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				shouldRecur = daysSinceWeekly >= 7;
 				break;
 			case "monthly":
-				shouldRecur = todayDate.getDate() === lastCompleted.getDate();
+				const daysSinceMonthly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				shouldRecur = daysSinceMonthly >= 30;
 				break;
 			case "custom":
 				if (todo.recurrenceInterval) {
-					const daysSinceCompletion = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-					shouldRecur = daysSinceCompletion >= todo.recurrenceInterval;
+					const daysSinceCustom = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+					shouldRecur = daysSinceCustom >= todo.recurrenceInterval;
 				}
 				break;
 		}

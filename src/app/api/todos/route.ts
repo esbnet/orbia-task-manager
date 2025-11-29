@@ -75,10 +75,10 @@ export async function GET() {
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const validated = createTodoSchema.parse(body);
+		const validated = createTodoSchema.omit({ userId: true }).parse(body);
 		
 		const sanitizedInput = {
-			userId: String(validated.userId),
+			userId: "",
 			title: String(validated.title),
 			observations: String(validated.observations),
 			tasks: [],
