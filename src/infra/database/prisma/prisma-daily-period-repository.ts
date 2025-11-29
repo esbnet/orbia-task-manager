@@ -1,40 +1,6 @@
 import { prisma } from "@/infra/database/prisma/prisma-client";
-
-export interface DailyPeriod {
-	id: string;
-	dailyId: string;
-	periodType: string;
-	startDate: Date;
-	endDate: Date | null;
-	isCompleted: boolean;
-	isActive: boolean;
-	createdAt: Date;
-	updatedAt: Date;
-}
-
-export interface CreateDailyPeriodData {
-	dailyId: string;
-	periodType: string;
-	startDate: Date;
-	endDate?: Date | null;
-	isCompleted?: boolean;
-	isActive?: boolean;
-}
-
-export interface UpdateDailyPeriodData {
-	isCompleted?: boolean;
-	endDate?: Date | null;
-	isActive?: boolean;
-}
-
-export interface DailyPeriodRepository {
-	findActiveByDailyId(dailyId: string): Promise<DailyPeriod | null>;
-	create(data: CreateDailyPeriodData): Promise<DailyPeriod>;
-	update(id: string, data: UpdateDailyPeriodData): Promise<DailyPeriod>;
-	findById(id: string): Promise<DailyPeriod | null>;
-	findByDailyId(dailyId: string): Promise<DailyPeriod[]>;
-	completeAndFinalize(id: string): Promise<DailyPeriod>;
-}
+import type { DailyPeriod, CreateDailyPeriodData, UpdateDailyPeriodData } from "@/domain/entities/daily-period";
+import type { DailyPeriodRepository } from "@/domain/repositories/all-repository";
 
 export class PrismaDailyPeriodRepository implements DailyPeriodRepository {
 	async findActiveByDailyId(dailyId: string): Promise<DailyPeriod | null> {
