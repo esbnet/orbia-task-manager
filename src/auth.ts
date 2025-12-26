@@ -14,19 +14,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     session: {
         strategy: "jwt",
     },
+    trustHost: true,
     callbacks: {
-        jwt: async ({ token, user }) => {
+        jwt: async ({ token, user, account }) => {
             if (user) {
                 token.id = user.id
             }
             return token
         },
         session: async ({ session, token }) => {
-            if (token) {
+            if (token && session.user) {
                 session.user.id = token.id as string
             }
             return session
         },
     },
-    debug: false,
+    pages: {
+        signIn: "/auth/signin",
+    },
+    debug: process.env.NODE_ENV === "development",
 })
