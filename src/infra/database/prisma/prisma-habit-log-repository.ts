@@ -4,16 +4,31 @@ import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaHabitLogRepository implements HabitLogRepository {
 	findByEntityId(entityId: string): Promise<HabitLog[]> {
-		throw new Error("Method not implemented." + entityId);
+		return prisma.habitLog.findMany({
+			where: { habitId: entityId },
+			orderBy: { completedAt: "desc" },
+		}).then(logs => logs.map(this.toDomain));
 	}
 	findByDateRange(startDate: Date, endDate: Date): Promise<HabitLog[]> {
-		throw new Error("Method not implemented." + startDate + endDate);
+		return prisma.habitLog.findMany({
+			where: {
+				completedAt: {
+					gte: startDate,
+					lte: endDate,
+				},
+			},
+			orderBy: { completedAt: "desc" },
+		}).then(logs => logs.map(this.toDomain));
 	}
 	deleteOlderThan(date: Date): Promise<void> {
-		throw new Error("Method not implemented." + date);
+		return prisma.habitLog.deleteMany({
+			where: { completedAt: { lt: date } },
+		}).then(() => undefined);
 	}
 	findById(id: string): Promise<HabitLog | null> {
-		throw new Error("Method not implemented." + id);
+		return prisma.habitLog.findUnique({
+			where: { id },
+		}).then(log => log ? this.toDomain(log) : null);
 	}
 	async list(): Promise<HabitLog[]> {
 		const logs = await prisma.habitLog.findMany({
@@ -35,14 +50,12 @@ export class PrismaHabitLogRepository implements HabitLogRepository {
 		return this.toDomain(log);
 	}
 
-	
 	async update(_log: HabitLog): Promise<HabitLog> {
-		throw new Error("Update not implemented for habit logs");
+		throw new Error("Logs são imutáveis");
 	}
 
-	
 	async toggleComplete(_id: string): Promise<HabitLog> {
-		throw new Error("Toggle complete not implemented for habit logs");
+		throw new Error("Logs são imutáveis");
 	}
 
 	async delete(id: string): Promise<void> {

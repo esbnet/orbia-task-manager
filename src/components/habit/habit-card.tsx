@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
 import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useArchiveHabit } from "@/hooks/use-archive-habit";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -82,7 +83,7 @@ export const HabitCard = memo(function HabitCard({
 	const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 	const registerLoading = useButtonLoading();
 	const editLoading = useButtonLoading();
-	const completeLoading = useButtonLoading();
+	const archiveHabit = useArchiveHabit();
 	const isOverdue =
 		habit.status === "Em Andamento" && habit.lastCompletedDate && habit.createdAt < new Date();
 
@@ -106,14 +107,12 @@ export const HabitCard = memo(function HabitCard({
 	};
 
 	const handleComplete = async () => {
-		if (completeLoading.isLoading) return;
+		if (archiveHabit.isPending) return;
 
 		try {
-			await completeLoading.executeAsync(async () => {
-				// Chama o callback que já está conectado com a mutation no habit-column
-				await onStatusChange?.(habit.id, "Completo");
-			});
+			await archiveHabit.mutateAsync(habit.id);
 			toast.success(`Hábito "${habit.title}" arquivado com sucesso!`);
+			setIsCompleteDialogOpen(false);
 		} catch (error) {
 			toast.error("Erro ao arquivar hábito. Tente novamente.");
 		}
@@ -166,9 +165,9 @@ export const HabitCard = memo(function HabitCard({
 							size="icon"
 							variant="ghost"
 							onClick={() => setIsCompleteDialogOpen(true)}
-							disabled={completeLoading.isLoading}
+							disabled={archiveHabit.isPending}
 						>
-							{completeLoading.isLoading ? (
+							{archiveHabit.isPending ? (
 								<LoaderCircle className="w-3 h-3 text-red-600 animate-spin" />
 							) : (
 								<Archive className="w-3 h-3" />

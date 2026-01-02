@@ -13,7 +13,7 @@ model Habit {
     title             String
     observations      String   @default("")
     difficulty        String
-    status            String   @default("Em Andamento")
+    status            String   @default("active") // "active", "archived"
     priority          String   @default("Média")
     tags              String[]
     reset             String
@@ -88,6 +88,7 @@ model Daily {
     tags              String[]
     order             Int      @default(0)
     lastCompletedDate String?
+    status            String   @default("active") // "active", "archived"
     userId            String
     createdAt         DateTime @default(now())
 

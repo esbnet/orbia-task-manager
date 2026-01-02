@@ -5,13 +5,12 @@ export const idSchema = z.string().min(1).regex(/^[a-zA-Z0-9_-]+$/);
 
 // Daily schemas
 export const createDailySchema = z.object({
-	userId: z.string().min(1),
 	title: z.string().min(1),
 	observations: z.string().optional().default(""),
 	tasks: z.array(z.string()).optional().default([]),
 	difficulty: z.enum(["Trivial", "Fácil", "Médio", "Difícil"]).optional().default("Fácil"),
 	repeat: z.object({
-		type: z.enum(["Diariamente", "Semanalmente", "Mensalmente"]),
+		type: z.enum(["Diariamente", "Semanalmente", "Mensalmente", "Anualmente"]),
 		frequency: z.number().optional().default(1),
 	}).optional(),
 	tags: z.array(z.string()).optional().default([]),
@@ -46,7 +45,6 @@ export const createTodoSchema = z.object({
 
 // Habit schemas
 export const createHabitSchema = z.object({
-	userId: z.string().min(1),
 	title: z.string().min(1),
 	description: z.string().optional().default(""),
 	difficulty: z.enum(["Trivial", "Fácil", "Médio", "Difícil"]).optional().default("Fácil"),

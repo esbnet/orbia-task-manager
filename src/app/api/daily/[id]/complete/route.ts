@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { CompleteDailyWithLogUseCase } from "@/application/use-cases/daily/complete-daily-with-log/complete-daily-with-log-use-case";
+import { CompleteDailyUseCase } from "@/application/use-cases/daily/complete-daily-simple/complete-daily-simple-use-case";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
-import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
 
 export async function POST(
     request: NextRequest,
@@ -16,34 +15,23 @@ export async function POST(
         }
 
         const { id } = await params;
-        const dailyRepository = new PrismaDailyRepository();
-        
-        const daily = await dailyRepository.findById(id);
 
-        if (!daily || daily.userId !== session.user.id) {
-            return NextResponse.json(
-                { error: "Daily não encontrado" },
-                { status: 404 }
-            );
-        }
-
-        const completeDailyUseCase = new CompleteDailyWithLogUseCase(
-            dailyRepository,
-            new PrismaDailyLogRepository(),
-            new PrismaDailyPeriodRepository()
+        const useCase = new CompleteDailyUseCase(
+            new PrismaDailyRepository(),
+            new PrismaDailyLogRepository()
         );
 
-        const result = await completeDailyUseCase.execute({ daily });
-
-        return NextResponse.json({
-            daily: result.updatedDaily,
-            success: result.success
+        const result = await useCase.execute({ 
+            dailyId: id, 
+            userId: session.user.id 
         });
+
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error("Erro ao completar daily:", error);
         return NextResponse.json(
-            { error: "Erro interno do servidor" },
+            { error: error instanceof Error ? error.message : "Erro interno" },
             { status: 500 }
         );
     }

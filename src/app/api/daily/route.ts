@@ -78,12 +78,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		// Validate with Zod schema to prevent code injection
 		const validated = createDailySchema.parse(body);
 		
-		// Ensure all fields are properly typed and sanitized
 		const sanitizedInput = {
-			userId: String(validated.userId),
 			title: String(validated.title),
 			observations: String(validated.observations),
 			tasks: Array.isArray(validated.tasks) ? validated.tasks.map(String) : [],

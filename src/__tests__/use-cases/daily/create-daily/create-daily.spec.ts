@@ -34,7 +34,7 @@ describe("CreateDailyUseCase", () => {
 
 		expect(result.daily).toBeDefined();
 		expect(result.daily.title).toBe(inputDaily.title);
-		expect(result.daily.observations).toBe("");
+		expect(result.daily.observations).toBe("Observações de teste");
 		expect(result.daily.taskList).toEqual([]);
 		expect(result.daily.difficulty).toBe("Fácil");
 		expect(result.daily.repeat?.type).toBe("Diariamente");

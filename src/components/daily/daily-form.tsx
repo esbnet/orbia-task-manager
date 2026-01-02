@@ -129,7 +129,7 @@ export function DailyForm({
 					setTags([]);
 				}
 
-				toast.success(isCreating ? t("messages.dailyCreated") : t("messages.dailyUpdated"));
+				toast.success(isCreating ? "Tarefa diária criada com sucesso!" : "Tarefa diária atualizada com sucesso!");
 				setInternalOpen(false);
 				if (onCancel) onCancel();
 				return;
@@ -139,7 +139,7 @@ export function DailyForm({
 			toast.error("Função de atualização não fornecida");
 			return;
 		} catch (error) {
-			toast.error(`${t("messages.errorSaving")}: ${error}`);
+			toast.error(`Erro ao salvar: ${error}`);
 		} finally {
 			setIsLoading(false);
 		}

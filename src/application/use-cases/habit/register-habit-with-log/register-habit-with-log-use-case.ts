@@ -1,40 +1,34 @@
 import type { HabitEntry } from "@/domain/entities/habit-entry";
-import type { HabitPeriod } from "@/domain/entities/habit-period";
-import type { HabitRepository } from "@/domain/repositories/all-repository";
+import type { HabitLogRepository, HabitRepository } from "@/domain/repositories/all-repository";
 import type { HabitEntryRepository } from "@/domain/repositories/habit-entry-repository";
 import type { HabitPeriodRepository } from "@/domain/repositories/habit-period-repository";
 
-export interface RegisterHabitInput {
+export interface RegisterHabitWithLogInput {
 	habitId: string;
 	note?: string;
 }
 
-export interface RegisterHabitOutput {
+export interface RegisterHabitWithLogOutput {
 	entry: HabitEntry;
 	currentCount: number;
-	target?: number;
-	periodType: string;
+	todayCount: number;
 }
 
-export class RegisterHabitUseCase {
+export class RegisterHabitWithLogUseCase {
 	constructor(
 		private habitRepository: HabitRepository,
 		private habitPeriodRepository: HabitPeriodRepository,
 		private habitEntryRepository: HabitEntryRepository,
+		private habitLogRepository: HabitLogRepository,
 	) {}
 
-	async execute(input: RegisterHabitInput): Promise<RegisterHabitOutput> {
-		// 1. Verificar se o hábito existe
+	async execute(input: RegisterHabitWithLogInput): Promise<RegisterHabitWithLogOutput> {
 		const habit = await this.habitRepository.findById(input.habitId);
-		if (!habit) {
-			throw new Error("Hábito não encontrado");
-		}
+		if (!habit) throw new Error("Hábito não encontrado");
 
-		// 2. Buscar período ativo ou criar um novo
 		let activePeriod = await this.habitPeriodRepository.findActiveByHabitId(input.habitId);
 		
 		if (!activePeriod) {
-			// Criar novo período baseado no reset do hábito
 			activePeriod = await this.habitPeriodRepository.create({
 				habitId: input.habitId,
 				periodType: habit.reset,
@@ -42,14 +36,8 @@ export class RegisterHabitUseCase {
 			});
 		}
 
-		// 3. Verificar se o período atual ainda é válido
-		const shouldCreateNewPeriod = this.shouldCreateNewPeriod(activePeriod);
-		
-		if (shouldCreateNewPeriod) {
-			// Finalizar período atual
+		if (this.shouldCreateNewPeriod(activePeriod)) {
 			await this.habitPeriodRepository.finalizePeriod(activePeriod.id);
-			
-			// Criar novo período
 			activePeriod = await this.habitPeriodRepository.create({
 				habitId: input.habitId,
 				periodType: habit.reset,
@@ -57,25 +45,31 @@ export class RegisterHabitUseCase {
 			});
 		}
 
-		// 4. Criar entrada de registro
 		const entry = await this.habitEntryRepository.create({
 			habitId: input.habitId,
 			periodId: activePeriod.id,
 			note: input.note,
 		});
 
-		// 5. Incrementar contador do período
+		await this.habitLogRepository.create({
+			habitId: habit.id,
+			habitTitle: habit.title,
+			difficulty: habit.difficulty,
+			tags: habit.tags,
+			completedAt: new Date(),
+		});
+
 		const updatedPeriod = await this.habitPeriodRepository.incrementCount(activePeriod.id);
+		const todayEntries = await this.habitEntryRepository.findTodayByHabitId(input.habitId);
 
 		return {
 			entry,
 			currentCount: updatedPeriod.count,
-			target: updatedPeriod.target,
-			periodType: updatedPeriod.periodType,
+			todayCount: todayEntries.length,
 		};
 	}
 
-	private shouldCreateNewPeriod(period: HabitPeriod): boolean {
+	private shouldCreateNewPeriod(period: { periodType: string; startDate: Date }): boolean {
 		const now = new Date();
 		const start = new Date(period.startDate);
 		

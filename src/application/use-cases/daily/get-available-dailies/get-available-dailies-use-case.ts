@@ -21,7 +21,8 @@ export class GetAvailableDailiesUseCase {
   async execute(input: GetAvailableDailiesInput): Promise<GetAvailableDailiesOutput> {
     const { userId } = input;
 
-    const dailies = await this.dailyRepository.findByUserId(userId);
+    const allDailies = await this.dailyRepository.findByUserId(userId);
+    const dailies = allDailies.filter(d => d.status !== "archived");
     
     if (dailies.length === 0) {
       return {

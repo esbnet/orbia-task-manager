@@ -1,15 +1,15 @@
-import { CompleteHabitUseCase } from "@/application/use-cases/habit/complete-habit/complete-habit-use-case";
+import { CompleteHabitWithLogUseCase } from "@/application/use-cases/habit/complete-habit-with-log/complete-habit-with-log-use-case";
 import { PrismaHabitLogRepository } from "@/infra/database/prisma/prisma-habit-log-repository";
+import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
 
 const habitLogRepository = new PrismaHabitLogRepository();
-const completeHabitUseCase = new CompleteHabitUseCase(habitLogRepository);
+const habitRepository = new PrismaHabitRepository();
+const completeHabitUseCase = new CompleteHabitWithLogUseCase(habitRepository);
 
 const completeHabitSchema = z.object({
-	habit: z.object({
-		id: z.string().min(1),
-	}).passthrough(),
+	habitId: z.string().min(1),
 });
 
 export async function POST(request: NextRequest) {
@@ -17,12 +17,7 @@ export async function POST(request: NextRequest) {
 		const body = await request.json();
 		const validated = completeHabitSchema.parse(body);
 		
-		const sanitizedHabit = {
-			...validated.habit,
-			id: String(validated.habit.id),
-		} as any;
-		
-		const result = await completeHabitUseCase.execute({ habit: sanitizedHabit });
+		const result = await completeHabitUseCase.execute({ habitId: validated.habitId });
 		return Response.json(result, { status: 201 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -32,7 +27,15 @@ export async function POST(request: NextRequest) {
 	}
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+	const url = new URL(request.url);
+	const habitId = url.searchParams.get("habitId");
+
+	if (habitId) {
+		const logs = await habitLogRepository.findByEntityId(habitId);
+		return Response.json({ habitLogs: logs });
+	}
+
 	const logs = await habitLogRepository.list();
 	return Response.json({ habitLogs: logs });
 }

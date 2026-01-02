@@ -10,13 +10,8 @@ export class PrismaDailyRepository implements DailyRepository {
 	private dailyLogRepository = new PrismaDailyLogRepository();
 
 	async findByUserId(userId: string): Promise<Daily[]> {
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-		const tomorrow = new Date(today);
-		tomorrow.setDate(tomorrow.getDate() + 1);
-
 		const dailies = await prisma.daily.findMany({
-			where: { userId },
+			where: { userId, status: { not: "archived" } },
 			orderBy: { order: "asc" },
 			select: {
 				id: true,
@@ -31,36 +26,10 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
-					select: {
-						id: true,
-						title: true,
-						completed: true,
-						dailyId: true,
-						order: true,
-						createdAt: true,
-					},
-				},
-				periods: {
-					where: { isActive: true },
-					select: {
-						id: true,
-						startDate: true,
-						endDate: true,
-						isCompleted: true,
-						isActive: true,
-					},
-				},
-				logs: {
-					where: {
-						completedAt: {
-							gte: today,
-							lt: tomorrow,
-						},
-					},
-					select: { id: true },
 				},
 			},
 		});
@@ -242,6 +211,7 @@ export class PrismaDailyRepository implements DailyRepository {
 		const daily = await prisma.daily.findMany({
 			where: {
 				userId,
+				status: { not: "archived" },
 				tags: {
 					hasSome: tags,
 				},
@@ -260,6 +230,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
@@ -305,9 +276,8 @@ export class PrismaDailyRepository implements DailyRepository {
 			return [];
 		}
 
-		// retornar todos os dailies do user
 		const daily = await prisma.daily.findMany({
-			where: { userId },
+			where: { userId, status: { not: "archived" } },
 			orderBy: { order: "asc" },
 			select: {
 				id: true,
@@ -322,6 +292,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
@@ -364,6 +335,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
@@ -386,7 +358,6 @@ export class PrismaDailyRepository implements DailyRepository {
 		const userId = await getCurrentUserIdWithFallback();
 		if (!userId) throw new Error("User not authenticated");
 
-		// Verificar se o usuário existe, se não, criar
 		await prisma.user.upsert({
 			where: { id: userId },
 			update: {},
@@ -404,11 +375,11 @@ export class PrismaDailyRepository implements DailyRepository {
 				repeatFrequency: data.repeat.frequency,
 				tags: data.tags,
 				order: data.order ?? 0,
+				status: data.status ?? "active",
 				userId,
 			},
 		});
 
-		// Criar período inicial ativo para a diária
 		const now = new Date();
 		const endDate = this.calculatePeriodEnd(data.repeat.type, now, data.repeat.frequency);
 		await this.dailyPeriodRepository.create({
@@ -440,6 +411,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: daily.tags,
 				order: daily.order,
 				lastCompletedDate: daily.lastCompletedDate,
+				status: daily.status ?? "active",
 			},
 		});
 		return this.toDomain(updated);
@@ -466,7 +438,6 @@ export class PrismaDailyRepository implements DailyRepository {
 		await prisma.daily.delete({ where: { id, userId } });
 	}
 
-	// Converts Prisma entity to domain entity
 	private toDomain(daily: {
 		id: string;
 		userId: string;
@@ -480,6 +451,7 @@ export class PrismaDailyRepository implements DailyRepository {
 		tags: string[];
 		order: number;
 		lastCompletedDate: string | null;
+		status?: string | null;
 		createdAt: Date;
 		subtasks?: Array<{
 			id: string;
@@ -489,15 +461,7 @@ export class PrismaDailyRepository implements DailyRepository {
 			order: number;
 			createdAt: Date;
 		}>;
-		periods?: Array<{
-			id: string;
-			startDate: Date;
-			endDate: Date | null;
-			isCompleted: boolean;
-			isActive: boolean;
-		}>;
-		logs?: Array<{ id: string }>;
-	}): Daily & { activePeriod?: any; hasLogToday?: boolean } {
+	}): Daily {
 		return {
 			id: daily.id,
 			userId: daily.userId,
@@ -513,6 +477,7 @@ export class PrismaDailyRepository implements DailyRepository {
 			tags: daily.tags,
 			order: daily.order,
 			lastCompletedDate: daily.lastCompletedDate || undefined,
+			status: (daily.status as Daily["status"]) || "active",
 			createdAt: daily.createdAt,
 			subtasks:
 				daily.subtasks?.map((s) => ({
@@ -523,8 +488,6 @@ export class PrismaDailyRepository implements DailyRepository {
 					order: s.order,
 					createdAt: s.createdAt,
 				})) || [],
-			activePeriod: daily.periods?.[0],
-			hasLogToday: (daily.logs?.length || 0) > 0,
 		};
 	}
 }

@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
 		};
 
 		const sanitizedInput = {
-			userId: String(validated.userId),
 			title: String(validated.title),
 			observations: String(validated.description || ""),
 			difficulty: validated.difficulty,

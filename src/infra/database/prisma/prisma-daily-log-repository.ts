@@ -62,12 +62,17 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
   }
 
   async hasLogForDate(dailyId: string, date: string): Promise<boolean> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const log = await prisma.dailyLog.findFirst({
       where: {
         dailyId,
         completedAt: {
-          gte: new Date(date + 'T00:00:00.000Z'),
-          lt: new Date(date + 'T23:59:59.999Z'),
+          gte: startOfDay,
+          lte: endOfDay,
         },
       },
     });

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { GetAvailableDailiesUseCase } from "@/application/use-cases/daily/get-available-dailies/get-available-dailies-use-case";
-import { ReactivateDailyPeriodsUseCase } from "@/application/use-cases/daily/reactivate-daily-periods/reactivate-daily-periods-use-case";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
-import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 
 export async function GET(request: NextRequest) {
     try {
@@ -15,25 +13,31 @@ export async function GET(request: NextRequest) {
 
         const dailyRepository = new PrismaDailyRepository();
         const dailyLogRepository = new PrismaDailyLogRepository();
-        const dailyPeriodRepository = new PrismaDailyPeriodRepository();
+        const allDailies = await dailyRepository.findByUserId(session.user.id);
 
-        const reactivateUseCase = new ReactivateDailyPeriodsUseCase(
-            dailyRepository,
-            dailyPeriodRepository
-        );
+        const today = new Date().toISOString().split('T')[0];
+        const availableDailies = [];
+        const completedToday = [];
 
-        await reactivateUseCase.execute({ userId: session.user.id });
-
-        const getAvailableUseCase = new GetAvailableDailiesUseCase(
-            dailyRepository,
-            dailyLogRepository,
-            dailyPeriodRepository
-        );
-
-        const result = await getAvailableUseCase.execute({ userId: session.user.id });
+        for (const daily of allDailies) {
+            const hasLogToday = await dailyLogRepository.hasLogForDate(daily.id, today);
+            
+            if (hasLogToday) {
+                const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
+                    daily.repeat.type as any,
+                    new Date(),
+                    daily.repeat.frequency
+                );
+                completedToday.push({ ...daily, nextAvailableAt });
+            } else {
+                availableDailies.push(daily);
+            }
+        }
 
         return NextResponse.json({
-            ...result,
+            availableDailies,
+            completedToday,
+            totalDailies: allDailies.length,
             success: true,
         });
 

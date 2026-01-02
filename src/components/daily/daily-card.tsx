@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+	Archive,
 	Calendar,
 	CheckCircle,
 	ChevronDown,
@@ -14,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 import { useCompleteDaily } from "@/hooks/use-dailies";
+import { useArchiveDaily } from "@/hooks/use-archive-daily";
 import { useTranslation } from "@/hooks/use-translation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,6 +48,7 @@ export function DailyCard({
 	isCompleted = false
 }: DailyCardProps) {
 	const completeDaily = useCompleteDaily();
+	const archiveDaily = useArchiveDaily();
 	const [isExpanded, setIsExpanded] = useState(false);
 	const difficulty = difficultyConfig[daily.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 	const repeatConfig = repeatTypeConfig[daily.repeat?.type as keyof typeof repeatTypeConfig] || repeatTypeConfig["Diariamente"];
@@ -81,6 +84,17 @@ export function DailyCard({
 			toast.success(`Tarefa "${daily.title}" concluída com sucesso!`);
 		} catch (error) {
 			toast.error("Erro ao completar tarefa. Tente novamente.");
+		}
+	};
+
+	const handleArchive = async () => {
+		if (archiveDaily.isPending) return;
+
+		try {
+			await archiveDaily.mutateAsync(daily.id);
+			toast.success(`Tarefa "${daily.title}" arquivada!`);
+		} catch (error) {
+			toast.error("Erro ao arquivar tarefa.");
 		}
 	};
 
@@ -133,6 +147,21 @@ export function DailyCard({
 						)}
 					</Button>
 				)}
+
+				<Button
+					className="hover:bg-orange-100 dark:hover:bg-orange-900/30 border border-orange-200/50 dark:border-orange-700/50 p-2 rounded-full w-7 h-7 text-orange-600"
+					title="Arquivar"
+					onClick={handleArchive}
+					size="icon"
+					variant="ghost"
+					disabled={archiveDaily.isPending}
+				>
+					{archiveDaily.isPending ? (
+						<LoaderCircle className="w-3 h-3 text-orange-600 animate-spin" />
+					) : (
+						<Archive className="w-3 h-3" />
+					)}
+				</Button>
 
 				{onEdit && (
 					<Button

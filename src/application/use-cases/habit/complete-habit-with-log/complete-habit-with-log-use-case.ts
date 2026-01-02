@@ -1,11 +1,8 @@
 import type { Habit } from "@/domain/entities/habit";
-import type {
-	HabitLogRepository,
-	HabitRepository,
-} from "@/domain/repositories/all-repository";
+import type { HabitRepository } from "@/domain/repositories/all-repository";
 
 export interface CompleteHabitWithLogInput {
-	habit: Habit;
+	habitId: string;
 }
 
 export interface CompleteHabitWithLogOutput {
@@ -14,31 +11,17 @@ export interface CompleteHabitWithLogOutput {
 }
 
 export class CompleteHabitWithLogUseCase {
-	constructor(
-		private habitRepository: HabitRepository,
-		private habitLogRepository: HabitLogRepository,
-	) {}
+	constructor(private habitRepository: HabitRepository) {}
 
-	async execute(
-		input: CompleteHabitWithLogInput,
-	): Promise<CompleteHabitWithLogOutput> {
-		// Create log
-		await this.habitLogRepository.create({
-			habitId: input.habit.id,
-			habitTitle: input.habit.title,
-			difficulty: input.habit.difficulty,
-			tags: input.habit.tags,
-			completedAt: new Date(),
+	async execute(input: CompleteHabitWithLogInput): Promise<CompleteHabitWithLogOutput> {
+		const habit = await this.habitRepository.findById(input.habitId);
+		if (!habit) throw new Error("Hábito não encontrado");
+
+		const updatedHabit = await this.habitRepository.update({
+			...habit,
+			status: "Completo",
 		});
 
-		// Update habit with completion date
-		const today = new Date().toISOString().split("T")[0];
-		const updatedHabit = { ...input.habit, lastCompletedDate: today };
-		const result = await this.habitRepository.update(updatedHabit);
-
-		return {
-			success: true,
-			updatedHabit: result,
-		};
+		return { success: true, updatedHabit };
 	}
 }
