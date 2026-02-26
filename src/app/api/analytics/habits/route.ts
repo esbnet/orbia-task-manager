@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
 		const safeError = InputSanitizer.sanitizeForLog(
 			error instanceof Error ? error.message : "Unknown error"
 		);
-		console.error("Erro ao buscar analytics de hábitos:", safeError);
 		return Response.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 }

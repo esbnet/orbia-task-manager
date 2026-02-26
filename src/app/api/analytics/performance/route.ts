@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(performanceData);
   } catch (error) {
-    console.error("Erro na API de performance:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
@@ -170,6 +169,43 @@ async function calculateRealPerformanceMetrics(userId: string, timeRange: string
   const priorityAnalysis = await calculatePriorityAnalysis(habitLogs, dailyLogs, todoLogs, goals);
   const difficultyAnalysis = await calculateDifficultyAnalysis(habitLogs, dailyLogs, todoLogs, goals);
 
+  const completionLogs = {
+    habits: habitLogs.map((log: any) => ({
+      id: log.id,
+      title: log.habitTitle || log.habit?.title || "Hábito",
+      completedAt: log.completedAt,
+      difficulty: log.difficulty || log.habit?.difficulty || "Fácil",
+      tags: log.tags || log.habit?.tags || [],
+      type: "habit" as const,
+    })),
+    dailies: dailyLogs.map((log: any) => ({
+      id: log.id,
+      title: log.dailyTitle || log.daily?.title || "Daily",
+      completedAt: log.completedAt,
+      difficulty: log.difficulty || log.daily?.difficulty || "Fácil",
+      tags: log.tags || log.daily?.tags || [],
+      type: "daily" as const,
+    })),
+    todos: todoLogs.map((log: any) => ({
+      id: log.id,
+      title: log.todoTitle || log.todo?.title || "Tarefa",
+      completedAt: log.completedAt,
+      difficulty: log.difficulty || log.todo?.difficulty || "Médio",
+      tags: log.tags || log.todo?.tags || [],
+      type: "todo" as const,
+    })),
+    goals: goals
+      .filter((goal: any) => goal.status === "COMPLETED")
+      .map((goal: any) => ({
+        id: goal.id,
+        title: goal.title || "Meta",
+        completedAt: goal.updatedAt || goal.targetDate || new Date(),
+        difficulty: goal.priority || "Média",
+        tags: goal.tags || [],
+        type: "goal" as const,
+      })),
+  };
+
   return {
     metrics: {
       productivity: Math.max(0, Math.min(100, productivity)),
@@ -213,6 +249,7 @@ async function calculateRealPerformanceMetrics(userId: string, timeRange: string
     tagAnalysis,
     priorityAnalysis,
     difficultyAnalysis,
+    completionLogs,
     insights,
     predictions: {
       nextWeekScore: Math.round(productivity * 0.9 + Math.random() * 10),

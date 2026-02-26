@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(analyticsData);
   } catch (error) {
-    console.error("Erro na API de analytics avançados:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

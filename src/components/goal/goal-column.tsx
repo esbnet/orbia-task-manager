@@ -45,7 +45,6 @@ export function GoalColumn() {
 			setIsFormOpen(false);
 			setEditingGoal(null);
 		} catch (error) {
-			console.error("Erro ao criar meta:", error);
 		} finally {
 			setIsSaving(false);
 		}
@@ -80,14 +79,12 @@ export function GoalColumn() {
 						// Por enquanto, apenas invalidar o cache das tarefas anexadas
 						queryClient.invalidateQueries({ queryKey: ["attached-tasks", editingGoal.id] });
 					} catch (error) {
-						console.error("Erro ao atualizar tarefas anexadas:", error);
 					}
 				}
 
 				setEditingGoal(null);
 				setIsFormOpen(false);
 			} catch (error) {
-				console.error("Erro ao editar meta:", error);
 			} finally {
 				setIsSaving(false);
 			}

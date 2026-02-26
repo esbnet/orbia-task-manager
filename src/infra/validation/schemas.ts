@@ -48,7 +48,6 @@ export const createHabitSchema = z.object({
 	title: z.string().min(1),
 	description: z.string().optional().default(""),
 	difficulty: z.enum(["Trivial", "Fácil", "Médio", "Difícil"]).optional().default("Fácil"),
-	resetType: z.enum(["daily", "weekly", "monthly"]).optional().default("daily"),
 	tags: z.array(z.string()).optional().default([]),
 });
 

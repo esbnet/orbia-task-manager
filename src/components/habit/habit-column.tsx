@@ -95,7 +95,6 @@ export function HabitColumn() {
 					status === "Cancelado" ? "cancelado" : "atualizado";
 				toast.success(`Hábito "${habit.title}" ${statusText} com sucesso!`);
 			} catch (error) {
-				console.error("Erro ao atualizar status do hábito:", error);
 				toast.error("Erro ao atualizar status do hábito. Tente novamente.");
 			}
 		}

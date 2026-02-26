@@ -1,5 +1,5 @@
 export type HabitDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
-export type HabitReset = "Diariamente" | "Semanalmente" | "Mensalmente";
+export type HabitReset = "Sempre disponível" | "Diariamente" | "Semanalmente" | "Mensalmente";
 export type HabitStatus = "Em Andamento" | "Completo" | "Cancelado";
 export type HabitPriority = "Baixa" | "Média" | "Alta" | "Urgente";
 

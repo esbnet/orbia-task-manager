@@ -42,7 +42,6 @@ interface HabitFormProps {
 
 const priorities: Habit["priority"][] = ["Baixa", "Média", "Alta", "Urgente"];
 const difficulties: Habit["difficulty"][] = ["Trivial", "Fácil", "Médio", "Difícil"];
-const resetOptions: Habit["reset"][] = ["Diariamente", "Semanalmente", "Mensalmente"];
 
 export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormProps) {
 	const { tagOptions } = useTags();
@@ -54,7 +53,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 		difficulty: "Fácil",
 		priority: "Média",
 		tags: [],
-		reset: "Diariamente",
+		reset: "Sempre disponível",
 	});
 	const queryClient = useQueryClient();
 	const deleteHabitMutation = useDeleteHabit();
@@ -69,7 +68,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 				difficulty: habit.difficulty,
 				priority: habit.priority,
 				tags: habit.tags,
-				reset: habit.reset,
+				reset: habit.reset || "Sempre disponível",
 			});
 		} else {
 			// Modo criação: resetar para valores padrão
@@ -80,7 +79,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 				difficulty: "Fácil",
 				priority: "Média",
 				tags: [],
-				reset: "Diariamente",
+				reset: "Sempre disponível",
 			});
 		}
 	}, [habit]);
@@ -99,7 +98,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 						difficulty: "Fácil",
 						priority: "Média",
 						tags: [],
-						reset: "Diariamente",
+						reset: "Sempre disponível",
 					});
 				}
 			});
@@ -177,29 +176,11 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 								</SelectContent>
 							</Select>
 						</div>
-
 						<div className="space-y-2">
-							<Label htmlFor="reset">Frequência de Reset</Label>
-							<Select
-								value={formData.reset}
-								onValueChange={(value) =>
-									setFormData((prev) => ({
-										...prev,
-										reset: value as Habit["reset"],
-									}))
-								}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="Selecione a frequência" />
-								</SelectTrigger>
-								<SelectContent>
-									{resetOptions.map((reset) => (
-										<SelectItem key={reset} value={reset}>
-											{reset}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<Label htmlFor="reset">Disponibilidade</Label>
+							<div className="text-sm text-gray-600 dark:text-gray-400 border rounded-md px-3 py-2 bg-muted">
+								Sempre disponível (pode ser registrado várias vezes ao dia)
+							</div>
 						</div>
 					</div>
 
@@ -318,5 +299,3 @@ function DialogConfirmDelete({ id, onDeleted }: { id: string; onDeleted?: () => 
 		</Dialog>
 	);
 }
-
-

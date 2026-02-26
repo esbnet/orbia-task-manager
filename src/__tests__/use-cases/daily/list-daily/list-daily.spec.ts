@@ -69,13 +69,23 @@ describe("ListDailyUseCase", () => {
 		expect(result.daily[1].difficulty).toBe("Médio");
 	});
 
-	it("deve retornar todos os dailies incluindo os dados de exemplo", async () => {
-		// O repositório já vem com um daily de exemplo
+	it("deve retornar todos os dailies criados", async () => {
+		const dailyData = {
+			title: "Daily de Teste",
+			observations: "Teste",
+			tasks: [],
+			difficulty: "Fácil" as const,
+			startDate: new Date(),
+			repeat: { type: "Diariamente" as const, frequency: 1 },
+			tags: [],
+			userId: "user-123",
+			createdAt: new Date(),
+		};
+
+		await dailyRepository.create(dailyData);
 		const result = await useCase.execute();
 
-		expect(result.daily.length).toBeGreaterThan(0);
-		expect(result.daily[0]).toBeDefined();
-		expect(result.daily[0].title).toBeDefined();
-		expect(result.daily[0].difficulty).toBeDefined();
+		expect(result.daily.length).toBe(1);
+		expect(result.daily[0].title).toBe("Daily de Teste");
 	});
 });

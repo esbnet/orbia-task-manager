@@ -30,7 +30,6 @@ export async function GET() {
 		const result = await useCase.execute();
 		return Response.json({ habits: result.habits });
 	} catch (error) {
-		console.error("Erro na API habits:", error);
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
 		return Response.json({ habits: [] });
 	}
@@ -65,8 +64,6 @@ export async function GET() {
  *                 type: array
  *                 items:
  *                   type: string
- *               reset:
- *                 type: string
  *               createdAt:
  *                 type: string
  *                 format: date-time
@@ -79,19 +76,13 @@ export async function POST(request: NextRequest) {
 		const body = await request.json();
 		const validated = createHabitSchema.parse(body);
 
-		const resetMap = {
-			daily: "Diariamente" as const,
-			weekly: "Semanalmente" as const,
-			monthly: "Mensalmente" as const,
-		};
-
 		const sanitizedInput = {
 			title: String(validated.title),
 			observations: String(validated.description || ""),
 			difficulty: validated.difficulty,
 			priority: "Média" as const,
 			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
-			reset: resetMap[validated.resetType],
+			reset: "Sempre disponível" as const,
 			createdAt: new Date(),
 		};
 

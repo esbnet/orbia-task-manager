@@ -132,7 +132,6 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true, isLoading = fa
 	// Efeito separado para atualizar attachedTasks quando os dados são carregados
 	useEffect(() => {
 		if (attachedTasksData) {
-			console.log("Attaching tasks...", attachedTasksData);
 			setFormData((prev) => ({
 				...prev,
 				attachedTasks: attachedTasksData.map((task) => ({

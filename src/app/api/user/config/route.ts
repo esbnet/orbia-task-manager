@@ -46,7 +46,6 @@ export async function GET() {
 
 		return NextResponse.json(result);
 	} catch (error) {
-		console.error("Erro ao obter configurações do usuário:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },
@@ -152,7 +151,6 @@ export async function PUT(request: NextRequest) {
 		}
 		return res;
 	} catch (error) {
-		console.error("Erro ao atualizar configurações do usuário:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },

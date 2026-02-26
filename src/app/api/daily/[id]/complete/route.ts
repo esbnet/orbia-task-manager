@@ -29,7 +29,6 @@ export async function POST(
         return NextResponse.json(result);
 
     } catch (error) {
-        console.error("Erro ao completar daily:", error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : "Erro interno" },
             { status: 500 }

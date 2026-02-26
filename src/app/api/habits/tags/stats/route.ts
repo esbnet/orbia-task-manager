@@ -9,7 +9,6 @@ export async function GET() {
 
 		return NextResponse.json({ tagStats });
 	} catch (error) {
-		console.error("Erro ao buscar estatísticas de tags:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 }

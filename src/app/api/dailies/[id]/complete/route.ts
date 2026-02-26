@@ -26,7 +26,6 @@ export async function POST(
 
 
 		const result = await dailyApplicationService.completeDaily(id);
-		console.log('Daily completada:', { id, result });
 
 		return NextResponse.json({
 			success: true,

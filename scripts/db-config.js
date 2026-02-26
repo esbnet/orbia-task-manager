@@ -55,8 +55,6 @@ if (environment === 'production' && (!prodDatabaseUrl || !prodDirectUrl)) {
 	process.exit(1);
 }
 
-const schemaPath = path.join(__dirname, '../prisma/schema.prisma');
-
 // Configurações por ambiente
 const configs = {
     development: {
@@ -89,23 +87,7 @@ if (!config) {
 
 console.log(`🔧 Configurando para: ${config.name}`);
 
-// Atualizar schema.prisma
-let schema = fs.readFileSync(schemaPath, 'utf8');
-
-const datasourceRegex = /datasource db \{[\s\S]*?\}/;
-const newDatasource = config.hasDirectUrl
-    ? `datasource db {
-            provider  = "${config.provider}"
-            url       = env("DATABASE_URL")
-            directUrl = env("DIRECT_URL")
-        }`
-    : `datasource db {
-            provider = "${config.provider}"
-            url      = env("DATABASE_URL")
-        }`;
-
-schema = schema.replace(datasourceRegex, newDatasource);
-fs.writeFileSync(schemaPath, schema);
+// Não alteramos mais o schema.prisma (Prisma 7 usa prisma.config.ts para URLs)
 
 // Atualizar .env apenas em desenvolvimento
 if (environment === 'development' && fs.existsSync(envPath)) {

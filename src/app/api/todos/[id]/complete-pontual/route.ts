@@ -61,7 +61,6 @@ export async function POST(
 			message: "Tarefa pontual concluída com sucesso"
 		});
 	} catch (error) {
-		console.error("Erro ao completar tarefa pontual:", error);
 
 		if (error instanceof Error) {
 			if (error.message.includes("não é pontual")) {

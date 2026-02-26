@@ -35,6 +35,11 @@ import { Badge } from "@/components/ui/badge";
 import { usePerformanceAnalytics } from "@/hooks/use-performance-analytics";
 import { useTranslation } from "@/hooks/use-translation";
 import { useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import { format } from "date-fns";
 
 interface PerformanceData {
   productivity: number;
@@ -60,6 +65,12 @@ interface TimeSeriesData {
 export function PerformanceAnalytics() {
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter">("month");
+  const [activeCategory, setActiveCategory] = useState<"habits" | "dailies" | "todos" | "goals">("habits");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"title" | "completedAt">("completedAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
   const { data: analyticsData, isLoading } = usePerformanceAnalytics(timeRange);
 
   if (isLoading) {
@@ -70,7 +81,41 @@ export function PerformanceAnalytics() {
     return <div className="p-8 text-center">Erro ao carregar dados</div>;
   }
 
-  const { metrics, timeSeries, insights, tagAnalysis, priorityAnalysis, difficultyAnalysis } = analyticsData;
+  const { metrics, timeSeries, insights, tagAnalysis, priorityAnalysis, difficultyAnalysis, completionLogs } = analyticsData;
+
+  const categoryMap = {
+    habits: { label: "Hábitos", logs: completionLogs.habits },
+    dailies: { label: "Diárias", logs: completionLogs.dailies },
+    todos: { label: "Tarefas", logs: completionLogs.todos },
+    goals: { label: "Metas", logs: completionLogs.goals },
+  };
+
+  const currentLogs = categoryMap[activeCategory].logs || [];
+  const filteredLogs = currentLogs.filter((log) =>
+    log.title.toLowerCase().includes(search.toLowerCase()),
+  );
+  const sortedLogs = [...filteredLogs].sort((a, b) => {
+    if (sortBy === "title") {
+      return sortDir === "asc"
+        ? a.title.localeCompare(b.title)
+        : b.title.localeCompare(a.title);
+    }
+    const dateA = new Date(a.completedAt).getTime();
+    const dateB = new Date(b.completedAt).getTime();
+    return sortDir === "asc" ? dateA - dateB : dateB - dateA;
+  });
+  const totalPages = Math.max(1, Math.ceil(sortedLogs.length / pageSize));
+  const paginatedLogs = sortedLogs.slice((page - 1) * pageSize, page * pageSize);
+
+  const toggleSort = (column: "title" | "completedAt") => {
+    if (sortBy === column) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortDir(column === "completedAt" ? "desc" : "asc");
+    }
+    setPage(1);
+  };
 
   const radarData = [
     { metric: "Produtividade", value: metrics.productivity, fullMark: 100 },
@@ -127,6 +172,91 @@ export function PerformanceAnalytics() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Histórico de conclusões por categoria */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico por categoria</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {(["habits", "dailies", "todos", "goals"] as const).map((key) => (
+              <Button
+                key={key}
+                variant={activeCategory === key ? "default" : "outline"}
+                onClick={() => {
+                  setActiveCategory(key);
+                  setPage(1);
+                }}
+              >
+                {categoryMap[key].label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Buscar descrição..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="cursor-pointer" onClick={() => toggleSort("title")}>
+                    <div className="flex items-center gap-1">
+                      Descrição {sortBy === "title" && (sortDir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => toggleSort("completedAt")}>
+                    <div className="flex items-center gap-1">
+                      Concluído em {sortBy === "completedAt" && (sortDir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedLogs.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      Nenhum registro encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {paginatedLogs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="font-medium">{log.title}</TableCell>
+                    <TableCell className="space-x-1">
+                      {(log.tags || []).slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                      ))}
+                    </TableCell>
+                    <TableCell>{format(new Date(log.completedAt), "dd/MM/yyyy HH:mm")}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                Anterior
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                Próxima
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Score Cards */}
       <div className="gap-4 grid grid-cols-1 md:grid-cols-4">

@@ -21,7 +21,6 @@ export function middleware(request: NextRequest) {
     const duration = Date.now() - start;
     const safeMethod = InputSanitizer.sanitizeForLog(request.method || 'UNKNOWN');
     const safePath = InputSanitizer.sanitizeForLog(request.nextUrl.pathname || '/unknown');
-    console.log(`🚀 ${safeMethod} ${safePath} - ${duration}ms`);
   }
   
   return response;

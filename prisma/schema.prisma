@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
             provider  = "postgresql"
-            url       = env("DATABASE_URL")
-            directUrl = env("DIRECT_URL")
         }
 
 model Habit {
@@ -136,6 +134,7 @@ model DailyLog {
     dailyTitle  String
     difficulty  String
     tags        String[]
+    status      String   @default("success") // "success" | "fail"
     completedAt DateTime @default(now())
     createdAt   DateTime @default(now())
 

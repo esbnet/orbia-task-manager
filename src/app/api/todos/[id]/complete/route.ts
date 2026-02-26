@@ -34,7 +34,6 @@ export async function POST(
 		const result = await toggleCompleteUseCase.execute(id);
 		return Response.json({ todo: result.todo });
 	} catch (error) {
-		console.error("Erro ao completar todo:", error);
 		return Response.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 }

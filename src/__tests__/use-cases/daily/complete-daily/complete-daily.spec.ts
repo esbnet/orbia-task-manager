@@ -1,27 +1,53 @@
 import { CompleteDailyUseCase } from "@/application/use-cases/daily/complete-daily/complete-daily-use-case";
-import { InMemoryDailyRepository } from "@/infra/repositories/memory/in-memory-daily-repository";
+import type { DailyLogRepository } from "@/domain/repositories/all-repository";
+import type { DailyLog } from "@/domain/entities/daily-log";
+
+class InMemoryDailyLogRepository implements DailyLogRepository {
+	private logs: DailyLog[] = [];
+
+	async create(data: Omit<DailyLog, "id" | "createdAt">): Promise<DailyLog> {
+		const log: DailyLog = {
+			...data,
+			id: Math.random().toString(),
+			createdAt: new Date(),
+			periodId: data.periodId,
+		};
+		this.logs.push(log);
+		return log;
+	}
+
+	async list(): Promise<DailyLog[]> { return this.logs; }
+	async findById(id: string): Promise<DailyLog | null> { return this.logs.find(l => l.id === id) || null; }
+	async update(log: DailyLog): Promise<DailyLog> { return log; }
+	async delete(id: string): Promise<void> { this.logs = this.logs.filter(l => l.id !== id); }
+	async toggleComplete(): Promise<DailyLog> { throw new Error("Not implemented"); }
+	async hasLogForDate(): Promise<boolean> { return false; }
+	async getLastLogDate(): Promise<Date | null> { return null; }
+	async findByEntityId(): Promise<DailyLog[]> { return []; }
+	async findByDateRange(): Promise<DailyLog[]> { return []; }
+	async deleteOlderThan(): Promise<void> { }
+}
 
 describe("CompleteDailyUseCase", () => {
 	let useCase: CompleteDailyUseCase;
-	let dailyRepository: InMemoryDailyRepository;
+	let logRepository: InMemoryDailyLogRepository;
 
 	beforeEach(() => {
-		dailyRepository = new InMemoryDailyRepository();
-		useCase = new CompleteDailyUseCase(dailyRepository);
+		logRepository = new InMemoryDailyLogRepository();
+		useCase = new CompleteDailyUseCase(logRepository);
 	});
 
-	afterEach(async () => {
-		// Limpar todos os dailies criados durante o teste
-		const allDailies = await dailyRepository.list();
-		for (const daily of allDailies) {
-			await dailyRepository.delete(daily.id);
-		}
-	});
+	it("deve criar log de conclusão", async () => {
+		const daily = {
+			id: "1",
+			title: "Test Daily",
+			difficulty: "Fácil",
+			tags: ["test"],
+		} as any;
 
-	it("deve executar o caso de uso com sucesso", async () => {
-		// TODO: Implementar teste específico para CompleteDailyUseCase
-		const result = await useCase.execute();
+		const result = await useCase.execute({ daily });
 
-		expect(result).toBeDefined();
+		expect(result.success).toBe(true);
+		expect(result.logId).toBeDefined();
 	});
 });

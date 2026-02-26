@@ -30,7 +30,6 @@ export async function GET() {
 		const result = await listTodosUseCase.execute();
 		return Response.json({ todos: result.todos });
 	} catch (error) {
-		console.error("Erro na API todos:", error);
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
 		return Response.json({ todos: [] });
 	}

@@ -299,7 +299,7 @@ export const HabitCard = memo(function HabitCard({
 								</Badge>
 								<Badge className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 min-w-0 text-purple-700 dark:text-purple-300 text-xs">
 									<RotateCcw className="flex-shrink-0 w-3 h-3" />
-									<span className="truncate">{habit.reset}</span>
+									<span className="truncate">Sempre disponível</span>
 								</Badge>
 							</div>
 

@@ -85,7 +85,6 @@ export class PrismaTodoRepository implements TodoRepository {
 		try {
 			const userId = await getCurrentUserId();
 			if (!userId) {
-				console.log('No userId found in list()');
 				return [];
 			}
 
@@ -100,7 +99,6 @@ export class PrismaTodoRepository implements TodoRepository {
 			});
 			return todos.map(this.toDomain);
 		} catch (error) {
-			console.error('Error in list():', error);
 			return [];
 		}
 	}

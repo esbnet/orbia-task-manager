@@ -26,7 +26,6 @@ export async function GET() {
 
         return Response.json({ habitPeriods });
     } catch (error) {
-        console.error('Error fetching habit periods:', error);
         return Response.json(
             { error: 'Failed to fetch habit periods' },
             { status: 500 }

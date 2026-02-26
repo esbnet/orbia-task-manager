@@ -20,26 +20,21 @@ export function useActiveTasks() {
 	return useQuery({
 		queryKey: activeTasksKeys.all,
 		queryFn: async (): Promise<ActiveTask[]> => {
-			console.log("🔍 Buscando tarefas ativas via API unificada...");
 
 			try {
 				const response = await fetch("/api/active-tasks");
 
-				console.log("📡 Status da resposta:", InputSanitizer.sanitizeForLog(String(response.status)));
 
 				if (!response.ok) {
 					throw new Error(`Erro na API: ${response.status}`);
 				}
 
 				const data = await response.json();
-				console.log("📦 Dados recebidos:", InputSanitizer.sanitizeForLog(JSON.stringify(data)));
 
 				const tasks: ActiveTask[] = data.tasks || [];
-				console.log("✅ Tarefas ativas encontradas:", InputSanitizer.sanitizeForLog(String(tasks.length)));
 
 				return tasks;
 			} catch (error) {
-				console.error("❌ Erro ao buscar tarefas ativas:", error);
 				// Retorna array vazio em caso de erro para não quebrar a UI
 				return [];
 			}

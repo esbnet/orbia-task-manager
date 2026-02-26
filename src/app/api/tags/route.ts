@@ -17,7 +17,6 @@ export async function GET() {
 
         return Response.json({ tags });
     } catch (error) {
-        console.error('Error fetching tags:', error);
         return Response.json({ error: 'Failed to fetch tags' }, { status: 500 });
     }
 }
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
 
         return Response.json({ tag }, { status: 201 });
     } catch (error) {
-        console.error('Error creating tag:', error);
         return Response.json({ error: 'Failed to create tag' }, { status: 500 });
     }
 }

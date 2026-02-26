@@ -9,6 +9,11 @@ import {
 	LoaderCircle,
 	RotateCcw,
 	Tag
+,
+	Sparkles,
+	RefreshCcw,
+	CalendarClock,
+	CalendarRange
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -36,11 +41,13 @@ const difficultyConfig = {
 };
 
 const repeatTypeConfig = {
-	"Diariamente": { icon: RotateCcw, color: "text-blue-600 dark:text-blue-400" },
-	"Semanalmente": { icon: Calendar, color: "text-green-600 dark:text-green-400" },
-	"Mensalmente": { icon: Calendar, color: "text-purple-600 dark:text-purple-400" },
-	"Anualmente": { icon: Calendar, color: "text-orange-600 dark:text-orange-400" },
-};
+	diariamente: { icon: RefreshCcw, color: "text-blue-600 dark:text-blue-400" },
+	semana: { icon: CalendarClock, color: "text-green-600 dark:text-green-400" },
+	semanalmente: { icon: CalendarClock, color: "text-green-600 dark:text-green-400" },
+	mensalmente: { icon: CalendarRange, color: "text-purple-600 dark:text-purple-400" },
+	anualmente: { icon: Sparkles, color: "text-orange-600 dark:text-orange-400" },
+	default: { icon: RotateCcw, color: "text-gray-500" },
+} as const;
 
 export function DailyCard({
 	daily,
@@ -51,7 +58,8 @@ export function DailyCard({
 	const archiveDaily = useArchiveDaily();
 	const [isExpanded, setIsExpanded] = useState(false);
 	const difficulty = difficultyConfig[daily.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
-	const repeatConfig = repeatTypeConfig[daily.repeat?.type as keyof typeof repeatTypeConfig] || repeatTypeConfig["Diariamente"];
+	const repeatKey = (daily.repeat?.type || "").toString().toLowerCase();
+	const repeatConfig = repeatTypeConfig[repeatKey as keyof typeof repeatTypeConfig] || repeatTypeConfig.default;
 	const RepeatIcon = repeatConfig.icon;
 
 	const { t } = useTranslation();

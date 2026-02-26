@@ -37,7 +37,6 @@ export async function GET() {
 			userId: "", // Não temos userId no log, mas não é usado na contagem
 		}));
 
-		console.log(`[TODO-LOGS-COUNT] 📊 Found ${logs.length} completed todos from logs`);
 
 		return Response.json({
 			todos: completedTodos,
@@ -47,7 +46,6 @@ export async function GET() {
 			}
 		});
 	} catch (error) {
-		console.error("Erro ao buscar logs de todos:", error);
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
 		return Response.json({
 			todos: [],

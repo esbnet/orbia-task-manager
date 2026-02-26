@@ -106,8 +106,6 @@ export function useTaskCounts() {
 			const total = habitsCount + dailiesCount + todosCount + goalsCount;
 
 			// Log detalhado para debug
-			console.log('[TASK-COUNTS] 📊 Todos active count (not completed today):', todosActiveCount);
-			console.log('[TASK-COUNTS] 📊 Todos total count:', todosCount);
 
 			return {
 				habits: habitsCount,

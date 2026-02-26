@@ -216,7 +216,6 @@ function RecommendationsDialog({
                                                                 className="h-6 text-xs"
                                                                 onClick={() => {
                                                                     // Aqui você pode implementar navegação para a tarefa
-                                                                    console.log('Navegar para:', { ...link, title: InputSanitizer.sanitizeForLog(link.title) });
                                                                 }}
                                                             >
                                                                 <ExternalLink className="mr-1 w-3 h-3" />
@@ -257,7 +256,6 @@ function RecommendationsDialog({
                                                                 size="sm"
                                                                 className="h-6 text-xs"
                                                                 onClick={() => {
-                                                                    console.log('Navegar para:', { ...link, title: InputSanitizer.sanitizeForLog(link.title) });
                                                                 }}
                                                             >
                                                                 <ExternalLink className="mr-1 w-3 h-3" />
@@ -298,7 +296,6 @@ function RecommendationsDialog({
                                                                 size="sm"
                                                                 className="h-6 text-xs"
                                                                 onClick={() => {
-                                                                    console.log('Navegar para:', { ...link, title: InputSanitizer.sanitizeForLog(link.title) });
                                                                 }}
                                                             >
                                                                 <ExternalLink className="mr-1 w-3 h-3" />
@@ -669,7 +666,6 @@ export function MetricsDashboard() {
 
                 setAttachedTasksStats({ habits: habitsCount, dailies: dailiesCount, todos: todosCount });
             } catch (error) {
-                console.error('Erro ao buscar tarefas anexadas:', error);
                 // Fallback para estimativa
                 setAttachedTasksStats({
                     habits: Math.floor(goals.length * 1.5),

@@ -132,8 +132,9 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 
 	async getAvailableDailies(userId: string): Promise<{ availableDailies: Daily[]; completedToday: (Daily & { nextAvailableAt: Date })[]; totalDailies: number }> {
 		try {
-			const dailies = await this.repository.findByUserId(userId) as any[];
+			const dailies = await this.repository.findByUserId(userId);
 			const today = new Date();
+			today.setHours(0, 0, 0, 0);
 
 			const available: Daily[] = [];
 			const completed: (Daily & { nextAvailableAt: Date })[] = [];
@@ -141,24 +142,29 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 			for (const daily of dailies) {
 				if (new Date(daily.startDate) > today) continue;
 
-				if (daily.hasLogToday) {
-					const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
-						daily.repeat.type,
-						today,
-						daily.repeat.frequency
-					);
-					completed.push({ ...daily, nextAvailableAt });
+				const activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(daily.id);
+
+				if (!activePeriod) {
+					available.push(daily);
 					continue;
 				}
 
-				const activePeriod = daily.activePeriod;
-				if (activePeriod) {
-					if (!activePeriod.isCompleted) {
-						available.push(daily);
-					} else if (activePeriod.endDate && today > new Date(activePeriod.endDate)) {
-						available.push(daily);
-					}
-				} else {
+				const periodStart = new Date(activePeriod.startDate);
+				periodStart.setHours(0, 0, 0, 0);
+				const periodEnd = activePeriod.endDate ? new Date(activePeriod.endDate) : null;
+				if (periodEnd) periodEnd.setHours(23, 59, 59, 999);
+
+				const isCompletedToday = activePeriod.isCompleted && periodStart.getTime() === today.getTime();
+				const isPeriodExpired = periodEnd && today > periodEnd;
+
+				if (isCompletedToday) {
+					const nextAvailableAt = this.calculateNextPeriodStart(
+						daily.repeat.type,
+						periodEnd || today,
+						daily.repeat.frequency
+					);
+					completed.push({ ...daily, nextAvailableAt });
+				} else if (!activePeriod.isCompleted || isPeriodExpired) {
 					available.push(daily);
 				}
 			}

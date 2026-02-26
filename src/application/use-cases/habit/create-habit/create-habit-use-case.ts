@@ -20,7 +20,7 @@ export class CreateHabitUseCase {
 			status: "Em Andamento", // Default status for new habits
 			priority: (inputHabit.priority as HabitPriority) ?? "Média",
 			tags: inputHabit.tags ?? [],
-			reset: (inputHabit.reset as HabitReset) ?? "Diariamente",
+			reset: (inputHabit.reset as HabitReset) ?? "Sempre disponível",
 			order: 0,
 			currentPeriod: undefined,
 			todayEntries: 0

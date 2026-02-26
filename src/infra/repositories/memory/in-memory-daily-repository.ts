@@ -8,25 +8,7 @@ export class InMemoryDailyRepository
 {
 	constructor() {
 		super();
-		// Inicializar com dados de exemplo se necessário
-		this.items = [
-			{
-				id: "1",
-				title: "Daily task example",
-				// adicione outras propriedades específicas do Daily aqui
-				observations: "This is an example observation.",
-				tasks: ["Task 1", "Task 2"],
-				difficulty: "Fácil",
-				startDate: new Date(),
-				repeat: {
-					type: "Diariamente",
-					frequency: 1,
-				},
-				tags: ["example", "daily"],
-				createdAt: new Date(),
-				userId: "1", // ID do usuário que criou a tarefa					
-			},
-		];
+		this.items = [];
 	}
 	findByUserId(userId: string): Promise<Daily[]> {
 		throw new Error("Method not implemented." + userId);

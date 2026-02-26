@@ -36,7 +36,12 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		order: number,
 	): Promise<DailySubtask> => {
 		try {
-			const sanitizedDailyId = InputSanitizer.sanitizeId(dailyId);
+			let sanitizedDailyId = dailyId;
+			try {
+				sanitizedDailyId = InputSanitizer.sanitizeId(dailyId);
+			} catch (error) {
+				console.warn("[DailySubtask] ID de daily inválido, usando valor bruto", error);
+			}
 			const taskTitle = TaskTitle.create(title);
 			const sanitizedOrder = Number(order);
 			
@@ -50,8 +55,8 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 				order: sanitizedOrder,
 			});
 			return result.subtask;
-		} catch (error) {
-			console.error("DailySubtaskContext.createSubtask:", error);
+		} catch (error: any) {
+			console.error("[DailySubtask] Erro ao criar subtarefa", error);
 			throw error instanceof Error ? error : new Error("Erro ao criar subtarefa");
 		}
 	};
@@ -73,7 +78,6 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 
 			return result.subtask;
 		} catch (error) {
-			console.error("DailySubtaskContext.updateSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao atualizar subtarefa");
 		}
 	};
@@ -83,7 +87,6 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 			const sanitizedId = InputSanitizer.sanitizeId(id);
 			await deleteUseCase.execute({ id: String(sanitizedId) });
 		} catch (error) {
-			console.error("DailySubtaskContext.deleteSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");
 		}
 	};

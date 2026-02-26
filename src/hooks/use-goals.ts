@@ -16,7 +16,6 @@ export const goalKeys = {
 // Hook para buscar todos os goals
 export function useGoals(status?: string) {
 	const safeStatus = status ? InputSanitizer.sanitizeForLog(status) : 'none';
-	console.log('[USE-GOALS] Hook called with status:', safeStatus);
 	const queryKey = status ? ["goals", status] : ["goals"];
 	
 	return useQuery({
@@ -24,11 +23,9 @@ export function useGoals(status?: string) {
 		queryFn: async (): Promise<Goal[]> => {
 			const url = status ? `/api/goals?status=${status}` : '/api/goals';
 			const safeUrl = InputSanitizer.sanitizeForLog(url);
-			console.log('[USE-GOALS] Fetching:', safeUrl);
 			const response = await fetch(url);
 			if (!response.ok) throw new Error("Erro ao buscar goals");
 			const data = await response.json();
-			console.log('[USE-GOALS] Response:', InputSanitizer.sanitizeForLog(JSON.stringify(data)));
 			return Array.isArray(data) ? data : (data.goals || []);
 		}
 	});
@@ -49,7 +46,6 @@ export function useGoal(id: string) {
 			// Debug: verificar estrutura da resposta
 			if (process.env.NODE_ENV === 'development') {
 				const safeData = InputSanitizer.sanitizeForLog(JSON.stringify(data));
-				console.log('[USE-GOAL] 📡 Resposta da API para goal específico:', safeData);
 			}
 
 			// A API pode retornar objeto diretamente ou com propriedade goal

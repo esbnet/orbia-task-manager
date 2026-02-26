@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
 
 		// Log apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
-			console.log({
+			console.debug("[GET /api/goals] request", {
 				userId: InputSanitizer.sanitizeForLog(session.user.id),
 				params: { status, priority, tags, includeOverdue, includeDueSoon, dueSoonDays }
 			});
@@ -125,6 +125,10 @@ export async function GET(request: NextRequest) {
 
 		// Log de resultado apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
+			console.debug("[GET /api/goals] response", {
+				userId: InputSanitizer.sanitizeForLog(session.user.id),
+				count: goals.length,
+			});
 		}
 
 		return NextResponse.json(goals);
@@ -260,7 +264,7 @@ export async function POST(request: NextRequest) {
 
 		// Log apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
-			console.log({
+			console.debug("[POST /api/goals] request", {
 				userId: InputSanitizer.sanitizeForLog(session.user.id),
 				title: InputSanitizer.sanitizeForLog(title.substring(0, 50) + (title.length > 50 ? "..." : ""))
 			});

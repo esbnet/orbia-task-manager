@@ -24,6 +24,7 @@ export class CreateDailyUseCase {
 				frequency: 1,
 			},
 			tags: inputDaily.tags || [],
+			lastCompletedDate: undefined,
 		});
 
 		return {

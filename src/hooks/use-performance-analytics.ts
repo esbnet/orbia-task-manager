@@ -57,6 +57,12 @@ export interface PerformanceAnalyticsData {
   tagAnalysis: TagAnalysis[];
   priorityAnalysis: PriorityAnalysis[];
   difficultyAnalysis: DifficultyAnalysis[];
+  completionLogs: {
+    habits: CompletionLog[];
+    dailies: CompletionLog[];
+    todos: CompletionLog[];
+    goals: CompletionLog[];
+  };
   insights: Array<{
     type: "positive" | "improvement" | "warning";
     title: string;
@@ -68,6 +74,15 @@ export interface PerformanceAnalyticsData {
     recommendedGoals: string[];
     riskAreas: string[];
   };
+}
+
+export interface CompletionLog {
+  id: string;
+  title: string;
+  completedAt: string;
+  difficulty?: string;
+  tags?: string[];
+  type: "habit" | "daily" | "todo" | "goal";
 }
 
 export function usePerformanceAnalytics(timeRange: "week" | "month" | "quarter" = "month") {

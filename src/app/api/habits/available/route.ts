@@ -1,6 +1,5 @@
 import { GetAvailableHabitsUseCase } from "@/application/use-cases/habit/get-available-habits/get-available-habits-use-case";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { PrismaHabitPeriodRepository } from "@/infra/database/prisma/prisma-habit-period-repository";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 
 // Força a rota a ser dinâmica devido ao uso de headers na autenticação
@@ -19,11 +18,8 @@ export async function GET() {
     }
 
     const habitRepository = new PrismaHabitRepository();
-    const habitPeriodRepository = new PrismaHabitPeriodRepository();
-    
     const getAvailableHabitsUseCase = new GetAvailableHabitsUseCase(
       habitRepository,
-      habitPeriodRepository
     );
 
     const result = await getAvailableHabitsUseCase.execute({ userId });

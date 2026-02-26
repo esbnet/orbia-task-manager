@@ -76,7 +76,6 @@ export const DailyColumn = () => {
 	// Editar daily existente
 	const handleEditDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
 		if (!editingDaily) {
-			console.log('handleEditDaily: Nenhum daily sendo editado');
 			return;
 		}
 
@@ -96,7 +95,6 @@ export const DailyColumn = () => {
 				});
 			}
 
-			// console.log('handleEditDaily: Fechando formulário');
 			setIsFormOpen(false);
 			setEditingDaily(null);
 		} catch (error) {

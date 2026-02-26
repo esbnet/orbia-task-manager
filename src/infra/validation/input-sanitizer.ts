@@ -56,6 +56,9 @@ export class InputSanitizer {
 	 */
 	static sanitizeUrl(url: string): string {
 		try {
+			// Permite caminhos relativos imediatamente (funciona em client e server)
+			if (url.startsWith('/')) return url;
+
 			const parsedUrl = new URL(url);
 			if (url.startsWith('/')) return url;
 			if (typeof window !== 'undefined' && parsedUrl.origin === window.location.origin) {

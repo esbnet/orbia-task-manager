@@ -40,15 +40,37 @@ export class GetAvailableDailiesUseCase {
     for (const daily of dailies) {
       if (new Date(daily.startDate) > now) continue;
 
-      const hasLogToday = await this.dailyLogRepository.hasLogForDate(daily.id, today);
-      const activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(daily.id);
+      const lastLogDate = daily.lastCompletedDate
+        ? new Date(daily.lastCompletedDate)
+        : await this.dailyLogRepository.getLastLogDate(daily.id);
 
-      if (hasLogToday) {
-        const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
-          daily.repeat.type,
-          new Date(),
-          daily.repeat.frequency
-        );
+      const lastCompletedDate = lastLogDate ?? null;
+      const hasCompletion = !!lastCompletedDate;
+      const periodStart = lastCompletedDate ?? new Date(daily.startDate);
+
+      // Sem conclusão prévia: sempre disponível
+      if (!hasCompletion) {
+        availableDailies.push({
+          ...daily,
+          repeatType: daily.repeat.type,
+          repeatFrequency: daily.repeat.frequency,
+          isAvailable: true,
+          isOverdue: false,
+        });
+        continue;
+      }
+
+      const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
+        daily.repeat.type,
+        periodStart,
+        daily.repeat.frequency
+      );
+
+      const isCompletedToday = lastCompletedDate
+        ? lastCompletedDate.toISOString().split('T')[0] === today
+        : false;
+
+      if (isCompletedToday) {
         completedToday.push({
           ...daily,
           repeatType: daily.repeat.type,
@@ -56,12 +78,27 @@ export class GetAvailableDailiesUseCase {
           isAvailable: false,
           nextAvailableAt,
         });
-      } else if (activePeriod && !activePeriod.isCompleted) {
+        continue;
+      }
+
+      const isOverdue = now > nextAvailableAt;
+      const canReopen = now >= nextAvailableAt;
+
+      if (canReopen) {
         availableDailies.push({
           ...daily,
           repeatType: daily.repeat.type,
           repeatFrequency: daily.repeat.frequency,
           isAvailable: true,
+          isOverdue,
+        });
+      } else {
+        completedToday.push({
+          ...daily,
+          repeatType: daily.repeat.type,
+          repeatFrequency: daily.repeat.frequency,
+          isAvailable: false,
+          nextAvailableAt,
         });
       }
     }

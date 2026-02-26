@@ -79,10 +79,6 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 				Number.isNaN(startDate.getTime()) ||
 				Number.isNaN(endDate.getTime())
 			) {
-				console.warn("Datas inválidas para cálculo de progresso:", {
-					createdAt: goal.createdAt,
-					targetDate: goal.targetDate,
-				});
 				return {
 					progress: 0,
 					background:
@@ -114,7 +110,6 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 
 			return { progress: Math.round(progress), background };
 		} catch (error) {
-			console.error("Erro ao calcular progresso:", error);
 			return {
 				progress: 0,
 				background:
@@ -135,7 +130,6 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 				await onStatusChange(goal.id, newStatus);
 			}
 		} catch (error) {
-			console.error("Erro ao alterar status da meta:", error);
 		} finally {
 			setLoading(false);
 		}

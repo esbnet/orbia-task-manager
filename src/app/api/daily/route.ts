@@ -6,6 +6,7 @@ import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily/d
 import { ListDailyUseCase } from "@/application/use-cases/daily/list-daily/list-daily-use-case";
 import { UpdateDailyUseCase } from "@/application/use-cases/daily/update-daily/update-daily-use-case";
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
+import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -29,7 +30,6 @@ export async function GET() {
 		const result = await useCase.execute();
 		return Response.json({ daily: result.daily });
 	} catch (error) {
-		console.error("Erro na API daily:", error);
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
 		return Response.json({ daily: [] });
 	}
@@ -77,10 +77,16 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
 	try {
+		const session = await auth();
+		if (!session?.user?.id) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const body = await request.json();
 		const validated = createDailySchema.parse(body);
 		
 		const sanitizedInput = {
+			userId: session.user.id,
 			title: String(validated.title),
 			observations: String(validated.observations),
 			tasks: Array.isArray(validated.tasks) ? validated.tasks.map(String) : [],
