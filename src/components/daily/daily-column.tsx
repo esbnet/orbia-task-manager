@@ -1,4 +1,6 @@
+import { CalendarCheck, Info, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Daily, DailyDifficulty } from "@/types/daily";
 import {
 	Dialog,
 	DialogContent,
@@ -8,16 +10,14 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAvailableDailies, useCompleteDaily, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
-import type { Daily, DailyDifficulty } from "@/types/daily";
-import { CalendarCheck, Info, Plus } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useAvailableDailies, useCreateDaily, useDeleteDaily, useUpdateDaily } from "@/hooks/use-dailies";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/hooks/use-translation";
-import { toast } from "sonner";
 import { DailyCard } from "./daily-card";
 import { DailyForm } from "./daily-form";
+import { toast } from "sonner";
+import { useTranslation } from "@/hooks/use-translation";
 
 const defaultDaily: Daily = {
 	id: "",
@@ -49,16 +49,7 @@ export const DailyColumn = () => {
 	const availableDailies = dailiesData?.availableDailies || [];
 	const completedDailies = dailiesData?.completedToday || [];
 
-	// Completar daily - usando React Query
-	const { mutateAsync: completeDailyMutation } = useCompleteDaily();
 
-	const handleCompleteDaily = useCallback(async (dailyId: string) => {
-		try {
-			await completeDailyMutation(dailyId);
-		} catch (error) {
-			toast.error(t("messages.errorCompletingTask"));
-		}
-	}, [completeDailyMutation]);
 
 	// Funções de controle do formulário
 	const openEditForm = async (daily: Daily) => {
@@ -85,7 +76,6 @@ export const DailyColumn = () => {
 	// Editar daily existente
 	const handleEditDaily = async (dailyData: Omit<Daily, "id" | "createdAt">) => {
 		if (!editingDaily) {
-			console.log('handleEditDaily: Nenhum daily sendo editado');
 			return;
 		}
 
@@ -105,7 +95,6 @@ export const DailyColumn = () => {
 				});
 			}
 
-			// console.log('handleEditDaily: Fechando formulário');
 			setIsFormOpen(false);
 			setEditingDaily(null);
 		} catch (error) {
@@ -218,9 +207,7 @@ export const DailyColumn = () => {
 									tasks: daily.tasks || [],
 									createdAt: new Date(),
 								}}
-								onComplete={handleCompleteDaily}
 								onEdit={openEditForm}
-								isCompleted={false}
 							/>
 						)
 					})}

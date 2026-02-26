@@ -23,6 +23,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useDeleteTodo, useUpdateTodo } from "@/hooks/use-todos";
+import type { TodoDifficulty, TodoRecurrence } from "@/types/todo";
 import { format, setDefaultOptions } from "date-fns";
 import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -32,7 +33,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTags } from "@/hooks/use-tags";
-import type { TodoDifficulty } from "@/types/todo";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import type { Todo } from "../../types";
@@ -66,6 +66,13 @@ export function TodoForm({
 	);
 	const [startDate, setStartDate] = useState(todo.startDate || new Date());
 	const [tags, setTags] = useState<string[]>(todo.tags || []);
+	const [recurrence, setRecurrence] = useState<TodoRecurrence>(
+		todo.recurrence || "none",
+	);
+	const [recurrenceInterval, setRecurrenceInterval] = useState<number | undefined>(
+		todo.recurrenceInterval || undefined,
+	);
+	const [todoType, setTodoType] = useState(todo.todoType || "pontual");
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +87,9 @@ export function TodoForm({
 		setDifficult(todo.difficulty || "Fácil");
 		setStartDate(todo.startDate || new Date());
 		setTags(todo.tags || []);
+		setRecurrence(todo.recurrence || "none");
+		setRecurrenceInterval(todo.recurrenceInterval || undefined);
+		setTodoType(todo.todoType || "pontual");
 	}, [todo]);
 
 	async function handleUpdateTodo(e: React.FormEvent<HTMLFormElement>) {
@@ -98,7 +108,20 @@ export function TodoForm({
 					difficulty,
 					startDate,
 					tags,
+					recurrence,
+					recurrenceInterval: recurrence === "custom" ? recurrenceInterval : undefined,
+					todoType: todoType,
 				} as Omit<Todo, "id" | "createdAt">);
+
+				// ✅ Limpar formulário após criação bem-sucedida
+				setTitle("");
+				setObservations("");
+				setDifficult("Fácil");
+				setStartDate(new Date());
+				setTags([]);
+				setRecurrence("none");
+				setRecurrenceInterval(undefined);
+
 				setInternalOpen(false);
 				if (onCancel) onCancel();
 				return;
@@ -112,6 +135,9 @@ export function TodoForm({
 					difficulty: difficulty,
 					startDate: startDate || new Date(),
 					tags: tags || [],
+					recurrence,
+					recurrenceInterval: recurrence === "custom" ? recurrenceInterval : undefined,
+					todoType: todoType,
 				}
 			});
 
@@ -130,7 +156,13 @@ export function TodoForm({
 			{/* Só renderizar TodoCard se não estiver usando prop externa open */}
 			{open === undefined && (
 				<TodoCard
-					todo={todo}
+					todo={{
+						...todo,
+						todoType: {
+							isPontual: () => todo.todoType === "pontual",
+							isRecorrente: () => todo.todoType === "recorrente"
+						} as any
+					} as any}
 				/>
 			)}
 			<Dialog
@@ -240,6 +272,56 @@ export function TodoForm({
 						</div>
 
 						<div className="flex flex-col gap-1">
+							<Label className="font-bold">Recorrência</Label>
+							<Select
+								onValueChange={(value) => {
+									setRecurrence(value as TodoRecurrence);
+									if (value !== "custom") {
+										setRecurrenceInterval(undefined);
+									}
+								}}
+								value={recurrence || "none"}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue
+										placeholder="Tipo de recorrência"
+										className="text-zinc-300"
+									/>
+								</SelectTrigger>
+								<SelectContent className="w-full">
+									<SelectItem value="none">
+										Nenhuma (tarefa única)
+									</SelectItem>
+									<SelectItem value="daily">
+										Diária
+									</SelectItem>
+									<SelectItem value="weekly">
+										Semanal
+									</SelectItem>
+									<SelectItem value="monthly">
+										Mensal
+									</SelectItem>
+									<SelectItem value="custom">
+										Personalizada
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						{recurrence === "custom" && (
+							<div className="flex flex-col gap-1">
+								<Label className="font-bold">Intervalo (dias)</Label>
+								<Input
+									type="number"
+									min="1"
+									value={recurrenceInterval || ""}
+									onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || undefined)}
+									placeholder="Ex: 3 para cada 3 dias"
+								/>
+							</div>
+						)}
+
+						<div className="flex flex-col gap-1">
 							<Label className="font-bold">Data de início</Label>
 							<Popover>
 								<PopoverTrigger asChild>
@@ -284,7 +366,7 @@ export function TodoForm({
 						</div>
 					</form>
 					<div className="flex justify-right items-center">
-						<DialogConfirmDelete id={todo.id} />
+						<DialogConfirmDelete id={todo.id} onDeleted={onCancel} />
 					</div>
 				</DialogContent>
 			</Dialog>
@@ -292,9 +374,10 @@ export function TodoForm({
 	);
 }
 
-function DialogConfirmDelete({ id }: { id: string }) {
+function DialogConfirmDelete({ id, onDeleted }: { id: string; onDeleted?: () => void }) {
 	const deleteTodoMutation = useDeleteTodo();
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [open, setOpen] = useState(false);
 
 	const onDelete = async () => {
 		if (isDeleting) return;
@@ -302,13 +385,15 @@ function DialogConfirmDelete({ id }: { id: string }) {
 		try {
 			await deleteTodoMutation.mutateAsync(id);
 			toast.success("Tarefa excluída com sucesso!");
+			setOpen(false); // Fechar o dialog após exclusão bem-sucedida
+			onDeleted?.(); // Notificar componente pai para fechar o form
 		} finally {
 			setIsDeleting(false);
 		}
 	};
 
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				<div className="flex justify-center items-center mt-4 w-full">
 					<Button

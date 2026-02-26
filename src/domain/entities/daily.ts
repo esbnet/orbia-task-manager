@@ -7,6 +7,7 @@ type DailyRepeatType =
 	| "Anualmente";
 
 type DailyRepeat = { type: DailyRepeatType; frequency: number };
+type DailyStatus = "active" | "archived";
 
 export interface Daily {
 	id: string;
@@ -21,6 +22,7 @@ export interface Daily {
 	order?: number;
 	userId: string;
 	lastCompletedDate?: string;
+	status?: DailyStatus;
 	subtasks?: DailySubtask[];
 }
 

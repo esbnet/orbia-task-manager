@@ -273,12 +273,9 @@ export function TimeTrackingDashboard() {
         });
 
         if (response.ok) {
-          console.log(`Tempo registrado com sucesso: ${currentTask} (${currentCategory}) - ${formatTime(elapsedTime)}`);
         } else {
-          console.error('Erro ao registrar tempo:', await response.text());
         }
       } catch (error) {
-        console.error('Erro ao registrar tempo:', error);
       }
     }
 

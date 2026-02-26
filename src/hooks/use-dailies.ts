@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Daily } from "@/types";
+import { taskCountKeys } from "./use-task-counts";
 
 // Query keys para dailies
 export const dailyKeys = {
@@ -101,6 +102,12 @@ export function useCompleteDaily() {
 			// Invalidate todas as outras queries de dailies
 			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
 
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 
@@ -132,6 +139,10 @@ export function useCreateDaily() {
 		onSuccess: () => {
 			// Invalidate all daily queries
 			queryClient.invalidateQueries({ queryKey: dailyKeys.all });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 			// Invalidate cache de metas para atualizar tarefas disponíveis
 			queryClient.invalidateQueries({ queryKey: ["goals"] });
 			// Invalidate cache de tarefas anexadas
@@ -167,6 +178,10 @@ export function useUpdateDaily() {
 			// Update cache
 			queryClient.setQueryData(dailyKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 		},
 	});
 }
@@ -189,6 +204,10 @@ export function useDeleteDaily() {
 			// Remove from cache
 			queryClient.removeQueries({ queryKey: dailyKeys.detail(id) });
 			queryClient.invalidateQueries({ queryKey: dailyKeys.lists() });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
 		},
 	});
 }

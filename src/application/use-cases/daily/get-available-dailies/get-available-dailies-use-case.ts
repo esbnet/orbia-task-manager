@@ -1,4 +1,5 @@
-import type { DailyRepository, DailyLogRepository } from "@/domain/repositories/all-repository";
+import type { DailyRepository, DailyLogRepository, DailyPeriodRepository } from "@/domain/repositories/all-repository";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 
 export interface GetAvailableDailiesInput {
   userId: string;
@@ -13,13 +14,15 @@ export interface GetAvailableDailiesOutput {
 export class GetAvailableDailiesUseCase {
   constructor(
     private dailyRepository: DailyRepository,
-    private dailyLogRepository: DailyLogRepository
+    private dailyLogRepository: DailyLogRepository,
+    private dailyPeriodRepository: DailyPeriodRepository
   ) {}
 
   async execute(input: GetAvailableDailiesInput): Promise<GetAvailableDailiesOutput> {
     const { userId } = input;
 
-    const dailies = await this.dailyRepository.findByUserId(userId);
+    const allDailies = await this.dailyRepository.findByUserId(userId);
+    const dailies = allDailies.filter(d => d.status !== "archived");
     
     if (dailies.length === 0) {
       return {
@@ -35,34 +38,67 @@ export class GetAvailableDailiesUseCase {
     const completedToday = [];
 
     for (const daily of dailies) {
-      const hasLogToday = await this.dailyLogRepository.hasLogForDate(daily.id, today);
-      const lastLog = await this.getLastLog(daily.id);
-      
-      const isAvailable = this.isDailyAvailable(daily.repeat.type, lastLog, now);
+      if (new Date(daily.startDate) > now) continue;
 
-      if (hasLogToday && !isAvailable) {
-        const nextAvailableAt = this.calculateNextPeriodStart(daily.repeat.type, lastLog || now);
-        completedToday.push({
-          id: daily.id,
-          title: daily.title,
-          observations: daily.observations,
-          difficulty: daily.difficulty,
+      const lastLogDate = daily.lastCompletedDate
+        ? new Date(daily.lastCompletedDate)
+        : await this.dailyLogRepository.getLastLogDate(daily.id);
+
+      const lastCompletedDate = lastLogDate ?? null;
+      const hasCompletion = !!lastCompletedDate;
+      const periodStart = lastCompletedDate ?? new Date(daily.startDate);
+
+      // Sem conclusão prévia: sempre disponível
+      if (!hasCompletion) {
+        availableDailies.push({
+          ...daily,
           repeatType: daily.repeat.type,
           repeatFrequency: daily.repeat.frequency,
-          tags: daily.tags,
+          isAvailable: true,
+          isOverdue: false,
+        });
+        continue;
+      }
+
+      const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
+        daily.repeat.type,
+        periodStart,
+        daily.repeat.frequency
+      );
+
+      const isCompletedToday = lastCompletedDate
+        ? lastCompletedDate.toISOString().split('T')[0] === today
+        : false;
+
+      if (isCompletedToday) {
+        completedToday.push({
+          ...daily,
+          repeatType: daily.repeat.type,
+          repeatFrequency: daily.repeat.frequency,
           isAvailable: false,
           nextAvailableAt,
         });
-      } else if (isAvailable) {
+        continue;
+      }
+
+      const isOverdue = now > nextAvailableAt;
+      const canReopen = now >= nextAvailableAt;
+
+      if (canReopen) {
         availableDailies.push({
-          id: daily.id,
-          title: daily.title,
-          observations: daily.observations,
-          difficulty: daily.difficulty,
+          ...daily,
           repeatType: daily.repeat.type,
           repeatFrequency: daily.repeat.frequency,
-          tags: daily.tags,
           isAvailable: true,
+          isOverdue,
+        });
+      } else {
+        completedToday.push({
+          ...daily,
+          repeatType: daily.repeat.type,
+          repeatFrequency: daily.repeat.frequency,
+          isAvailable: false,
+          nextAvailableAt,
         });
       }
     }
@@ -72,42 +108,5 @@ export class GetAvailableDailiesUseCase {
       completedToday,
       totalDailies: dailies.length,
     };
-  }
-
-  private async getLastLog(dailyId: string): Promise<Date | null> {
-    return await this.dailyLogRepository.getLastLogDate(dailyId);
-  }
-
-  private isDailyAvailable(repeatType: string, lastLog: Date | null, now: Date): boolean {
-    if (!lastLog) {
-      return true; // Se nunca foi completada, está disponível
-    }
-
-    const nextAvailable = this.calculateNextPeriodStart(repeatType, lastLog);
-    return now >= nextAvailable;
-  }
-
-  private calculateNextPeriodStart(repeatType: string, completedAt: Date): Date {
-    const nextStart = new Date(completedAt);
-
-    switch (repeatType) {
-      case "Diariamente":
-        nextStart.setDate(nextStart.getDate() + 1);
-        nextStart.setHours(0, 0, 0, 0);
-        break;
-      case "Semanalmente":
-        nextStart.setDate(nextStart.getDate() + 7);
-        nextStart.setHours(0, 0, 0, 0);
-        break;
-      case "Mensalmente":
-        nextStart.setMonth(nextStart.getMonth() + 1);
-        nextStart.setHours(0, 0, 0, 0);
-        break;
-      default:
-        nextStart.setDate(nextStart.getDate() + 1);
-        nextStart.setHours(0, 0, 0, 0);
-    }
-
-    return nextStart;
   }
 }

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCompleteTodo, useCreateTodo, useDeleteTodo, useTodos } from "@/hooks/use-todos";
+import { useCreateTodo, useDeleteTodo, useTodos } from "@/hooks/use-todos";
+import type { Todo as DomainTodo } from "@/domain/entities/todo";
 import type { Todo, TodoDifficulty } from "@/types/todo";
 import { Info, ListChecks, Plus, SquareCheckBig } from "lucide-react";
 
@@ -21,26 +22,65 @@ const defaultTodo: Todo = {
 	difficulty: "Fácil" as TodoDifficulty,
 	startDate: new Date(),
 	createdAt: new Date(),
+	recurrence: "none" as const,
+	todoType: { isPontual: () => true, isRecorrente: () => false } as any,
 };
 
 export const TodoColumn = () => {
 	const { data: todos = [], isLoading } = useTodos();
 	const createTodoMutation = useCreateTodo();
 	const deleteTodoMutation = useDeleteTodo();
-	const completeTodoMutation = useCompleteTodo();
+
 	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+	const [editingTodo, setEditingTodo] = useState<any>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-	const [todoToDelete, setTodoToDelete] = useState<Todo | null>(null);
+	const [todoToDelete, setTodoToDelete] = useState<any>(null);
 
 
 	const today = new Date().toISOString().split("T")[0];
-	const inProgressTodos = todos.filter(
-		(todo) => todo.lastCompletedDate !== today
-	).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+	// Função auxiliar para determinar se uma tarefa deve aparecer na lista
+	const shouldShowTodo = (todo: any): boolean => {
+		// Tarefas pontuais sempre aparecem (não desaparecem após conclusão)
+		if (todo.recurrence === "none") {
+			return true;
+		}
+
+		// Para tarefas recorrentes, verificar se devem reaparecer
+		const lastCompleted = todo.lastCompletedDate ? new Date(todo.lastCompletedDate) : null;
+		if (!lastCompleted) return true;
+
+		const todayDate = new Date(today);
+		let shouldRecur = false;
+
+		switch (todo.recurrence) {
+			case "daily":
+				const daysSinceDaily = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				shouldRecur = daysSinceDaily >= 1;
+				break;
+			case "weekly":
+				const daysSinceWeekly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				shouldRecur = daysSinceWeekly >= 7;
+				break;
+			case "monthly":
+				const daysSinceMonthly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+				shouldRecur = daysSinceMonthly >= 30;
+				break;
+			case "custom":
+				if (todo.recurrenceInterval) {
+					const daysSinceCustom = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
+					shouldRecur = daysSinceCustom >= todo.recurrenceInterval;
+				}
+				break;
+		}
+
+		return shouldRecur;
+	};
+
+	const inProgressTodos = todos.filter(shouldShowTodo).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 	// Funções de controle do formulário
-	const openEditForm = (todo: Todo) => {
+	const openEditForm = (todo: any) => {
 		setEditingTodo(todo);
 		setIsFormOpen(true);
 	};
@@ -51,7 +91,7 @@ export const TodoColumn = () => {
 	};
 
 	// Criar novo todo
-	const handleCreateTodo = async (todoData: Omit<Todo, "id" | "createdAt">) => {
+	const handleCreateTodo = async (todoData: Omit<any, "id" | "createdAt">) => {
 		try {
 			await createTodoMutation.mutateAsync(todoData);
 			toast.success(`Todo "${todoData.title}" criado com sucesso!`);
@@ -62,7 +102,7 @@ export const TodoColumn = () => {
 	};
 
 	// Editar todo existente
-	const handleEditTodo = async (todoData: Omit<Todo, "id" | "createdAt">) => {
+	const handleEditTodo = async (todoData: Omit<any, "id" | "createdAt">) => {
 		// TODO: Implementar edição quando useUpdateTodo estiver funcionando
 		toast.success(`Todo "${todoData.title}" - edição será implementada em breve!`);
 		setIsFormOpen(false);
@@ -78,16 +118,7 @@ export const TodoColumn = () => {
 		}
 	};
 
-	// Completar todo
-	const handleCompleteTodo = async (id: string) => {
-		try {
-			await completeTodoMutation.mutateAsync(id);
-			const todo = inProgressTodos.find(t => t.id === id);
-			toast.success(`Todo "${todo?.title}" concluído com sucesso!`);
-		} catch (error) {
-			toast.error("Erro ao completar todo. Tente novamente.");
-		}
-	};
+
 
 	const confirmDeleteTodo = async () => {
 		if (todoToDelete) {
@@ -159,9 +190,14 @@ export const TodoColumn = () => {
 					inProgressTodos.map((todo) => (
 						<TodoCard
 							key={todo.id}
-							todo={todo}
+							todo={{
+								...todo,
+								todoType: {
+									isPontual: () => todo.todoType === "pontual",
+									isRecorrente: () => todo.todoType === "recorrente"
+								} as any
+							} as any}
 							onEdit={openEditForm}
-							onComplete={handleCompleteTodo}
 							onDelete={handleDeleteTodo}
 						/>
 					))

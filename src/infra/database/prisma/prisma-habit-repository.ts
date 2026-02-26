@@ -12,7 +12,7 @@ export class PrismaHabitRepository implements HabitRepository {
 		}
 
 		const habits = await prisma.habit.findMany({
-			where: { userId },
+			where: { userId, status: { not: "archived" } },
 			orderBy: { order: "asc" },
 			select: {
 				id: true,
@@ -49,7 +49,7 @@ export class PrismaHabitRepository implements HabitRepository {
 				title: data.title,
 				observations: data.observations,
 				difficulty: data.difficulty,
-				status: data.status || "Em Andamento",
+				status: data.status || "active",
 				priority: data.priority || "Média",
 				tags: data.tags,
 				reset: data.reset,
@@ -105,7 +105,7 @@ export class PrismaHabitRepository implements HabitRepository {
 	// UserOwnedRepository methods
 	async findByUserId(userId: string): Promise<Habit[]> {
 		const habits = await prisma.habit.findMany({
-			where: { userId },
+			where: { userId, status: { not: "archived" } },
 			orderBy: { order: "asc" },
 			select: {
 				id: true,

@@ -19,6 +19,7 @@ export function DailySubtaskList({
 	initialSubtasks = [],
 	onSubtasksChange,
 }: DailySubtaskListProps) {
+	const hasDailyId = Boolean(dailyId);
 	const [subtasks, setSubtasks] = useState<DailySubtask[]>(initialSubtasks);
 	const [newTaskTitle, setNewTaskTitle] = useState("");
 	const [editingDailySubtask, setEditingDailySubtask] = useState<DailySubtask | null>(null);
@@ -37,6 +38,10 @@ export function DailySubtaskList({
 
 	const addSubtask = async () => {
 		if (!newTaskTitle.trim()) return;
+		if (!hasDailyId) {
+			toast.error("Salve a tarefa diária antes de adicionar subtarefas.");
+			return;
+		}
 
 		try {
 			const newSubtask = await createSubtask(
@@ -47,7 +52,8 @@ export function DailySubtaskList({
 			updateSubtasks([...subtasks, newSubtask]);
 			setNewTaskTitle("");
 		} catch (error) {
-			toast.error("Erro ao criar tarefa");
+			const message = error instanceof Error ? error.message : "Erro ao criar tarefa";
+			toast.error(message);
 		}
 	};
 
@@ -96,6 +102,7 @@ export function DailySubtaskList({
 			<div className="flex items-center gap-2">
 				<Input
 					value={newTaskTitle}
+					disabled={!hasDailyId}
 					onChange={(e) => setNewTaskTitle(e.target.value)}
 					onKeyDown={(e) => {
 						if (e.key === "Enter") {
@@ -103,10 +110,10 @@ export function DailySubtaskList({
 							addSubtask();
 						}
 					}}
-					placeholder="Nova tarefa..."
+					placeholder={hasDailyId ? "Nova tarefa..." : "Salve a daily para adicionar subtarefas"}
 					className="flex-1"
 				/>
-				<Button onClick={addSubtask} size="sm" type="button">
+				<Button onClick={addSubtask} size="sm" type="button" disabled={!hasDailyId}>
 					<Plus size={16} />
 				</Button>
 			</div>

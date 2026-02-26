@@ -1,10 +1,12 @@
+import { createTodoSchema, idSchema } from "@/infra/validation/schemas";
+
 import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
 import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo/delete-todo-use-case";
 import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
 import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
-import { TodoInputValidator } from "@/application/dto/todo-dto";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 
 // Instâncias únicas
 const todoRepo = new PrismaTodoRepository();
@@ -28,7 +30,6 @@ export async function GET() {
 		const result = await listTodosUseCase.execute();
 		return Response.json({ todos: result.todos });
 	} catch (error) {
-		console.error("Erro na API todos:", error);
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
 		return Response.json({ todos: [] });
 	}
@@ -72,23 +73,29 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
 	try {
-		const rawData = await request.json();
-		const validatedInput = TodoInputValidator.validateCreateInput(rawData);
+		const body = await request.json();
+		const validated = createTodoSchema.omit({ userId: true }).parse(body);
 		
-		const result = await createTodoUseCase.execute({
-			userId: rawData.userId || "", // Will be set by use case
-			title: validatedInput.title,
-			observations: validatedInput.description || "",
+		const sanitizedInput = {
+			userId: "",
+			title: String(validated.title),
+			observations: String(validated.observations),
 			tasks: [],
-			difficulty: "Fácil", // Default for todos
+			difficulty: validated.difficulty,
 			startDate: new Date(),
-			tags: validatedInput.tags,
+			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
+			recurrence: validated.recurrence,
+			recurrenceInterval: validated.recurrenceInterval ? Number(validated.recurrenceInterval) : undefined,
 			createdAt: new Date(),
-		});
+		};
+
+		const result = await createTodoUseCase.execute(sanitizedInput);
 		return Response.json(result, { status: 201 });
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Invalid input";
-		return Response.json({ error: message }, { status: 400 });
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json({ error: "Internal server error" }, { status: 500 });
 	}
 }
 
@@ -133,34 +140,38 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
 	try {
-		const rawData = await request.json();
+		const body = await request.json();
+		const validated = createTodoSchema.partial().extend({ id: idSchema }).parse(body);
 		
-		// Mapear observations para description para o validador
-		const dataForValidation = {
-			...rawData,
-			description: rawData.observations
+		const existing = await todoRepo.findById(validated.id!);
+		if (!existing) {
+			return Response.json({ error: "Todo not found" }, { status: 404 });
+		}
+
+		const sanitizedUpdate = {
+			...(validated.title && { title: String(validated.title) }),
+			...(validated.observations && { observations: String(validated.observations) }),
+			...(validated.difficulty && { difficulty: validated.difficulty }),
+			...(validated.tags && { tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [] }),
+			...(validated.recurrence && { recurrence: validated.recurrence }),
+			...(validated.recurrenceInterval && { recurrenceInterval: Number(validated.recurrenceInterval) }),
 		};
 		
-		const validatedInput = TodoInputValidator.validateUpdateInput(dataForValidation);
-		
-		// Mapear de volta description para observations
-		const todoData = {
-			id: validatedInput.id,
-			title: validatedInput.title || rawData.title || "",
-			observations: validatedInput.description || "",
-			userId: rawData.userId || "temp-dev-user",
-			tasks: rawData.tasks || [],
-			difficulty: rawData.difficulty || "Fácil",
-			startDate: rawData.startDate ? new Date(rawData.startDate) : new Date(),
-			tags: validatedInput.tags || [],
-			createdAt: rawData.createdAt ? new Date(rawData.createdAt) : new Date()
+		const todoData = { 
+			...existing, 
+			...sanitizedUpdate,
+			id: String(validated.id),
+			// Ensure we're passing a primitive (string) todoType to the use case,
+			// not a TodoTypeValueObject instance.
+			todoType: (existing as any)?.todoType?.getValue?.() ?? (existing as any)?.todoType,
 		};
-		
 		const updatedTodo = await updateTodoUseCase.execute(todoData);
 		return Response.json({ todo: updatedTodo }, { status: 200 });
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Invalid input";
-		return Response.json({ error: message }, { status: 400 });
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json({ error: "Failed to update todo" }, { status: 500 });
 	}
 }
 
@@ -186,13 +197,21 @@ export async function PATCH(request: NextRequest) {
  *         description: Tarefa não encontrada
  */
 export async function DELETE(request: NextRequest) {
-	const url = new URL(request.url);
-	const id = url.searchParams.get("id");
+	try {
+		const url = new URL(request.url);
+		const id = url.searchParams.get("id");
 
-	if (!id) {
-		return Response.json({ error: "ID is required" }, { status: 400 });
+		if (!id) {
+			return Response.json({ error: "ID is required" }, { status: 400 });
+		}
+
+		const validatedId = idSchema.parse(id);
+		await deleteTodoUseCase.execute(validatedId);
+		return new Response(null, { status: 204 });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json({ error: "Failed to delete todo" }, { status: 500 });
 	}
-
-	await deleteTodoUseCase.execute(id);
-	return new Response(null, { status: 204 });
 }

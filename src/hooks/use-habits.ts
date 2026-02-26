@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitFormData } from "@/types/habit";
+import { taskCountKeys } from "./use-task-counts";
 
 // Query keys para melhor organização
 export const habitKeys = {
@@ -92,6 +93,12 @@ export function useCreateHabit() {
 		onSuccess: () => {
 			// Invalidate e refetch da lista de hábitos
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate hábitos disponíveis
+			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache de contagens de tarefas para atualizar badges de filtro
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 			// Invalidate cache de metas para atualizar tarefas disponíveis
 			queryClient.invalidateQueries({ queryKey: ["goals"] });
 			// Invalidate cache de tarefas anexadas
@@ -134,6 +141,16 @@ export function useUpdateHabit() {
 			queryClient.setQueryData(habitKeys.detail(variables.id), data);
 			// Invalidate lista
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate hábitos disponíveis para refletir mudanças de status
+			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito atualizado
+			queryClient.removeQueries({ queryKey: ["habit-stats", variables.id] });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache de contagens de tarefas para atualizar badges de filtro
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 		},
 	});
 }
@@ -157,6 +174,16 @@ export function useDeleteHabit() {
 			queryClient.removeQueries({ queryKey: habitKeys.detail(id) });
 			// Invalidate lista
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate hábitos disponíveis (usado pelo habit-column)
+			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito excluído
+			queryClient.removeQueries({ queryKey: ["habit-stats", id] });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache de contagens de tarefas para atualizar badges de filtro
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 		},
 	});
 }
@@ -182,6 +209,14 @@ export function useCompleteHabit() {
 			// Update cache
 			queryClient.setQueryData(habitKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito
+			queryClient.removeQueries({ queryKey: ["habit-stats", id] });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
@@ -225,6 +260,14 @@ export function useRegisterHabit() {
 			queryClient.invalidateQueries({ queryKey: habitKeys.detail(variables.id) });
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: habitKeys.available() });
+			// Invalidate estatísticas múltiplas de hábitos
+			queryClient.removeQueries({ queryKey: ["multiple-habit-stats"] });
+			// Invalidate estatísticas individuais do hábito
+			queryClient.removeQueries({ queryKey: ["habit-stats", variables.id] });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Goal } from "@/types";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import { taskCountKeys } from "./use-task-counts";
 
 // Query keys para goals
 export const goalKeys = {
@@ -13,49 +15,19 @@ export const goalKeys = {
 
 // Hook para buscar todos os goals
 export function useGoals(status?: string) {
+	const safeStatus = status ? InputSanitizer.sanitizeForLog(status) : 'none';
+	const queryKey = status ? ["goals", status] : ["goals"];
+	
 	return useQuery({
-		queryKey: goalKeys.list({ status }),
-		enabled: true, // Force enable
+		queryKey,
 		queryFn: async (): Promise<Goal[]> => {
-			const params = new URLSearchParams();
-			if (status) {
-				params.append('status', status);
-			}
-			const url = `/api/goals${params.toString() ? `?${params.toString()}` : ''}`;
+			const url = status ? `/api/goals?status=${status}` : '/api/goals';
+			const safeUrl = InputSanitizer.sanitizeForLog(url);
 			const response = await fetch(url);
-			if (!response.ok) {
-				throw new Error("Erro ao buscar goals");
-			}
+			if (!response.ok) throw new Error("Erro ao buscar goals");
 			const data = await response.json();
-
-			// Debug: verificar estrutura da resposta
-			if (process.env.NODE_ENV === 'development') {
-				console.log('[USE-GOALS] 📡 Resposta da API:', data);
-				console.log('[USE-GOALS] 📡 Tipo da resposta:', typeof data);
-				console.log('[USE-GOALS] 📡 É array?', Array.isArray(data));
-			}
-
-			// A API pode retornar array diretamente ou objeto com propriedade goals
-			if (Array.isArray(data)) {
-				if (process.env.NODE_ENV === 'development') {
-					console.log('[USE-GOALS] ✅ API retornou array diretamente:', data.length, 'metas');
-				}
-				return data;
-			} else if (data.goals && Array.isArray(data.goals)) {
-				if (process.env.NODE_ENV === 'development') {
-					console.log('[USE-GOALS] ✅ API retornou objeto com goals:', data.goals.length, 'metas');
-				}
-				return data.goals;
-			} else {
-				if (process.env.NODE_ENV === 'development') {
-					console.log('[USE-GOALS] ❌ Estrutura inesperada:', Object.keys(data));
-				}
-				return [];
-			}
-		},
-		staleTime: 0, // Force fresh data
-		gcTime: 0, // No cache
-		refetchOnWindowFocus: true,
+			return Array.isArray(data) ? data : (data.goals || []);
+		}
 	});
 }
 
@@ -73,7 +45,7 @@ export function useGoal(id: string) {
 
 			// Debug: verificar estrutura da resposta
 			if (process.env.NODE_ENV === 'development') {
-				console.log('[USE-GOAL] 📡 Resposta da API para goal específico:', data);
+				const safeData = InputSanitizer.sanitizeForLog(JSON.stringify(data));
 			}
 
 			// A API pode retornar objeto diretamente ou com propriedade goal
@@ -114,6 +86,18 @@ export function useCreateGoal() {
 		onSuccess: () => {
 			// Invalidate all goal queries
 			queryClient.invalidateQueries({ queryKey: goalKeys.all });
+
+			// Invalidate cache de contagens de tarefas com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: taskCountKeys.counts(),
+				refetchType: 'active' // Força refetch imediato
+			});
+
+			// Invalidate cache de tarefas de hoje com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: ["today-tasks"],
+				refetchType: 'active' // Força refetch imediato
+			});
 		},
 	});
 }
@@ -125,7 +109,7 @@ export function useUpdateGoal() {
 	return useMutation({
 		mutationFn: async ({ id, data }: { id: string; data: Partial<Goal> }): Promise<Goal> => {
 			const response = await fetch(`/api/goals/${id}`, {
-				method: "PATCH",
+				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -143,6 +127,19 @@ export function useUpdateGoal() {
 			// Update cache
 			queryClient.setQueryData(goalKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+
+			// Invalidate cache de contagens de tarefas com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: taskCountKeys.counts(),
+				refetchType: 'active' // Força refetch imediato
+			});
+
+			// Invalidate cache de tarefas de hoje com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: ["today-tasks"],
+				refetchType: 'active' // Força refetch imediato
+			});
+
 			// Invalidate cache do gráfico de evolução semanal
 			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
 		},
@@ -167,6 +164,18 @@ export function useDeleteGoal() {
 			// Remove from cache
 			queryClient.removeQueries({ queryKey: goalKeys.detail(id) });
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+
+			// Invalidate cache de contagens de tarefas com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: taskCountKeys.counts(),
+				refetchType: 'active' // Força refetch imediato
+			});
+
+			// Invalidate cache de tarefas de hoje com prioridade alta
+			queryClient.invalidateQueries({
+				queryKey: ["today-tasks"],
+				refetchType: 'active' // Força refetch imediato
+			});
 		},
 	});
 }

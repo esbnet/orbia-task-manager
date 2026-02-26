@@ -1,3 +1,5 @@
+import { InputSanitizer } from '@/infra/validation/input-sanitizer';
+
 // Monitor de performance para desenvolvimento
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
@@ -21,7 +23,7 @@ export class PerformanceMonitor {
       const start = this.metrics.get(label);
       if (start) {
         const duration = performance.now() - start;
-        console.log(`⏱️ ${label}: ${duration.toFixed(2)}ms`);
+        const safeLabel = InputSanitizer.sanitizeForLog(label);
         this.metrics.delete(label);
         return duration;
       }

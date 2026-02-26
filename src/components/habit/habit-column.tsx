@@ -1,18 +1,18 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dumbbell, Info, Plus, RefreshCcw, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableHabits, useCreateHabit, useDeleteHabit, useRegisterHabit, useUpdateHabit } from "@/hooks/use-habits";
-import { Dumbbell, Info, Plus, RefreshCcw, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
-import { useMultipleHabitStats } from "@/hooks/use-habit-stats";
-import { useState } from "react";
-import { toast } from "sonner";
 import { HabitCard } from "./habit-card";
 import { HabitForm } from "./habit-form";
+import { toast } from "sonner";
+import { useMultipleHabitStats } from "@/hooks/use-habit-stats";
+import { useState } from "react";
 
 export function HabitColumn() {
 	const { data: habitsData, isLoading } = useAvailableHabits();
@@ -91,9 +91,9 @@ export function HabitColumn() {
 					id: habitId,
 					data: { status }
 				});
-				const statusText = status === "Completo" ? "concluído" :
+				const statusText = status === "Completo" ? "arquivado" :
 					status === "Cancelado" ? "cancelado" : "atualizado";
-				toast.success(`Hábito "${habit.title}" ${statusText}!`);
+				toast.success(`Hábito "${habit.title}" ${statusText} com sucesso!`);
 			} catch (error) {
 				toast.error("Erro ao atualizar status do hábito. Tente novamente.");
 			}
@@ -179,22 +179,24 @@ export function HabitColumn() {
 			<div className="space-y-4">
 				{!isLoading && availableHabits.length > 0 && (
 					<div className="space-y-3">
-						{availableHabits.map((habit) => {
-							const stats = habitStats?.[habit.id];
-							return (
-								<HabitCard
-									key={habit.id}
-									habit={habit}
-									onEdit={openEditForm}
-									onStatusChange={handleStatusChange}
-									onRegister={handleRegisterHabit}
-									currentCount={stats?.currentPeriod?.period.count || 0}
-									target={stats?.currentPeriod?.period.target}
-									todayCount={stats?.todayEntries || 0}
-									streak={stats?.streak}
-								/>
-							);
-						})}
+						{availableHabits
+							.filter(habit => habit.status === "Em Andamento") // Filtro adicional de segurança
+							.map((habit) => {
+								const stats = habitStats?.[habit.id];
+								return (
+									<HabitCard
+										key={habit.id}
+										habit={habit}
+										onEdit={openEditForm}
+										onStatusChange={handleStatusChange}
+										onRegister={handleRegisterHabit}
+										currentCount={stats?.currentPeriod?.period.count || 0}
+										target={stats?.currentPeriod?.period.target}
+										todayCount={stats?.todayEntries || 0}
+										streak={stats?.streak}
+									/>
+								);
+							})}
 					</div>
 				)}
 

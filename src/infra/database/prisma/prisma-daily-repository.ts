@@ -1,9 +1,9 @@
 import type { Daily } from "@/domain/entities/daily";
 import type { DailyRepository } from "@/domain/repositories/all-repository";
-import { PrismaDailyLogRepository } from './prisma-daily-log-repository';
-import { PrismaDailyPeriodRepository } from './prisma-daily-period-repository';
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
+import { PrismaDailyLogRepository } from './prisma-daily-log-repository';
+import { PrismaDailyPeriodRepository } from './prisma-daily-period-repository';
 
 export class PrismaDailyRepository implements DailyRepository {
 	private dailyPeriodRepository = new PrismaDailyPeriodRepository();
@@ -11,7 +11,7 @@ export class PrismaDailyRepository implements DailyRepository {
 
 	async findByUserId(userId: string): Promise<Daily[]> {
 		const dailies = await prisma.daily.findMany({
-			where: { userId },
+			where: { userId, status: { not: "archived" } },
 			orderBy: { order: "asc" },
 			select: {
 				id: true,
@@ -26,17 +26,10 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
-					select: {
-						id: true,
-						title: true,
-						completed: true,
-						dailyId: true,
-						order: true,
-						createdAt: true,
-					},
 				},
 			},
 		});
@@ -165,15 +158,21 @@ export class PrismaDailyRepository implements DailyRepository {
 				break;
 			case "Semanalmente":
 				nextStart.setDate(nextStart.getDate() + (7 * frequency));
+				nextStart.setHours(0, 0, 0, 0);
 				break;
 			case "Mensalmente":
 				nextStart.setMonth(nextStart.getMonth() + frequency);
+				nextStart.setDate(1); // Primeiro dia do mês
+				nextStart.setHours(0, 0, 0, 0);
 				break;
 			case "Anualmente":
 				nextStart.setFullYear(nextStart.getFullYear() + frequency);
+				nextStart.setMonth(0, 1); // 1 de janeiro
+				nextStart.setHours(0, 0, 0, 0);
 				break;
 			default:
 				nextStart.setDate(nextStart.getDate() + frequency);
+				nextStart.setHours(0, 0, 0, 0);
 		}
 		return nextStart;
 	}
@@ -212,6 +211,7 @@ export class PrismaDailyRepository implements DailyRepository {
 		const daily = await prisma.daily.findMany({
 			where: {
 				userId,
+				status: { not: "archived" },
 				tags: {
 					hasSome: tags,
 				},
@@ -230,6 +230,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
@@ -275,9 +276,8 @@ export class PrismaDailyRepository implements DailyRepository {
 			return [];
 		}
 
-		// retornar todos os dailies do user
 		const daily = await prisma.daily.findMany({
-			where: { userId },
+			where: { userId, status: { not: "archived" } },
 			orderBy: { order: "asc" },
 			select: {
 				id: true,
@@ -292,6 +292,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
@@ -334,6 +335,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: true,
 				order: true,
 				lastCompletedDate: true,
+				status: true,
 				createdAt: true,
 				subtasks: {
 					orderBy: { order: "asc" },
@@ -356,7 +358,6 @@ export class PrismaDailyRepository implements DailyRepository {
 		const userId = await getCurrentUserIdWithFallback();
 		if (!userId) throw new Error("User not authenticated");
 
-		// Verificar se o usuário existe, se não, criar
 		await prisma.user.upsert({
 			where: { id: userId },
 			update: {},
@@ -374,9 +375,22 @@ export class PrismaDailyRepository implements DailyRepository {
 				repeatFrequency: data.repeat.frequency,
 				tags: data.tags,
 				order: data.order ?? 0,
+				status: data.status ?? "active",
 				userId,
 			},
 		});
+
+		const now = new Date();
+		const endDate = this.calculatePeriodEnd(data.repeat.type, now, data.repeat.frequency);
+		await this.dailyPeriodRepository.create({
+			dailyId: daily.id,
+			periodType: data.repeat.type,
+			startDate: now,
+			endDate,
+			isCompleted: false,
+			isActive: true,
+		});
+
 		return this.toDomain(daily);
 	}
 
@@ -397,6 +411,7 @@ export class PrismaDailyRepository implements DailyRepository {
 				tags: daily.tags,
 				order: daily.order,
 				lastCompletedDate: daily.lastCompletedDate,
+				status: daily.status ?? "active",
 			},
 		});
 		return this.toDomain(updated);
@@ -423,7 +438,6 @@ export class PrismaDailyRepository implements DailyRepository {
 		await prisma.daily.delete({ where: { id, userId } });
 	}
 
-	// Converts Prisma entity to domain entity
 	private toDomain(daily: {
 		id: string;
 		userId: string;
@@ -437,6 +451,7 @@ export class PrismaDailyRepository implements DailyRepository {
 		tags: string[];
 		order: number;
 		lastCompletedDate: string | null;
+		status?: string | null;
 		createdAt: Date;
 		subtasks?: Array<{
 			id: string;
@@ -462,6 +477,7 @@ export class PrismaDailyRepository implements DailyRepository {
 			tags: daily.tags,
 			order: daily.order,
 			lastCompletedDate: daily.lastCompletedDate || undefined,
+			status: (daily.status as Daily["status"]) || "active",
 			createdAt: daily.createdAt,
 			subtasks:
 				daily.subtasks?.map((s) => ({

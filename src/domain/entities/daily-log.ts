@@ -3,8 +3,9 @@ export interface DailyLog {
 	dailyId: string;
 	periodId?: string;
 	dailyTitle: string;
-	completedAt: Date;
 	difficulty: string;
 	tags: string[];
+	status: "success" | "fail";
+	completedAt: Date;
 	createdAt: Date;
 }

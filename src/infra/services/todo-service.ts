@@ -3,6 +3,7 @@ import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoLog } from "@/domain/entities/todo-log";
+import { TodoTypeValueObject } from "@/domain/value-objects/todo-type";
 
 // Todo form data interface
 export interface TodoFormData {
@@ -34,6 +35,8 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 			userId: "", // Will be set by repository
 			order: 0, // Will be set by repository
 			lastCompletedDate: undefined,
+			recurrence: "none" as const, // Default recurrence
+			todoType: TodoTypeValueObject.create("pontual"), // Default todo type
 		};
 	}
 

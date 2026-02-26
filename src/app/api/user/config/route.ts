@@ -3,6 +3,7 @@ import { UpdateUserConfigUseCase } from "@/application/use-cases/user-config/upd
 import { auth } from "@/auth";
 import { LOCALE_COOKIE } from "@/i18n/shared";
 import { PrismaUserConfigRepository } from "@/infra/database/prisma/prisma-user-config-repository";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -35,14 +36,16 @@ export async function GET() {
 			);
 		}
 
+		// Sanitizar userId
+		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
+
 		// Executar use case
 		const result = await getUserConfigUseCase.execute({
-			userId: session.user.id,
+			userId: sanitizedUserId,
 		});
 
 		return NextResponse.json(result);
 	} catch (error) {
-		console.error("Erro ao obter configurações do usuário:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },
@@ -128,14 +131,18 @@ export async function PUT(request: NextRequest) {
 			);
 		}
 
+		// Sanitizar userId e dados de entrada
+		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
+		const sanitizedInput = {
+			userId: sanitizedUserId,
+			...(theme && { theme: String(theme) }),
+			...(language && { language: String(language) }),
+			...(typeof notifications === "boolean" && { notifications }),
+			...(timezone && { timezone: String(timezone) }),
+		};
+
 		// Executar use case
-		const result = await updateUserConfigUseCase.execute({
-			userId: session.user.id,
-			theme,
-			language,
-			notifications,
-			timezone,
-		});
+		const result = await updateUserConfigUseCase.execute(sanitizedInput);
 
 		const res = NextResponse.json(result);
 		// Se o idioma foi enviado e é válido, persistir no cookie de locale
@@ -144,7 +151,6 @@ export async function PUT(request: NextRequest) {
 		}
 		return res;
 	} catch (error) {
-		console.error("Erro ao atualizar configurações do usuário:", error);
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 },

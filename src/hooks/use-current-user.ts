@@ -7,7 +7,6 @@ export const getCurrentUser = cache(async () => {
     const session = await auth()
     return session?.user
   } catch (error) {
-    console.error('Erro na autenticação:', error)
     return null
   }
 })
@@ -17,7 +16,6 @@ export const getCurrentUserId = cache(async () => {
     const user = await getCurrentUser()
     return user?.id
   } catch (error) {
-    console.error('Erro ao obter usuário atual:', error)
     return null
   }
 })

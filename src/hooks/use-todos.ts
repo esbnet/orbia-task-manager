@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Todo } from "@/types";
+import { taskCountKeys } from "./use-task-counts";
 
 export const todoKeys = {
   all: ["todos"] as const,
@@ -49,6 +50,10 @@ export function useCreateTodo() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: todoKeys.all });
+      // Invalidate cache de contagens de tarefas
+      queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+      // Invalidate tarefas do dia para atualizar coração
+      queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
     },
   });
 }
@@ -76,6 +81,12 @@ export function useUpdateTodo() {
     onSuccess: (data, { id }) => {
       queryClient.setQueryData(todoKeys.detail(id), data);
       queryClient.invalidateQueries({ queryKey: todoKeys.all });
+      // Invalidate cache de contagens de tarefas
+      queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+      // Invalidate cache de tarefas de hoje
+      queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+      // Invalidate cache do gráfico de evolução semanal
+      queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
     },
   });
 }
@@ -96,30 +107,69 @@ export function useDeleteTodo() {
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: todoKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+      // Invalidate cache de contagens de tarefas
+      queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+      // Invalidate tarefas do dia para atualizar coração
+      queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
     },
   });
 }
 
 export function useCompleteTodo() {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (id: string): Promise<Todo> => {
-      const response = await fetch(`/api/todos/${id}/complete`, {
-        method: "POST",
-      });
+	return useMutation({
+		mutationFn: async (id: string): Promise<Todo> => {
+			const response = await fetch(`/api/todos/${id}/complete`, {
+				method: "POST",
+			});
 
-      if (!response.ok) {
-        throw new Error("Erro ao completar todo");
-      }
+			if (!response.ok) {
+				throw new Error("Erro ao completar todo");
+			}
 
-      const result = await response.json();
-      return result.todo;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: todoKeys.all });
-      // Invalidate cache do gráfico de evolução semanal
-      queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
-    },
-  });
+			const result = await response.json();
+			return result.todo;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: todoKeys.all });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache do gráfico de evolução semanal
+			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
+		},
+	});
+}
+
+export function useCompletePontualTodo() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (id: string): Promise<Todo> => {
+			const response = await fetch(`/api/todos/${id}/complete-pontual`, {
+				method: "POST",
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				throw new Error(errorData.error || "Erro ao completar tarefa pontual");
+			}
+
+			const result = await response.json();
+			return result.todo;
+		},
+		onSuccess: (data, variables) => {
+			// Atualizar o cache específico da tarefa
+			queryClient.setQueryData(todoKeys.detail(variables), data);
+			queryClient.invalidateQueries({ queryKey: todoKeys.all });
+			// Invalidate cache de contagens de tarefas
+			queryClient.invalidateQueries({ queryKey: taskCountKeys.counts() });
+			// Invalidate tarefas do dia para atualizar coração
+			queryClient.invalidateQueries({ queryKey: ["today-tasks"] });
+			// Invalidate cache do gráfico de evolução semanal
+			queryClient.invalidateQueries({ queryKey: ["weekly-evolution"] });
+		},
+	});
 }

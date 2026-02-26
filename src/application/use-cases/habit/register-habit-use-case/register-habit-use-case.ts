@@ -77,21 +77,16 @@ export class RegisterHabitUseCase {
 
 	private shouldCreateNewPeriod(period: HabitPeriod): boolean {
 		const now = new Date();
-		const startDate = new Date(period.startDate);
+		const start = new Date(period.startDate);
 		
 		switch (period.periodType) {
 			case "Diariamente":
-				// Novo período se passou de 1 dia
-				return now.getTime() - startDate.getTime() > 24 * 60 * 60 * 1000;
-			
+				return now.toDateString() !== start.toDateString();
 			case "Semanalmente":
-				// Novo período se passou de 7 dias
-				return now.getTime() - startDate.getTime() > 7 * 24 * 60 * 60 * 1000;
-			
+				const weekDiff = Math.floor((now.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+				return weekDiff >= 1;
 			case "Mensalmente":
-				// Novo período se passou de 30 dias
-				return now.getTime() - startDate.getTime() > 30 * 24 * 60 * 60 * 1000;
-			
+				return now.getMonth() !== start.getMonth() || now.getFullYear() !== start.getFullYear();
 			default:
 				return false;
 		}

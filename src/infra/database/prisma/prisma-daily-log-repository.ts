@@ -9,15 +9,15 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
     return logs.map(this.toDomain);
   }
 
-  async findById(id: string): Promise<DailyLog | null> {
-    const log = await prisma.dailyLog.findUnique({ where: { id } });
-    return log ? this.toDomain(log) : null;
-  }
+	async findById(id: string): Promise<DailyLog | null> {
+		const log = await prisma.dailyLog.findUnique({ where: { id } });
+		return log ? this.toDomain(log) : null;
+	}
 
-  async create(data: CreateEntityData<DailyLog>): Promise<DailyLog> {
-    const log = await prisma.dailyLog.create({ data });
-    return this.toDomain(log);
-  }
+	async create(data: CreateEntityData<DailyLog>): Promise<DailyLog> {
+		const log = await prisma.dailyLog.create({ data });
+		return this.toDomain(log);
+	}
 
   async update(entity: DailyLog): Promise<DailyLog> {
     const log = await prisma.dailyLog.update({
@@ -51,23 +51,28 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
     return logs.map(this.toDomain);
   }
 
-  async deleteOlderThan(date: Date): Promise<void> {
-    await prisma.dailyLog.deleteMany({
-      where: {
-        completedAt: {
-          lt: date,
-        },
-      },
-    });
-  }
+	async deleteOlderThan(date: Date): Promise<void> {
+		await prisma.dailyLog.deleteMany({
+			where: {
+				completedAt: {
+					lt: date,
+				},
+			},
+		});
+	}
 
   async hasLogForDate(dailyId: string, date: string): Promise<boolean> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const log = await prisma.dailyLog.findFirst({
       where: {
         dailyId,
         completedAt: {
-          gte: new Date(date + 'T00:00:00.000Z'),
-          lt: new Date(date + 'T23:59:59.999Z'),
+          gte: startOfDay,
+          lte: endOfDay,
         },
       },
     });
@@ -79,6 +84,7 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
     const log = await prisma.dailyLog.findFirst({
       where: {
         dailyId,
+        status: "success",
       },
       orderBy: {
         completedAt: 'desc',
@@ -88,16 +94,17 @@ export class PrismaDailyLogRepository implements DailyLogRepository {
     return log ? log.completedAt : null;
   }
 
-  private toDomain(prismaLog: any): DailyLog {
-    return {
-      id: prismaLog.id,
-      dailyId: prismaLog.dailyId,
-      periodId: prismaLog.periodId,
-      dailyTitle: prismaLog.dailyTitle,
-      difficulty: prismaLog.difficulty,
-      tags: prismaLog.tags || [],
-      completedAt: prismaLog.completedAt,
-      createdAt: prismaLog.createdAt,
-    };
-  }
+	private toDomain(prismaLog: any): DailyLog {
+		return {
+			id: prismaLog.id,
+			dailyId: prismaLog.dailyId,
+			periodId: prismaLog.periodId,
+			dailyTitle: prismaLog.dailyTitle,
+			difficulty: prismaLog.difficulty,
+			tags: prismaLog.tags || [],
+			status: (prismaLog.status as DailyLog["status"]) || "success",
+			completedAt: prismaLog.completedAt,
+			createdAt: prismaLog.createdAt,
+		};
+	}
 }

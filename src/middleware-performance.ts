@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { InputSanitizer } from '@/infra/validation/input-sanitizer';
 
 export function middleware(request: NextRequest) {
   const start = Date.now();
@@ -18,7 +19,8 @@ export function middleware(request: NextRequest) {
   
   if (process.env.NODE_ENV === 'development') {
     const duration = Date.now() - start;
-    console.log(`🚀 ${request.method} ${request.nextUrl.pathname} - ${duration}ms`);
+    const safeMethod = InputSanitizer.sanitizeForLog(request.method || 'UNKNOWN');
+    const safePath = InputSanitizer.sanitizeForLog(request.nextUrl.pathname || '/unknown');
   }
   
   return response;

@@ -6,6 +6,7 @@ import { UpdateTodoSubtaskUseCase } from "@/application/use-cases/todo-subtask/u
 import { TaskTitle } from "@/domain/value-objects/task-title";
 import { ApiTodoSubtaskRepository } from "@/infra/repositories/http/api-todo-subtask-repository";
 import { ErrorHandler } from "@/infra/services/error-handler";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { TodoSubtask } from "@/types";
 import { type ReactNode, createContext, useContext } from "react";
 
@@ -44,15 +45,21 @@ export function TodoSubtaskProvider({
 		order: number,
 	): Promise<TodoSubtask> => {
 		try {
+			const sanitizedTodoId = InputSanitizer.sanitizeId(todoId);
 			const taskTitle = TaskTitle.create(title);
+			const sanitizedOrder = Number(order);
+			
+			if (!Number.isFinite(sanitizedOrder)) {
+				throw new Error("Invalid order value");
+			}
+			
 			const result = await createUseCase.execute({
 				title: taskTitle.getValue(),
-				todoId,
-				order,
+				todoId: sanitizedTodoId,
+				order: sanitizedOrder,
 			});
 			return result.subtask;
 		} catch (error) {
-			console.error("TodoSubtaskContext.createSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao criar subtarefa");
 		}
 	};
@@ -61,19 +68,27 @@ export function TodoSubtaskProvider({
 		subtask: TodoSubtask,
 	): Promise<TodoSubtask> => {
 		try {
-			const result = await updateUseCase.execute({ subtask });
+			const sanitizedSubtask = {
+				...subtask,
+				id: InputSanitizer.sanitizeId(subtask.id),
+				title: String(subtask.title),
+				todoId: InputSanitizer.sanitizeId(subtask.todoId),
+				order: Number(subtask.order),
+				completed: Boolean(subtask.completed),
+			};
+			
+			const result = await updateUseCase.execute({ subtask: sanitizedSubtask });
 			return result.subtask;
 		} catch (error) {
-			console.error("TodoSubtaskContext.updateSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao atualizar subtarefa");
 		}
 	};
 
 	const deleteSubtask = async (id: string): Promise<void> => {
 		try {
-			await deleteUseCase.execute({ id });
+			const sanitizedId = InputSanitizer.sanitizeId(id);
+			await deleteUseCase.execute({ id: String(sanitizedId) });
 		} catch (error) {
-			console.error("TodoSubtaskContext.deleteSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");
 		}
 	};

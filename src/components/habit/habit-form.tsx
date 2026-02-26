@@ -27,6 +27,7 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Habit } from "@/domain/entities/habit";
 import { useButtonLoading } from "@/hooks/use-button-loading";
+import { useDeleteHabit } from "@/hooks/use-habits";
 import { useTags } from "@/hooks/use-tags";
 import type { HabitFormData } from "@/types/habit";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,7 +42,6 @@ interface HabitFormProps {
 
 const priorities: Habit["priority"][] = ["Baixa", "Média", "Alta", "Urgente"];
 const difficulties: Habit["difficulty"][] = ["Trivial", "Fácil", "Médio", "Difícil"];
-const resetOptions: Habit["reset"][] = ["Diariamente", "Semanalmente", "Mensalmente"];
 
 export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormProps) {
 	const { tagOptions } = useTags();
@@ -53,16 +53,10 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 		difficulty: "Fácil",
 		priority: "Média",
 		tags: [],
-		reset: "Diariamente",
+		reset: "Sempre disponível",
 	});
 	const queryClient = useQueryClient();
-
-	// Função para invalidar queries após exclusão
-	const handleDeleteSuccess = () => {
-		queryClient.invalidateQueries({ queryKey: ["habits", "list"] });
-		queryClient.invalidateQueries({ queryKey: ["habits", "detail", habit?.id] });
-		onCancel();
-	};
+	const deleteHabitMutation = useDeleteHabit();
 
 	useEffect(() => {
 		if (habit) {
@@ -74,7 +68,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 				difficulty: habit.difficulty,
 				priority: habit.priority,
 				tags: habit.tags,
-				reset: habit.reset,
+				reset: habit.reset || "Sempre disponível",
 			});
 		} else {
 			// Modo criação: resetar para valores padrão
@@ -85,7 +79,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 				difficulty: "Fácil",
 				priority: "Média",
 				tags: [],
-				reset: "Diariamente",
+				reset: "Sempre disponível",
 			});
 		}
 	}, [habit]);
@@ -95,6 +89,18 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 		if (formData.title.trim()) {
 			await saveLoading.executeAsync(async () => {
 				await onSubmit(formData);
+				// ✅ Limpar formulário após criação bem-sucedida
+				if (!habit) {
+					setFormData({
+						userId: "",
+						title: "",
+						observations: "",
+						difficulty: "Fácil",
+						priority: "Média",
+						tags: [],
+						reset: "Sempre disponível",
+					});
+				}
 			});
 		}
 	};
@@ -170,29 +176,11 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 								</SelectContent>
 							</Select>
 						</div>
-
 						<div className="space-y-2">
-							<Label htmlFor="reset">Frequência de Reset</Label>
-							<Select
-								value={formData.reset}
-								onValueChange={(value) =>
-									setFormData((prev) => ({
-										...prev,
-										reset: value as Habit["reset"],
-									}))
-								}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="Selecione a frequência" />
-								</SelectTrigger>
-								<SelectContent>
-									{resetOptions.map((reset) => (
-										<SelectItem key={reset} value={reset}>
-											{reset}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<Label htmlFor="reset">Disponibilidade</Label>
+							<div className="text-sm text-gray-600 dark:text-gray-400 border rounded-md px-3 py-2 bg-muted">
+								Sempre disponível (pode ser registrado várias vezes ao dia)
+							</div>
 						</div>
 					</div>
 
@@ -252,7 +240,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 					<div className="flex justify-center items-center mt-4 w-full">
 						<DialogConfirmDelete
 							id={habit.id}
-							onDeleteSuccess={handleDeleteSuccess}
+							onDeleted={onCancel}
 						/>
 					</div>
 				)}
@@ -261,27 +249,18 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 	);
 }
 
-function DialogConfirmDelete({ id, onDeleteSuccess }: { id: string; onDeleteSuccess?: () => void }) {
-	const [isDeleting, setIsDeleting] = useState(false);
-	// const deleteHabitMutation = useDeleteHabit();
+function DialogConfirmDelete({ id, onDeleted }: { id: string; onDeleted?: () => void }) {
+	const [open, setOpen] = useState(false);
+	const deleteHabitMutation = useDeleteHabit();
 
 	const onDelete = async () => {
-		if (isDeleting) return;
-		setIsDeleting(true);
 		try {
-			const response = await fetch(`/api/habits?id=${id}`, {
-				method: "DELETE",
-			});
-			if (!response.ok) {
-				throw new Error("Erro ao excluir hábito");
-			}
-
+			await deleteHabitMutation.mutateAsync(id);
 			toast.success("Hábito excluído com sucesso!");
-			onDeleteSuccess?.();
+			setOpen(false); // Fechar dialog após exclusão bem-sucedida
+			onDeleted?.(); // Notificar componente pai
 		} catch (error) {
 			toast.error("Erro ao excluir hábito. Tente novamente.");
-		} finally {
-			setIsDeleting(false);
 		}
 	};
 
@@ -308,9 +287,9 @@ function DialogConfirmDelete({ id, onDeleteSuccess }: { id: string; onDeleteSucc
 						type="submit"
 						variant="destructive"
 						onClick={onDelete}
-						disabled={isDeleting}
+						disabled={deleteHabitMutation.isPending}
 					>
-						{isDeleting ? "Excluindo..." : "Excluir"}
+						{deleteHabitMutation.isPending ? "Excluindo..." : "Excluir"}
 					</Button>
 					<DialogClose asChild>
 						<Button variant="outline">Cancelar</Button>
@@ -320,5 +299,3 @@ function DialogConfirmDelete({ id, onDeleteSuccess }: { id: string; onDeleteSucc
 		</Dialog>
 	);
 }
-
-

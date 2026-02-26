@@ -1,6 +1,7 @@
 export type HabitDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
 
-export type HabitReset = "Diariamente" | "Semanalmente" | "Mensalmente";
+// Hábitos não têm mais frequência fixa; mantemos string para compatibilidade
+export type HabitReset = "Sempre disponível" | "Diariamente" | "Semanalmente" | "Mensalmente";
 
 export type HabitStatus = "Em Andamento" | "Completo" | "Cancelado";
 

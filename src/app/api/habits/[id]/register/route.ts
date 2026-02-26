@@ -2,6 +2,9 @@ import { RegisterHabitUseCase } from "@/application/use-cases/habit/register-hab
 import { PrismaHabitEntryRepository } from "@/infra/database/prisma/prisma-habit-entry-repository";
 import { PrismaHabitPeriodRepository } from "@/infra/database/prisma/prisma-habit-period-repository";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import { idSchema } from "@/infra/validation/schemas";
+import { z } from "zod";
 import type { NextRequest } from "next/server";
 
 const habitRepository = new PrismaHabitRepository();
@@ -16,6 +19,14 @@ export async function POST(
 		const { id } = await params;
 		const body = await request.json();
 
+		const validatedId = idSchema.parse(id);
+		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
+
+		const bodySchema = z.object({
+			note: z.string().optional(),
+		});
+		const validatedBody = bodySchema.parse(body);
+
 		const useCase = new RegisterHabitUseCase(
 			habitRepository,
 			habitPeriodRepository,
@@ -23,12 +34,15 @@ export async function POST(
 		);
 
 		const result = await useCase.execute({
-			habitId: id,
-			note: body.note,
+			habitId: sanitizedId,
+			note: validatedBody.note ? String(validatedBody.note) : undefined,
 		});
 
 		return Response.json(result, { status: 201 });
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
 		return Response.json(
 			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }

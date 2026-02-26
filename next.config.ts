@@ -24,11 +24,14 @@ const nextConfig: NextConfig = {
 		optimizeCss: true,
 		scrollRestoration: true,
 		optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'date-fns'],
-		turbo: {
-			memoryLimit: 512,
-		},
 		optimizeServerReact: true,
 	},
+
+	// Configuração do Turbopack (estável)
+	turbopack: {},
+
+	// Configurações específicas para deploy no Vercel
+	generateEtags: false,
 
 	webpack: (config: any) => {
 		// Desabilitar source maps em produção para performance

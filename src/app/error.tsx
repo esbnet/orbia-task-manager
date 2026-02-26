@@ -11,7 +11,6 @@ export default function Error({
 }) {
     useEffect(() => {
         // Log do erro para análise
-        console.error('Erro na aplicação:', error)
     }, [error])
 
     const isDatabaseError = error.message.toLowerCase().includes('database') ||

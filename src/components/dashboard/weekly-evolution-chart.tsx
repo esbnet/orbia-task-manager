@@ -161,19 +161,9 @@ export function WeeklyEvolutionChart() {
 
     // Debug: verificar dados das metas
     if (process.env.NODE_ENV === 'development') {
-        console.log('[WEEKLY-CHART] 🔍 === DEBUG METAS RECEBIDAS ===');
-        console.log('[WEEKLY-CHART] Total de metas recebidas:', goals.length);
-        console.log('[WEEKLY-CHART] Estrutura dos dados:', goals);
-        console.log('[WEEKLY-CHART] Tipo de goals:', typeof goals);
-        console.log('[WEEKLY-CHART] Goals é array?', Array.isArray(goals));
-        console.log('[WEEKLY-CHART] Error:', goalsError);
-        console.log('[WEEKLY-CHART] Is Loading:', goalsLoading);
 
         if (goals.length > 0) {
-            console.log('[WEEKLY-CHART] ✅ Metas recebidas com sucesso:', goals.length, 'metas');
-            console.log('[WEEKLY-CHART] Exemplo de meta:', goals[0]);
         } else {
-            console.log('[WEEKLY-CHART] ❌ Nenhuma meta recebida');
         }
     }
 
@@ -200,7 +190,7 @@ export function WeeklyEvolutionChart() {
                         <div className="text-center">
                             <div className="mx-auto mb-3 text-red-500">
                                 <svg className="mx-auto w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <p className="mb-3 text-red-600">Erro ao carregar dados da evolução semanal</p>
@@ -275,8 +265,9 @@ export function WeeklyEvolutionChart() {
                 })
             );
 
-            // Filtrar logs de diárias concluídas por dia
+            // Filtrar logs de diárias concluídas por dia (ignorar fails)
             const dayDailies = dailyLogs.filter((log: DailyLog) => {
+                if ((log as any).status === "fail") return false;
                 if (!log.completedAt) return false;
                 const completed = new Date(log.completedAt);
                 const normalizedCompleted = new Date(completed.getFullYear(), completed.getMonth(), completed.getDate());

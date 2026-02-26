@@ -30,7 +30,7 @@ interface TimeEntry {
  *             properties:
  *               taskId:
  *                 type: string
- *                 description: ID da tarefa (habit, daily, todo ou goal)
+ *                 description: ID da tarefa - habit, daily, todo ou goal
  *               taskType:
  *                 type: string
  *                 enum: [habit, daily, todo, goal]
@@ -43,7 +43,7 @@ interface TimeEntry {
  *               date:
  *                 type: string
  *                 format: date-time
- *                 description: Data do registro (opcional, padrão: agora)
+ *                 description: "Data do registro - opcional, padrão: agora"
  *     responses:
  *       201:
  *         description: Tempo registrado com sucesso
@@ -118,7 +118,6 @@ export async function POST(request: NextRequest) {
 
     // Log apenas em desenvolvimento
     if (process.env.NODE_ENV === "development") {
-      console.log({
         userId: session.user.id,
         taskId,
         taskType,
@@ -152,7 +151,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error("Erro ao registrar tempo:", error);
 
     return NextResponse.json(
       { error: "Erro interno do servidor" },
@@ -230,7 +228,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Erro ao buscar registros de tempo:", error);
 
     return NextResponse.json(
       { error: "Erro interno do servidor" },

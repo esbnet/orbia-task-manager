@@ -7,7 +7,6 @@ export async function GET() {
 		const result = await getActiveTasksUseCase.execute();
 		return Response.json(result);
 	} catch (error) {
-		console.error("❌ Erro ao buscar tarefas ativas:", error);
 		return Response.json({ tasks: [] }, { status: 500 });
 	}
 }

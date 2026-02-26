@@ -3,6 +3,7 @@ import { ListGoalsUseCase } from "@/application/use-cases/goal/list-goals/list-g
 import { auth } from "@/auth";
 import type { Goal } from "@/domain/entities/goal";
 import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -102,15 +103,18 @@ export async function GET(request: NextRequest) {
 
 		// Log apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
-			console.log({
-				userId: session.user.id,
+			console.debug("[GET /api/goals] request", {
+				userId: InputSanitizer.sanitizeForLog(session.user.id),
 				params: { status, priority, tags, includeOverdue, includeDueSoon, dueSoonDays }
 			});
 		}
 
+		// Sanitize userId before use case execution
+		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
+
 		// Execução do use case
 		const goals = await listGoalsUseCase.execute({
-			userId: session.user.id,
+			userId: sanitizedUserId,
 			status,
 			priority,
 			tags,
@@ -121,6 +125,10 @@ export async function GET(request: NextRequest) {
 
 		// Log de resultado apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
+			console.debug("[GET /api/goals] response", {
+				userId: InputSanitizer.sanitizeForLog(session.user.id),
+				count: goals.length,
+			});
 		}
 
 		return NextResponse.json(goals);
@@ -256,11 +264,14 @@ export async function POST(request: NextRequest) {
 
 		// Log apenas em desenvolvimento
 		if (process.env.NODE_ENV === "development") {
-			console.log({
-				userId: session.user.id,
-				title: title.substring(0, 50) + (title.length > 50 ? "..." : "")
+			console.debug("[POST /api/goals] request", {
+				userId: InputSanitizer.sanitizeForLog(session.user.id),
+				title: InputSanitizer.sanitizeForLog(title.substring(0, 50) + (title.length > 50 ? "..." : ""))
 			});
 		}
+
+		// Sanitize userId before use case execution
+		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
 
 		// Validação de tarefas anexadas
 		let validatedAttachedTasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }> = [];
@@ -280,7 +291,7 @@ export async function POST(request: NextRequest) {
 			targetDate: parsedDate,
 			priority: validatedPriority,
 			tags: validatedTags,
-			userId: session.user.id,
+			userId: sanitizedUserId,
 			attachedTasks: validatedAttachedTasks,
 		});
 

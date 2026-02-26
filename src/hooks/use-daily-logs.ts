@@ -5,6 +5,7 @@ interface DailyLog {
     dailyId: string;
     periodId?: string;
     dailyTitle: string;
+    status?: "success" | "fail";
     completedAt: Date;
     difficulty: string;
     tags: string[];

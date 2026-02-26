@@ -2,6 +2,7 @@ import type { DailyLogRepository, DailyPeriodRepository, DailyRepository } from 
 import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 import type { Daily } from "@/domain/entities/daily";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 
 // Daily form data interface
 export interface DailyFormData {
@@ -133,28 +134,38 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 		try {
 			const dailies = await this.repository.findByUserId(userId);
 			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+
 			const available: Daily[] = [];
 			const completed: (Daily & { nextAvailableAt: Date })[] = [];
 
 			for (const daily of dailies) {
+				if (new Date(daily.startDate) > today) continue;
+
 				const activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(daily.id);
-				if (activePeriod) {
-					if (activePeriod.isCompleted) {
-						const periodStart = new Date(activePeriod.startDate);
-						if (periodStart.toDateString() === today.toDateString()) {
-							const nextAvailableAt = this.calculateNextPeriodStart(daily.repeat.type, activePeriod.endDate || today, daily.repeat.frequency);
-							completed.push({ ...daily, nextAvailableAt });
-						} else if (today >= activePeriod.endDate!) {
-							available.push(daily);
-						}
-					} else {
-						available.push(daily);
-					}
-				} else {
-					const shouldShow = this.shouldShowToday(daily);
-					if (shouldShow) {
-						available.push(daily);
-					}
+
+				if (!activePeriod) {
+					available.push(daily);
+					continue;
+				}
+
+				const periodStart = new Date(activePeriod.startDate);
+				periodStart.setHours(0, 0, 0, 0);
+				const periodEnd = activePeriod.endDate ? new Date(activePeriod.endDate) : null;
+				if (periodEnd) periodEnd.setHours(23, 59, 59, 999);
+
+				const isCompletedToday = activePeriod.isCompleted && periodStart.getTime() === today.getTime();
+				const isPeriodExpired = periodEnd && today > periodEnd;
+
+				if (isCompletedToday) {
+					const nextAvailableAt = this.calculateNextPeriodStart(
+						daily.repeat.type,
+						periodEnd || today,
+						daily.repeat.frequency
+					);
+					completed.push({ ...daily, nextAvailableAt });
+				} else if (!activePeriod.isCompleted || isPeriodExpired) {
+					available.push(daily);
 				}
 			}
 
@@ -168,26 +179,24 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 		}
 	}
 
+	private shouldCreatePeriod(daily: Daily, now: Date): boolean {
+		if (!daily.lastCompletedDate) return true;
+
+		const lastCompleted = new Date(daily.lastCompletedDate);
+		return DailyPeriodCalculator.shouldBeAvailable(
+			daily.repeat.type,
+			lastCompleted,
+			now,
+			daily.repeat.frequency
+		);
+	}
+
 	private calculateNextPeriodStart(type: string, fromDate: Date, frequency: number): Date {
-		const nextStart = new Date(fromDate);
-		switch (type) {
-			case "Diariamente":
-				nextStart.setDate(nextStart.getDate() + frequency);
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			case "Semanalmente":
-				nextStart.setDate(nextStart.getDate() + (7 * frequency));
-				break;
-			case "Mensalmente":
-				nextStart.setMonth(nextStart.getMonth() + frequency);
-				break;
-			case "Anualmente":
-				nextStart.setFullYear(nextStart.getFullYear() + frequency);
-				break;
-			default:
-				nextStart.setDate(nextStart.getDate() + frequency);
-		}
-		return nextStart;
+		return DailyPeriodCalculator.calculateNextStartDate(
+			type as "Diariamente" | "Semanalmente" | "Mensalmente" | "Anualmente",
+			fromDate,
+			frequency
+		);
 	}
 
 	async reorderDailies(dailyIds: string[]): Promise<void> {
@@ -229,28 +238,20 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 		}
 	}
 
-	// Helper method to determine if daily should be shown today
 	private shouldShowToday(daily: Daily): boolean {
 		const today = new Date();
 		const startDate = new Date(daily.startDate);
 		
-		// If start date is in the future, don't show
-		if (startDate > today) {
-			return false;
-		}
+		if (startDate > today) return false;
 
-		const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+		if (!daily.lastCompletedDate) return true;
 
-		switch (daily.repeat.type) {
-			case "Diariamente":
-				return daysDiff % daily.repeat.frequency === 0;
-			case "Semanalmente":
-				return daysDiff % (daily.repeat.frequency * 7) === 0;
-			case "Mensalmente":
-				// Simplified monthly calculation
-				return daysDiff % (daily.repeat.frequency * 30) === 0;
-			default:
-				return false;
-		}
+		const lastCompleted = new Date(daily.lastCompletedDate);
+		return DailyPeriodCalculator.shouldBeAvailable(
+			daily.repeat.type,
+			lastCompleted,
+			today,
+			daily.repeat.frequency
+		);
 	}
 }

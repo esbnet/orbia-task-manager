@@ -1,4 +1,4 @@
-import type { DailyRepository, HabitRepository, TagRepository, TodoRepository } from "@/domain/repositories/all-repository";
+import type { DailyRepository, HabitRepository, TagRepository, TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
 
 import { CreateDailyUseCase } from "@/application/use-cases/daily/create-daily/create-daily-use-case";
 import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily/delete-daily-use-case";
@@ -24,6 +24,7 @@ import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/upda
 import type { GoalRepository } from "@/domain/repositories/goal-repository";
 import { ApiDailyRepository } from "@/infra/repositories/http/api-daily-repository";
 import { ApiHabitRepository } from "@/infra/repositories/http/api-habit-repository";
+import { ApiTodoLogRepository } from "@/infra/repositories/http/api-todo-log-repository";
 import { ApiTodoRepository } from "@/infra/repositories/http/api-todo-repository";
 import { HttpGoalRepository } from "@/infra/repositories/http/http-goal-repository";
 
@@ -52,6 +53,7 @@ export class DIContainer {
 		// Repositories
 		this.repositories.set("habitRepository", new ApiHabitRepository());
 		this.repositories.set("todoRepository", new ApiTodoRepository());
+		this.repositories.set("todoLogRepository", new ApiTodoLogRepository());
 		this.repositories.set("dailyRepository", new ApiDailyRepository());
 		this.repositories.set("goalRepository", new HttpGoalRepository());
 		// Tag repository can be added when implemented
@@ -70,7 +72,7 @@ export class DIContainer {
 		this.useCases.set("listTodosUseCase", new ListTodosUseCase(this.getTodoRepository()));
 		this.useCases.set("updateTodoUseCase", new UpdateTodoUseCase(this.getTodoRepository()));
 		this.useCases.set("deleteTodoUseCase", new DeleteTodoUseCase(this.getTodoRepository()));
-		this.useCases.set("toggleTodoUseCase", new ToggleTodoUseCase(this.getTodoRepository()));
+		this.useCases.set("toggleTodoUseCase", new ToggleTodoUseCase(this.getTodoRepository(), {} as any));
 
 		// Daily Use Cases
 		this.useCases.set("createDailyUseCase", new CreateDailyUseCase(this.getDailyRepository()));
@@ -97,6 +99,10 @@ export class DIContainer {
 
 	public getTodoRepository(): TodoRepository {
 		return this.repositories.get("todoRepository");
+	}
+
+	public getTodoLogRepository(): TodoLogRepository {
+		return this.repositories.get("todoLogRepository");
 	}
 
 	public getDailyRepository(): DailyRepository {

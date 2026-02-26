@@ -34,12 +34,12 @@ describe("CreateDailyUseCase", () => {
 
 		expect(result.daily).toBeDefined();
 		expect(result.daily.title).toBe(inputDaily.title);
-		expect(result.daily.observations).toBe("");
-		expect(result.daily.taskList).toEqual([]);
+		expect(result.daily.observations).toBe("Observações de teste");
+		expect(result.daily.tasks).toEqual([]);
 		expect(result.daily.difficulty).toBe("Fácil");
 		expect(result.daily.repeat?.type).toBe("Diariamente");
 		expect(result.daily.repeat?.frequency).toBe(1);
-		expect(result.daily.tags).toEqual([]);
+		expect(result.daily.tags).toEqual(["Tag 1", "Tag 2"]);
 	});
 
 	it("deve criar um daily com dificuldade padrão quando não especificada", async () => {

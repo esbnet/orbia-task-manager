@@ -6,6 +6,7 @@ import { UpdateDailySubtaskUseCase } from "@/application/use-cases/daily-subtask
 import { TaskTitle } from "@/domain/value-objects/task-title";
 import { ApiDailySubtaskRepository } from "@/infra/repositories/http/api-daily-subtask-repository";
 import { ErrorHandler } from "@/infra/services/error-handler";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { DailySubtask } from "@/types";
 import { type ReactNode, createContext, useContext } from "react";
 
@@ -35,15 +36,27 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		order: number,
 	): Promise<DailySubtask> => {
 		try {
+			let sanitizedDailyId = dailyId;
+			try {
+				sanitizedDailyId = InputSanitizer.sanitizeId(dailyId);
+			} catch (error) {
+				console.warn("[DailySubtask] ID de daily inválido, usando valor bruto", error);
+			}
 			const taskTitle = TaskTitle.create(title);
+			const sanitizedOrder = Number(order);
+			
+			if (!Number.isFinite(sanitizedOrder)) {
+				throw new Error("Invalid order value");
+			}
+			
 			const result = await createUseCase.execute({
 				title: taskTitle.getValue(),
-				dailyId,
-				order,
+				dailyId: sanitizedDailyId,
+				order: sanitizedOrder,
 			});
 			return result.subtask;
-		} catch (error) {
-			console.error("DailySubtaskContext.createSubtask:", error);
+		} catch (error: any) {
+			console.error("[DailySubtask] Erro ao criar subtarefa", error);
 			throw error instanceof Error ? error : new Error("Erro ao criar subtarefa");
 		}
 	};
@@ -52,20 +65,28 @@ export function DailySubtaskProvider({ children }: { children: ReactNode }) {
 		subtask: DailySubtask,
 	): Promise<DailySubtask> => {
 		try {
-			const result = await updateUseCase.execute({ subtask });
+			const sanitizedSubtask = {
+				...subtask,
+				id: InputSanitizer.sanitizeId(subtask.id),
+				title: String(subtask.title),
+				dailyId: InputSanitizer.sanitizeId(subtask.dailyId),
+				order: Number(subtask.order),
+				completed: Boolean(subtask.completed),
+			};
+			
+			const result = await updateUseCase.execute({ subtask: sanitizedSubtask });
 
 			return result.subtask;
 		} catch (error) {
-			console.error("DailySubtaskContext.updateSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao atualizar subtarefa");
 		}
 	};
 
 	const deleteSubtask = async (id: string): Promise<void> => {
 		try {
-			await deleteUseCase.execute({ id });
+			const sanitizedId = InputSanitizer.sanitizeId(id);
+			await deleteUseCase.execute({ id: String(sanitizedId) });
 		} catch (error) {
-			console.error("DailySubtaskContext.deleteSubtask:", error);
 			throw error instanceof Error ? error : new Error("Erro ao deletar subtarefa");
 		}
 	};

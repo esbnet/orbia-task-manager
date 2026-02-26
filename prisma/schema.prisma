@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
             provider  = "postgresql"
-            url       = env("DATABASE_URL")
-            directUrl = env("DIRECT_URL")
         }
 
 model Habit {
@@ -13,7 +11,7 @@ model Habit {
     title             String
     observations      String   @default("")
     difficulty        String
-    status            String   @default("Em Andamento")
+    status            String   @default("active") // "active", "archived"
     priority          String   @default("Média")
     tags              String[]
     reset             String
@@ -88,6 +86,7 @@ model Daily {
     tags              String[]
     order             Int      @default(0)
     lastCompletedDate String?
+    status            String   @default("active") // "active", "archived"
     userId            String
     createdAt         DateTime @default(now())
 
@@ -135,6 +134,7 @@ model DailyLog {
     dailyTitle  String
     difficulty  String
     tags        String[]
+    status      String   @default("success") // "success" | "fail"
     completedAt DateTime @default(now())
     createdAt   DateTime @default(now())
 
@@ -144,17 +144,20 @@ model DailyLog {
 }
 
 model Todo {
-    id                String   @id @default(cuid())
-    title             String
-    observations      String   @default("")
-    tasks             String[]
-    difficulty        String
-    startDate         DateTime
-    tags              String[]
-    order             Int      @default(0)
-    lastCompletedDate String?
-    userId            String
-    createdAt         DateTime @default(now())
+    id                 String   @id @default(cuid())
+    title              String
+    observations       String   @default("")
+    tasks              String[]
+    difficulty         String
+    startDate          DateTime
+    tags               String[]
+    order              Int      @default(0)
+    lastCompletedDate  String?
+    recurrence         String   @default("none") // "none", "daily", "weekly", "monthly", "custom"
+    recurrenceInterval Int? // Para recorrência customizada (ex: a cada 3 dias)
+    todoType           String   @default("pontual") // "pontual", "recorrente"
+    userId             String
+    createdAt          DateTime @default(now())
 
     user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
     logs     TodoLog[]

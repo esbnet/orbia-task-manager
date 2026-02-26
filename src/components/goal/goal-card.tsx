@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Goal } from "@/domain/entities/goal";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
@@ -59,7 +58,8 @@ const statusLabels: Record<Goal["status"], string> = {
 export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-	const statusChangeLoading = useButtonLoading();
+	const [isCompleting, setIsCompleting] = useState(false);
+	const [isCanceling, setIsCanceling] = useState(false);
 	const isOverdue =
 		goal.status === "IN_PROGRESS" && new Date(goal.targetDate) < new Date();
 	const daysUntilTarget = Math.ceil(
@@ -79,10 +79,6 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 				Number.isNaN(startDate.getTime()) ||
 				Number.isNaN(endDate.getTime())
 			) {
-				console.warn("Datas inválidas para cálculo de progresso:", {
-					createdAt: goal.createdAt,
-					targetDate: goal.targetDate,
-				});
 				return {
 					progress: 0,
 					background:
@@ -114,7 +110,6 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 
 			return { progress: Math.round(progress), background };
 		} catch (error) {
-			console.error("Erro ao calcular progresso:", error);
 			return {
 				progress: 0,
 				background:
@@ -126,93 +121,92 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
 	const timeProgress = calculateTimeProgress();
 
 	const handleStatusChange = async (newStatus: Goal["status"]) => {
-		await statusChangeLoading.executeAsync(
-			async () => {
-				if (onStatusChange) {
-					await onStatusChange(goal.id, newStatus);
-				}
-			},
-			undefined,
-			() => console.error("Erro ao alterar status da meta."),
-		);
+		// Definir qual estado de loading usar baseado na ação
+		const setLoading = newStatus === "COMPLETED" ? setIsCompleting : setIsCanceling;
+
+		setLoading(true);
+		try {
+			if (onStatusChange) {
+				await onStatusChange(goal.id, newStatus);
+			}
+		} catch (error) {
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
 		<Card
-			className={`transition-all duration-200 hover:shadow-lg ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${statusChangeLoading.isLoading ? "opacity-50 pointer-events-none" : ""}`}
+			className={`hover:shadow-md gap-0 transition-shadow duration-200 relative overflow-hidden ${isOverdue ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20" : ""} ${(isCompleting || isCanceling) ? "opacity-50 pointer-events-none" : ""}`}
 		>
-			<CardHeader className="pb-3">
-				<div className="flex justify-between items-start gap-3">
-					<div className="flex-1 min-w-0">
-						<CardTitle className="pr-2 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
-							{goal.title}
-						</CardTitle>
-					</div>
-
-					<div className="flex flex-shrink-0 items-center gap-1">
-						{goal.status === "IN_PROGRESS" && (
-							<>
-								<Button
-									title="Concluído"
-									size="icon"
-									variant="ghost"
-									onClick={() => handleStatusChange("COMPLETED")}
-									className="hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full w-8 h-8 text-green-600 hover:text-green-600"
-									disabled={statusChangeLoading.isLoading}
-								>
-									{statusChangeLoading.isLoading ? (
-										<div className="border-2 border-green-600 border-t-transparent rounded-full w-4 h-4 animate-spin" />
-									) : (
-										<CheckCircle className="w-4 h-4" />
-									)}
-								</Button>
-								{onEdit && (
-									<Button
-										title="Editar"
-										size="icon"
-										variant="ghost"
-										onClick={() => onEdit(goal)}
-										className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 text-gray-600 dark:text-gray-400"
-									>
-										<Edit className="w-4 h-4" />
-									</Button>
-								)}
-
-								<Button
-									title="Cancelar"
-									size="icon"
-									variant="ghost"
-									onClick={() => setIsCancelDialogOpen(true)}
-									className="hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full w-8 h-8 text-red-600 hover:text-red-600"
-									disabled={statusChangeLoading.isLoading}
-								>
-									{statusChangeLoading.isLoading ? (
-										<div className="border-2 border-t-transparent border-red-600 rounded-full w-4 h-4 animate-spin" />
-									) : (
-										<XCircle className="w-4 h-4" />
-									)}
-								</Button>
-							</>
-						)}
-
-						{/* Botão para expandir/ocultar detalhes */}
+			{/* Barra de controles fixa no canto superior direito */}
+			<div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+				{goal.status === "IN_PROGRESS" && (
+					<>
 						<Button
-							size="sm"
+							title="Concluído"
+							size="icon"
 							variant="ghost"
-							onClick={() => setIsExpanded(!isExpanded)}
-							className="flex-shrink-0 p-0 w-8 h-8"
+							onClick={() => handleStatusChange("COMPLETED")}
+							className="hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200/50 dark:border-green-700/50 p-2 rounded-full w-7 h-7 text-green-600"
+							disabled={isCompleting}
 						>
-							<ChevronDown className={`transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+							{isCompleting ? (
+								<div className="border-2 border-green-600 border-t-transparent rounded-full w-3 h-3 animate-spin" />
+							) : (
+								<CheckCircle className="w-3 h-3" />
+							)}
 						</Button>
-					</div>
+						{onEdit && (
+							<Button
+								title="Editar"
+								size="icon"
+								variant="ghost"
+								onClick={() => onEdit(goal)}
+								className="hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/50 dark:border-gray-600/50 p-2 rounded-full w-7 h-7 text-gray-600"
+							>
+								<Edit className="w-3 h-3" />
+							</Button>
+						)}
+						<Button
+							title="Cancelar"
+							size="icon"
+							variant="ghost"
+							onClick={() => setIsCancelDialogOpen(true)}
+							className="hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200/50 dark:border-red-700/50 p-2 rounded-full w-7 h-7 text-red-600"
+							disabled={isCanceling}
+						>
+							{isCanceling ? (
+								<div className="border-2 border-t-transparent border-red-600 rounded-full w-3 h-3 animate-spin" />
+							) : (
+								<XCircle className="w-3 h-3" />
+							)}
+						</Button>
+					</>
+				)}
+
+				<Button
+					size="sm"
+					variant="ghost"
+					onClick={() => setIsExpanded(!isExpanded)}
+					className="border border-gray-200/50 dark:border-gray-600/50 p-0 w-7 h-7"
+				>
+					<ChevronDown className={`w-3 h-3 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
+				</Button>
+			</div>
+			<CardHeader className="pb-0">
+				<div className="pr-20">
+					<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base break-words leading-snug">
+						{goal.title}
+					</CardTitle>
 				</div>
 			</CardHeader>
 
-			<CardContent className="pt-0">
+			<CardContent className="py-0">
 
 				{/* Conteúdo expandido */}
 				{isExpanded && (
-					<div className="space-y-4 mt-4 pt-4 border-gray-100 dark:border-gray-700 border-t">
+					<div className="space-y-4 pt-4 border-gray-100 dark:border-gray-700 border-t max-w-full overflow-hidden">
 						{/* Informações básicas */}
 						<div className="space-y-3">
 							<div className="font-medium text-gray-700 dark:text-gray-300 text-sm">

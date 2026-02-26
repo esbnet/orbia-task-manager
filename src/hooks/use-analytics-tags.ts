@@ -11,7 +11,6 @@ export function useAnalyticsTags() {
         const tags = await tagRepository.list();
         return tags;
       } catch (error) {
-        console.error("Erro ao buscar tags para analytics:", error);
         return [];
       }
     },

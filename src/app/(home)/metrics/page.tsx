@@ -3,6 +3,9 @@ import { MetricsDashboard } from "@/components/metrics/metrics-dashboard";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+// Força renderização dinâmica devido ao uso de funcionalidades dinâmicas
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
     title: "Métricas",
     description: "Métricas e insights sobre seu progresso"

@@ -1,5 +1,6 @@
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoRepository } from "@/domain/repositories/all-repository";
+import { TodoTypeValueObject } from "@/domain/value-objects/todo-type";
 import { getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
@@ -10,8 +11,20 @@ export class PrismaTodoRepository implements TodoRepository {
 	deleteByUserId(userId: string): Promise<void> {
 		throw new Error("Method not implemented." + userId);
 	}
-	findById(id: string): Promise<Todo | null> {
-		throw new Error("Method not implemented." + id);
+	async findById(id: string): Promise<Todo | null> {
+		const userId = await getCurrentUserId();
+		if (!userId) return null;
+
+		const todo = await prisma.todo.findUnique({
+			where: { id, userId },
+			include: {
+				subtasks: {
+					orderBy: { order: "asc" },
+				},
+			},
+		});
+
+		return todo ? this.toDomain(todo) : null;
 	}
 	markComplete(id: string): Promise<Todo> {
 		throw new Error("Method not implemented." + id);
@@ -69,19 +82,25 @@ export class PrismaTodoRepository implements TodoRepository {
 		}));
 	}
 	async list(): Promise<Todo[]> {
-		const userId = await getCurrentUserId();
-		if (!userId) return [];
+		try {
+			const userId = await getCurrentUserId();
+			if (!userId) {
+				return [];
+			}
 
-		const todos = await prisma.todo.findMany({
-			where: { userId },
-			include: {
-				subtasks: {
-					orderBy: { order: "asc" },
+			const todos = await prisma.todo.findMany({
+				where: { userId },
+				include: {
+					subtasks: {
+						orderBy: { order: "asc" },
+					},
 				},
-			},
-			orderBy: { order: "asc" },
-		});
-		return todos.map(this.toDomain);
+				orderBy: { order: "asc" },
+			});
+			return todos.map(this.toDomain);
+		} catch (error) {
+			return [];
+		}
 	}
 
 	async create(
@@ -97,10 +116,10 @@ export class PrismaTodoRepository implements TodoRepository {
 			create: { id: userId },
 		});
 
-		const { ...todoData } = data;
 		const todo = await prisma.todo.create({
 			data: {
-				...todoData,
+				...data,
+				todoType: data.todoType.getValue(),
 				order: data.order ?? 0,
 				userId,
 			},
@@ -123,6 +142,9 @@ export class PrismaTodoRepository implements TodoRepository {
 				tags: todo.tags,
 				order: todo.order,
 				lastCompletedDate: todo.lastCompletedDate,
+				recurrence: todo.recurrence,
+				recurrenceInterval: todo.recurrenceInterval,
+				todoType: todo.todoType.getValue(),
 			},
 		});
 		return this.toDomain(updated);
@@ -161,6 +183,9 @@ export class PrismaTodoRepository implements TodoRepository {
 		order: number;
 		lastCompletedDate: string | null;
 		createdAt: Date;
+		recurrence: string;
+		recurrenceInterval: number | null;
+		todoType?: string;
 		subtasks?: Array<{
 			id: string;
 			title: string;
@@ -182,6 +207,9 @@ export class PrismaTodoRepository implements TodoRepository {
 			order: todo.order,
 			lastCompletedDate: todo.lastCompletedDate || undefined,
 			createdAt: todo.createdAt,
+			recurrence: todo.recurrence as Todo["recurrence"],
+			recurrenceInterval: todo.recurrenceInterval || undefined,
+			todoType: TodoTypeValueObject.create(((todo.todoType as string) || "pontual") as "pontual" | "recorrente"),
 			subtasks:
 				todo.subtasks?.map((s) => ({
 					id: s.id,

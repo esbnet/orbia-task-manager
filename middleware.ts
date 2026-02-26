@@ -1,43 +1,65 @@
-import { LOCALE_COOKIE, detectLocaleFromHeader, normalizeLocale } from "@/i18n/shared";
-
+import { LOCALE_COOKIE, defaultLocale, normalizeLocale } from "@/i18n/shared";
+import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// Middleware: define cookie de idioma baseado no Accept-Language quando ausente
-export function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Configuração de idioma
-  const existing = req.cookies.get(LOCALE_COOKIE)?.value ?? null;
-  const normalized = normalizeLocale(existing);
+  // Rotas públicas
+  const publicPaths = [
+    "/auth/signin",
+    "/api/auth",
+    "/_next",
+    "/favicon.ico",
+    "/sitemap.xml",
+    "/robots.txt",
+  ];
 
-  if (!normalized) {
-    const detected = detectLocaleFromHeader(req.headers.get("accept-language"));
-    res.cookies.set(LOCALE_COOKIE, detected, {
-      path: "/",
-      sameSite: "lax",
-    });
+  const isPublic = publicPaths.some(path => pathname.startsWith(path));
+
+  // Proteger apenas rotas privadas
+  if (!isPublic) {
+    const session = await auth();
+    
+    if (!session?.user?.id) {
+      // API retorna 401
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      }
+      
+      // Páginas redirecionam para login
+      const signInUrl = new URL("/auth/signin", req.url);
+      signInUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(signInUrl);
+    }
   }
 
-  // Headers de performance
+  const res = NextResponse.next();
+
+  // Configuração de idioma
+  if (!pathname.startsWith("/api/")) {
+    const existing = req.cookies.get(LOCALE_COOKIE)?.value ?? null;
+    const normalized = normalizeLocale(existing);
+
+    if (!normalized) {
+      res.cookies.set(LOCALE_COOKIE, defaultLocale, {
+        path: "/",
+        sameSite: "lax",
+      });
+    }
+  }
+
+  // Headers de segurança
   res.headers.set("X-DNS-Prefetch-Control", "on");
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Content-Type-Options", "nosniff");
-  
-  // Cache para API routes
-  if (pathname.startsWith("/api/")) {
-    if (pathname.includes("/active-tasks") || pathname.includes("/todos")) {
-      res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
-    }
-  }
 
   return res;
 }
 
-// Evita rodar em assets estáticos/imagens
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/docs).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

@@ -78,20 +78,36 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 		return null;
 	}
 
+	const sanitizeColor = (color: string): string => {
+		const sanitized = String(color).replace(/[^a-zA-Z0-9#(),. %/-]/g, '');
+		if (!/^(#[0-9a-fA-F]{3,8}|rgb|hsl|var\(|[a-z-]+)/.test(sanitized)) {
+			return '';
+		}
+		return sanitized;
+	};
+
+	const sanitizeKey = (key: string): string => {
+		return String(key).replace(/[^a-zA-Z0-9_-]/g, '');
+	};
+
 	return (
 		<style
 			dangerouslySetInnerHTML={{
 				__html: Object.entries(THEMES)
 					.map(
 						([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${sanitizeKey(id)}] {
 ${colorConfig
 	.map(([key, itemConfig]) => {
 		const color =
 			itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
 			itemConfig.color;
-		return color ? `  --color-${key}: ${color};` : null;
+		if (!color) return null;
+		const sanitizedColor = sanitizeColor(color);
+		if (!sanitizedColor) return null;
+		return `  --color-${sanitizeKey(key)}: ${sanitizedColor};`;
 	})
+	.filter(Boolean)
 	.join("\n")}
 }
 `,

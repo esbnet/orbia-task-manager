@@ -14,7 +14,6 @@ export async function POST() {
 			message: "Períodos expirados finalizados com sucesso" 
 		});
 	} catch (error) {
-		console.error("Erro ao finalizar períodos expirados:", error);
 		
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },

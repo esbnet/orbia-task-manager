@@ -1,12 +1,12 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Eye, EyeOff, HeartCrackIcon, HeartPulse } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useInitialDialog } from "@/hooks/use-initial-dialog";
+import { useTodayTasks } from "@/hooks/use-today-tasks";
 import { useTranslation } from "@/hooks/use-translation";
-import { useUserConfig } from "@/hooks/use-user-config";
-import { useSession } from "next-auth/react";
+import { useState } from "react";
 import { WeeklyEvolutionChart } from '../dashboard/weekly-evolution-chart';
 import { ColumnFilter } from '../navigation/column-filter';
 import { QuickMenu } from '../navigation/quick-menu';
@@ -14,43 +14,49 @@ import { ClientProviders } from '../providers/client-providers';
 import { TasksOverviewDialog } from './tasks-overview-dialog';
 
 export default function HomePage() {
-    const { data: session, status } = useSession();
-    const { config } = useUserConfig();
     const { t } = useTranslation();
-    const [showTasksDialog, setShowTasksDialog] = useState(false);
+    const { shouldShowDialog, markDialogAsShown } = useInitialDialog();
+    const { totalCount, isLoading: tasksLoading } = useTodayTasks();
     const [columnFilter, setColumnFilter] = useState<"all" | "habits" | "dailies" | "todos" | "goals">("all");
     const [isChartVisible, setIsChartVisible] = useState(false);
 
-    useEffect(() => {
-        if (status === "authenticated" && session?.user && config.notifications) {
-            // Check if dialog has been shown before
-            const hasBeenShown = localStorage.getItem("tasksOverviewDialogShown");
-            if (!hasBeenShown) {
-                // Show dialog after a short delay to ensure the page has loaded
-                const timer = setTimeout(() => {
-                    setShowTasksDialog(true);
-                }, 1000);
-
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [status, session, config.notifications]);
+    // Determinar qual ícone mostrar baseado na presença de atividades
+    const hasActivitiesToday = totalCount > 0;
 
     const handleDialogClose = (open: boolean) => {
-        setShowTasksDialog(open);
         if (!open) {
-            // Mark as shown when closed
-            localStorage.setItem("tasksOverviewDialogShown", "true");
+            markDialogAsShown();
         }
     };
 
-    return [
+    return (
         <section className="relative flex flex-col mx-auto p-6 min-h-screen">
             {/* Header Section */}
-            <div className="flex shadow-sm mb-8 p-8 border rounded-lg text-center animate-[fadeIn_1s_ease-in-out_forwards]">
-                <div className="flex justify-between items-center w-full">
-                    <div className="flex-1 font-bold text-4xl md:text-6xl text-center">
-                        {t("home.title")}
+            <div className="flex py-2 rounded-lg animate-[fadeIn_1s_ease-in-out_forwards]">
+                <div className="flex flex-1 justify-between items-center gap-4 font-bold text-4xl md:text-6xl">
+                    {t("home.title")}
+                    <div className="flex flex-col items-center gap-1">
+
+                        {!tasksLoading && (<>
+                            {hasActivitiesToday ? (
+                                <HeartPulse className={`w-10 h-10 font-bold transition-all duration-300 ${hasActivitiesToday
+                                    ? "text-red-500 drop-shadow-lg scale-110 animate-caret-blink"
+                                    : "text-gray-400 opacity-50 grayscale scale-90"
+                                    }`} />
+                            ) : (<HeartCrackIcon className={`w-10 h-10 font-bold transition-all duration-300 ${hasActivitiesToday
+                                ? "text-red-500 drop-shadow-lg scale-110 animate-caret-blink"
+                                : "text-green-400 opacity-50  scale-90"
+                                }`} />)}
+
+
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full transition-colors ${hasActivitiesToday
+                                ? "text-red-700 bg-red-100"
+                                : "text-green-600 bg-green-100"
+                                }`}>
+                                {totalCount > 0 ? `${totalCount} hoje` : "Dia livre"}
+                            </span>
+                        </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -95,9 +101,9 @@ export default function HomePage() {
 
             {/* Dialog */}
             <TasksOverviewDialog
-                open={showTasksDialog}
+                open={shouldShowDialog}
                 onOpenChange={handleDialogClose}
             />
         </section>
-    ]
+    )
 }

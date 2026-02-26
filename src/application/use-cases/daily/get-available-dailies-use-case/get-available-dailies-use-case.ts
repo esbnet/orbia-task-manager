@@ -1,5 +1,4 @@
-import type { DailyRepository } from "@/domain/repositories/all-repository";
-import type { DailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
+import type { DailyRepository, DailyPeriodRepository } from "@/domain/repositories/all-repository";
 import type { Daily } from "@/types";
 
 export interface GetAvailableDailiesInput {

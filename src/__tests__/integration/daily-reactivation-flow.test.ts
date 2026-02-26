@@ -40,6 +40,8 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
       findByEntityId: vi.fn(),
       findByDateRange: vi.fn(),
       deleteOlderThan: vi.fn(),
+      hasLogForDate: vi.fn().mockResolvedValue(false),
+      getLastLogDate: vi.fn().mockResolvedValue(null),
     };
 
     mockDailyPeriodRepository = {
@@ -124,6 +126,7 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
         updatedAt: new Date('2024-01-01'),
       };
       mockDailyPeriodRepository.findActiveByDailyId.mockResolvedValue(completedPeriodDay1);
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(true);
 
       result = await dailyService.getAvailableDailies('user-1');
       expect(result.availableDailies).toHaveLength(0);
@@ -139,6 +142,7 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
         endDate: new Date('2024-01-01T23:59:59'), // Ontem
       };
       mockDailyPeriodRepository.findActiveByDailyId.mockResolvedValue(expiredPeriod);
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(false);
 
       result = await dailyService.getAvailableDailies('user-1');
       expect(result.availableDailies).toHaveLength(1);
@@ -212,6 +216,7 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
         updatedAt: new Date('2024-01-03'),
       };
       mockDailyPeriodRepository.findActiveByDailyId.mockResolvedValue(completedWeekPeriod);
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(true);
 
       result = await dailyService.getAvailableDailies('user-1');
       expect(result.completedToday).toHaveLength(1);
@@ -225,6 +230,7 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
         endDate: new Date('2024-01-07T23:59:59'), // Semana passada
       };
       mockDailyPeriodRepository.findActiveByDailyId.mockResolvedValue(expiredWeekPeriod);
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(false);
 
       result = await dailyService.getAvailableDailies('user-1');
       expect(result.availableDailies).toHaveLength(1);
@@ -295,6 +301,7 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
         updatedAt: new Date('2024-01-15'),
       };
       mockDailyPeriodRepository.findActiveByDailyId.mockResolvedValue(completedJanuaryPeriod);
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(true);
 
       result = await dailyService.getAvailableDailies('user-1');
       expect(result.completedToday).toHaveLength(1);
@@ -308,6 +315,7 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
         endDate: new Date('2024-01-31T23:59:59'), // Mês passado
       };
       mockDailyPeriodRepository.findActiveByDailyId.mockResolvedValue(expiredJanuaryPeriod);
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(false);
 
       result = await dailyService.getAvailableDailies('user-1');
       expect(result.availableDailies).toHaveLength(1);
@@ -512,22 +520,25 @@ describe('Integração - Fluxo Completo de Reativação de Tarefas Diárias', ()
       let result = await dailyService.getAvailableDailies('user-1');
       expect(result.availableDailies).toHaveLength(1);
 
-      // Dia 2: Não deve estar disponível (frequência = 3)
-      const day2 = new Date('2024-01-02T10:00:00');
-      vi.setSystemTime(day2);
-
+      // Dia 1: Completar tarefa
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(true);
       const completedPeriodDay1: DailyPeriod = {
         id: 'period-day1',
         dailyId: 'every-3-days',
         periodType: 'Diariamente',
         startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-01-01T23:59:59'),
+        endDate: new Date('2024-01-03T23:59:59'), // Frequência 3 dias
         isCompleted: true,
         isActive: false,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
       };
       mockDailyPeriodRepository.findActiveByDailyId.mockResolvedValue(completedPeriodDay1);
+
+      // Dia 2: Não deve estar disponível (frequência = 3)
+      const day2 = new Date('2024-01-02T10:00:00');
+      vi.setSystemTime(day2);
+      mockDailyLogRepository.hasLogForDate.mockResolvedValue(false);
 
       result = await dailyService.getAvailableDailies('user-1');
       expect(result.availableDailies).toHaveLength(0); // Não deve estar disponível ainda

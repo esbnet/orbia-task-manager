@@ -30,7 +30,7 @@ export interface CreateDailyOutput {
 		userId: string;
 		title: string;
 		observations: string;
-		taskList?: string[];
+		tasks?: string[];
 		difficulty: DailyDifficulty;
 		startDate: Date;
 		repeat?: DailyRepeat;

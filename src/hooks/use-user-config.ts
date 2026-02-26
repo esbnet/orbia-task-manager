@@ -35,7 +35,6 @@ const getLocalConfig = (): LocalUserConfig => {
 			return { ...DEFAULT_CONFIG, ...parsed };
 		}
 	} catch (error) {
-		console.error("Erro ao ler configurações do localStorage:", error);
 	}
 
 	return DEFAULT_CONFIG;
@@ -49,7 +48,6 @@ const setLocalConfig = (config: Partial<LocalUserConfig>) => {
 		const updated = { ...current, ...config };
 		localStorage.setItem("user-config", JSON.stringify(updated));
 	} catch (error) {
-		console.error("Erro ao salvar configurações no localStorage:", error);
 	}
 };
 

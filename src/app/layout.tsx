@@ -1,17 +1,16 @@
 import "./globals.css";
 
-import { Kode_Mono, Lobster } from "next/font/google";
 import type { Metadata, Viewport } from "next";
+import { Kode_Mono, Lobster } from "next/font/google";
 
-import { AuthProvider } from "@/components/providers/session-provider";
 import { I18nProvider } from "@/components/providers/i18n-provider";
-import { PWARegister } from "./pwa-register";
 import { QueryClientProviderWrapper } from "@/components/providers/query-client-provider";
+import { AuthProvider } from "@/components/providers/session-provider";
 import { ThemeProviderWrapper } from "@/components/providers/theme-provider-wrapper";
 import { Toaster } from "@/components/ui/sonner";
-import { UserWidget } from "@/components/navigation/user-widget";
-import { getDictionary } from "@/i18n/shared";
 import { getRequestLocale } from "@/i18n/index";
+import { getDictionary } from "@/i18n/shared";
+import { PWARegister } from "./pwa-register";
 
 const lobster = Lobster({
 	subsets: ["latin"],
@@ -65,7 +64,6 @@ export default async function RootLayout({
 						<AuthProvider>
 							<QueryClientProviderWrapper>
 								<ThemeProviderWrapper>
-									<UserWidget />
 									<main className="flex-1">			{children}
 									</main>
 									<Toaster richColors />

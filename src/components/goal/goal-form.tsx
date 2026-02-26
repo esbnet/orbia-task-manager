@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import {
 	Dialog,
 	DialogClose,
@@ -23,23 +22,24 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { CalendarIcon, SaveIcon, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import type { Goal } from "@/domain/entities/goal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect } from "../ui/multi-select";
-import { SpinCircle } from "../ui/spin-circle";
 import { Textarea } from "@/components/ui/textarea";
+import { useGoals } from "@/contexts/goal-context";
+import type { Goal } from "@/domain/entities/goal";
+import { useActiveTasks } from "@/hooks/use-active-tasks";
+import { useTags } from "@/hooks/use-tags";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useActiveTasks } from "@/hooks/use-active-tasks";
-import { useGoals } from "@/contexts/goal-context";
-import { useQuery } from "@tanstack/react-query";
-import { useTags } from "@/hooks/use-tags";
+import { MultiSelect } from "../ui/multi-select";
+import { SpinCircle } from "../ui/spin-circle";
 
 interface AttachedTask {
 	id: string;
@@ -132,7 +132,6 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true, isLoading = fa
 	// Efeito separado para atualizar attachedTasks quando os dados são carregados
 	useEffect(() => {
 		if (attachedTasksData) {
-			console.log("Attaching tasks...", attachedTasksData);
 			setFormData((prev) => ({
 				...prev,
 				attachedTasks: attachedTasksData.map((task) => ({
@@ -148,8 +147,20 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true, isLoading = fa
 
 		if (formData.title.trim() && formData.targetDate) {
 			onSubmit(formData);
+
+			// ✅ Limpar formulário após criação bem-sucedida (se não for edição)
+			if (!goal?.id) {
+				setFormData({
+					title: "",
+					description: "",
+					targetDate: new Date(),
+					priority: "MEDIUM",
+					tags: [],
+					attachedTasks: [],
+				});
+			}
 		}
-	}, [formData, onSubmit]);
+	}, [formData, onSubmit, goal?.id]);
 
 	const handleCancel = useCallback(() => {
 		onCancel();

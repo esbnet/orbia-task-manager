@@ -73,7 +73,6 @@ export function FocusMode() {
           if (newElapsed >= prev.estimatedTime * 60) {
             if (soundEnabled) {
               // Aqui você adicionaria um som de notificação
-              console.log("🔔 Tarefa concluída!");
             }
             return {
               ...prev,

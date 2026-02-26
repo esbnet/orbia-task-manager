@@ -20,6 +20,7 @@ interface HabitContextType {
   updateHabit: (id: string, data: Partial<Habit>) => Promise<void>;
   deleteHabit: (id: string) => Promise<void>;
   refreshHabits: () => Promise<void>;
+  registerHabit: (habitId: string, note?: string) => Promise<void>;
   completeHabit: (habitId: string) => Promise<void>;
   toggleComplete: (habitId: string) => Promise<void>;
   updateStatus: (id: string, status: Habit["status"]) => Promise<void>;
@@ -100,15 +101,36 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
     await refreshHabits();
   };
 
+  const registerHabit = async (habitId: string, note?: string) => {
+    try {
+      const response = await fetch('/api/habits/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ habitId, note }),
+      });
+      if (!response.ok) throw new Error('Failed to register habit');
+      await refreshHabits();
+      const habit = habits.find(h => h.id === habitId);
+      toast.success(`Hábito "${habit?.title || 'Hábito'}" registrado!`);
+    } catch (error) {
+      toast.error('Erro ao registrar hábito. Tente novamente.');
+      throw error;
+    }
+  };
+
   const completeHabit = async (habitId: string) => {
     try {
-      const response = await fetch(`/api/habits/${habitId}/complete`, { method: 'PATCH' });
+      const response = await fetch('/api/habit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ habitId }),
+      });
       if (!response.ok) throw new Error('Failed to complete habit');
       await refreshHabits();
       const habit = habits.find(h => h.id === habitId);
-      toast.success(`Hábito "${habit?.title || 'Hábito'}" concluído!`);
+      toast.success(`Hábito "${habit?.title || 'Hábito'}" arquivado!`);
     } catch (error) {
-      toast.error('Erro ao concluir hábito. Tente novamente.');
+      toast.error('Erro ao arquivar hábito. Tente novamente.');
       throw error;
     }
   };
@@ -178,6 +200,7 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
     updateHabit,
     deleteHabit,
     refreshHabits,
+    registerHabit,
     completeHabit,
     toggleComplete,
     updateStatus,
