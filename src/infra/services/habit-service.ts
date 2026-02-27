@@ -1,6 +1,8 @@
 import { BaseEntityService, handleServiceError } from "./base/entity-service";
 import type { HabitLogRepository, HabitRepository } from "@/domain/repositories/all-repository";
 
+import { CompleteHabitUseCase } from "@/application/use-cases/habit/complete-habit/complete-habit-use-case";
+import { ToggleCompleteUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitFormData } from "@/types/habit";
 import type { HabitLog } from "@/domain/entities/habit-log";
@@ -33,9 +35,7 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 	// Habit-specific methods
 	async completeHabit(habitId: string): Promise<{ habit: Habit; log?: HabitLog }> {
 		try {
-			// Get current habit
-			const habits = await this.repository.list();
-			const habit = habits.find((h) => h.id === habitId);
+			const habit = await this.repository.findById(habitId);
 			if (!habit) {
 				throw new Error("Habit not found");
 			}
@@ -49,13 +49,9 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 			// Create log if repository is available
 			let log: HabitLog | undefined;
 			if (this.habitLogRepository) {
-				log = await this.habitLogRepository.create({
-					habitId: habit.id,
-					habitTitle: habit.title,
-					difficulty: habit.difficulty,
-					tags: habit.tags,
-					completedAt: new Date(),
-				});
+				const completeHabitUseCase = new CompleteHabitUseCase(this.habitLogRepository);
+				const logResult = await completeHabitUseCase.execute({ habit });
+				log = await this.habitLogRepository.findById(logResult.logId) ?? undefined;
 			}
 
 			return { habit: completedHabit, log };
@@ -67,7 +63,9 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 	async toggleComplete(habitId: string): Promise<Habit> {
 		try {
 			const habitRepo = this.repository as HabitRepository;
-			return await habitRepo.toggleComplete(habitId);
+			const useCase = new ToggleCompleteUseCase(habitRepo);
+			const result = await useCase.execute(habitId);
+			return result.habit;
 		} catch (error) {
 			return handleServiceError(error, "alternar status do hábito");
 		}

@@ -1,5 +1,6 @@
 import type { Daily } from "@/domain/entities/daily";
 import type { DailyLogRepository, DailyPeriodRepository, DailyRepository } from "@/domain/repositories/all-repository";
+import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
 
 export interface CreateDailyInput {
   title: string;
@@ -44,13 +45,71 @@ export class DailyApplicationService {
   }
 
   async completeDaily(dailyId: string): Promise<CompleteDailyOutput> {
-    const daily = await this.dailyRepository.markComplete(dailyId);
-    const nextPeriod = await this.dailyPeriodRepository.findActiveByDailyId(dailyId);
-    const nextAvailableAt = nextPeriod 
-      ? nextPeriod.startDate 
-      : this.calculateNextPeriodStart(daily.repeat.type, new Date(), daily.repeat.frequency);
+    const daily = await this.dailyRepository.findById(dailyId);
+    if (!daily) {
+      throw new Error("Daily not found");
+    }
 
-    return { daily, nextAvailableAt };
+    let activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(dailyId);
+    const now = new Date();
+
+    if (!activePeriod) {
+      activePeriod = await this.dailyPeriodRepository.create({
+        dailyId: daily.id,
+        periodType: daily.repeat.type,
+        startDate: now,
+        endDate: DailyPeriodCalculator.calculatePeriodEnd(
+          daily.repeat.type,
+          now,
+          daily.repeat.frequency
+        ),
+        isCompleted: false,
+        isActive: true,
+      });
+    }
+
+    if (activePeriod.isCompleted) {
+      throw new Error("Daily already completed in this period");
+    }
+
+    const completedPeriod = await this.dailyPeriodRepository.completeAndFinalize(activePeriod.id);
+    const completedAt = completedPeriod.endDate || now;
+
+    await this.dailyLogRepository.create({
+      dailyId: daily.id,
+      periodId: completedPeriod.id,
+      dailyTitle: daily.title,
+      difficulty: daily.difficulty,
+      tags: daily.tags,
+      status: "success",
+      completedAt,
+    });
+
+    const nextAvailableAt = DailyPeriodCalculator.calculateNextStartDate(
+      daily.repeat.type,
+      completedAt,
+      daily.repeat.frequency
+    );
+
+    await this.dailyPeriodRepository.create({
+      dailyId: daily.id,
+      periodType: daily.repeat.type,
+      startDate: nextAvailableAt,
+      endDate: DailyPeriodCalculator.calculatePeriodEnd(
+        daily.repeat.type,
+        nextAvailableAt,
+        daily.repeat.frequency
+      ),
+      isCompleted: false,
+      isActive: true,
+    });
+
+    const updatedDaily = await this.dailyRepository.update({
+      ...daily,
+      lastCompletedDate: completedAt.toISOString().split("T")[0],
+    });
+
+    return { daily: updatedDaily, nextAvailableAt };
   }
 
   async getAvailableDailies(userId: string) {

@@ -1,6 +1,12 @@
 import { auth } from "@/auth"
 import { cache } from "react"
 
+const DEV_FALLBACK_USER_ID = process.env.DEV_FALLBACK_USER_ID || "temp-dev-user"
+
+function canUseDevAuthFallback() {
+  return process.env.NODE_ENV !== "production" && process.env.ENABLE_DEV_AUTH_FALLBACK !== "false"
+}
+
 // ✅ Para uso em Server Components e API Routes APENAS
 export const getCurrentUser = cache(async () => {
   try {
@@ -23,13 +29,14 @@ export const getCurrentUserId = cache(async () => {
 // 🚨 TEMPORÁRIO: Versão sem autenticação para desenvolvimento
 // TODO: Implementar autenticação do lado cliente adequada
 export const getCurrentUserIdSafe = async (): Promise<string | null> => {
-  // Para desenvolvimento, retorna um userId padrão
-  // Em produção, isso deveria usar useSession() do next-auth
-  return "temp-dev-user";
+  // Para desenvolvimento, retorna um userId padrão.
+  // Em produção, nunca deve mascarar falha de autenticação.
+  return canUseDevAuthFallback() ? DEV_FALLBACK_USER_ID : null;
 }
 
 // Função para API Routes - com fallback para desenvolvimento
 export const getCurrentUserIdWithFallback = async (): Promise<string | null> => {
   const userId = await getCurrentUserId();
-  return userId ?? "temp-dev-user";
+  if (userId) return userId;
+  return canUseDevAuthFallback() ? DEV_FALLBACK_USER_ID : null;
 }

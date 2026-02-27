@@ -3,6 +3,7 @@ import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
 import type { Daily } from "@/domain/entities/daily";
 import { DailyPeriodCalculator } from "@/domain/services/daily-period-calculator";
+import { DailyApplicationService } from "@/application/services/daily-application-service";
 
 // Daily form data interface
 export interface DailyFormData {
@@ -20,12 +21,19 @@ export interface DailyFormData {
 
 // Daily service implementation
 export class DailyService extends BaseEntityService<Daily, DailyFormData> {
+	private dailyApplicationService: DailyApplicationService;
+
 	constructor(
 		protected repository: DailyRepository,
 		private dailyLogRepository: DailyLogRepository,
 		private dailyPeriodRepository: DailyPeriodRepository
 	) {
 		super(repository);
+		this.dailyApplicationService = new DailyApplicationService(
+			repository,
+			dailyLogRepository,
+			dailyPeriodRepository
+		);
 	}
 
 	protected mapFormDataToEntity(data: DailyFormData): Omit<Daily, "id" | "createdAt" | "updatedAt"> {
@@ -46,13 +54,7 @@ export class DailyService extends BaseEntityService<Daily, DailyFormData> {
 	// Daily-specific methods
 	async completeDaily(dailyId: string): Promise<{ daily: Daily; nextAvailableAt: Date }> {
 		try {
-			const result = await this.repository.markComplete(dailyId);
-
-			// Get the next active period's start as nextAvailableAt
-			const nextPeriod = await this.dailyPeriodRepository.findActiveByDailyId(dailyId);
-			const nextAvailableAt = nextPeriod ? nextPeriod.startDate : this.calculateNextPeriodStart(result.repeat.type, new Date(), result.repeat.frequency);
-
-			return { daily: result, nextAvailableAt };
+			return await this.dailyApplicationService.completeDaily(dailyId);
 		} catch (error) {
 			throw handleServiceError(error, "completar daily");
 		}

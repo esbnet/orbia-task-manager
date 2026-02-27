@@ -1,32 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { CompleteDailyUseCase } from "@/application/use-cases/daily/complete-daily-simple/complete-daily-simple-use-case";
-import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
-import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
+import { container } from "@/infra/di/container";
+import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 
 export async function POST(
-    request: NextRequest,
+    _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await auth();
-        if (!session?.user?.id) {
+        const userId = await getCurrentUserIdWithFallback();
+        if (!userId) {
             return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
         }
 
         const { id } = await params;
+        const result = await container.getDailyApplicationService().completeDaily(id);
 
-        const useCase = new CompleteDailyUseCase(
-            new PrismaDailyRepository(),
-            new PrismaDailyLogRepository()
-        );
-
-        const result = await useCase.execute({ 
-            dailyId: id, 
-            userId: session.user.id 
-        });
-
-        return NextResponse.json(result);
+        return NextResponse.json({
+            success: true,
+            message: "Daily completada com sucesso!",
+            daily: result.daily,
+            nextAvailableAt: result.nextAvailableAt,
+        }, { status: 200 });
 
     } catch (error) {
         return NextResponse.json(

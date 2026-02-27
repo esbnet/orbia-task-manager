@@ -1,5 +1,8 @@
 # 📋 Revisão da Funcionalidade: Reaparecimento de Tarefas Diárias
 
+> Status de implementação (atualizado): parte das correções descritas abaixo foi aplicada e ampliada na codebase.
+> Em especial: `dailies/*` foi consolidado como alias de `daily/*`, `daily/available` passou a usar use cases/factory, e o fluxo principal de conclusão de daily foi centralizado em `DailyApplicationService`.
+
 ## 🔍 Análise Realizada
 
 ### ❌ Problemas Identificados
@@ -89,6 +92,11 @@
 - Usa repositórios através de use cases
 - Clean Architecture respeitada
 
+**Status atual no código:**
+- ✅ Handler usa `UseCaseFactory`
+- ✅ Executa `ReactivateDailyPeriodsUseCase` antes de listar
+- ✅ Endpoint plural `/api/dailies/available` reexporta o handler de `/api/daily/available`
+
 #### `/api/daily/[id]/complete/route.ts`
 **Antes:**
 - Lógica de conclusão na API
@@ -99,6 +107,12 @@
 - Delega para `CompleteDailyWithLogUseCase`
 - Apenas validação e resposta HTTP
 - Clean Architecture respeitada
+
+**Status atual no código (ajustado):**
+- ✅ Endpoint `/api/daily/[id]/complete` e `/api/dailies/[id]/complete` foram consolidados para o mesmo fluxo
+- ✅ Rotas delegam para `DailyApplicationService`
+- ✅ Orquestração principal (períodos/log/next period) foi movida para `DailyApplicationService.completeDaily()`
+- ⚠️ `PrismaDailyRepository.markComplete()` ainda existe como caminho legado/minimalista para compatibilidade
 
 ## 🏗️ Arquitetura Final
 
@@ -214,3 +228,12 @@ A funcionalidade de reaparecimento de tarefas diárias agora:
 - ✅ Separa responsabilidades corretamente
 - ✅ É testável e manutenível
 - ✅ Segue princípios SOLID
+
+## 🔄 Evolução Pós-Revisão (consolidação arquitetural)
+
+Além do escopo original desta revisão, a base também recebeu melhorias relacionadas:
+
+- Endurecimento de rotas de `habits` e `todos` com auth + sanitização de IDs + erros mais consistentes
+- Expansão do `UseCaseFactory` e `DI container` para fluxos de `habit`/`todo`
+- Correção de inconsistência em `src/infra/di/container.ts` (`getPrismaTodoRepository`)
+- Guardrails por ambiente em rotas de debug/migração (`ENABLE_DEBUG_API`, `ENABLE_MIGRATION_API`)

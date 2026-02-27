@@ -2,12 +2,10 @@ import type { Daily } from "@/domain/entities/daily";
 import type { DailyRepository } from "@/domain/repositories/all-repository";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
-import { PrismaDailyLogRepository } from './prisma-daily-log-repository';
 import { PrismaDailyPeriodRepository } from './prisma-daily-period-repository';
 
 export class PrismaDailyRepository implements DailyRepository {
 	private dailyPeriodRepository = new PrismaDailyPeriodRepository();
-	private dailyLogRepository = new PrismaDailyLogRepository();
 
 	async findByUserId(userId: string): Promise<Daily[]> {
 		const dailies = await prisma.daily.findMany({
@@ -41,61 +39,10 @@ export class PrismaDailyRepository implements DailyRepository {
 	}
 
 	async markComplete(id: string): Promise<Daily> {
-		const userId = await getCurrentUserIdWithFallback();
-		if (!userId) throw new Error("User not authenticated");
-
-		const daily = await this.findById(id);
-		if (!daily) throw new Error("Daily not found");
-
-		// Find or create active period
-		let activePeriod = await this.dailyPeriodRepository.findActiveByDailyId(id);
-		if (!activePeriod) {
-			const now = new Date();
-			const endDate = this.calculatePeriodEnd(daily.repeat.type, now, daily.repeat.frequency);
-			activePeriod = await this.dailyPeriodRepository.create({
-				dailyId: id,
-				periodType: daily.repeat.type,
-				startDate: now,
-				endDate,
-				isCompleted: false,
-				isActive: true,
-			});
-		}
-
-		if (activePeriod.isCompleted) throw new Error("Daily already completed in this period");
-
-		// Complete period and create log
-		const completedPeriod = await this.dailyPeriodRepository.completeAndFinalize(activePeriod.id);
-
-		await this.dailyLogRepository.create({
-			dailyId: id,
-			periodId: completedPeriod.id,
-			dailyTitle: daily.title,
-			difficulty: daily.difficulty,
-			tags: daily.tags,
-			completedAt: new Date(),
-		});
-
-		// Create next period
-		const nextStart = this.calculateNextPeriodStart(daily.repeat.type, completedPeriod.endDate || new Date(), daily.repeat.frequency);
-		const nextEnd = this.calculatePeriodEnd(daily.repeat.type, nextStart, daily.repeat.frequency);
-		await this.dailyPeriodRepository.create({
-			dailyId: id,
-			periodType: daily.repeat.type,
-			startDate: nextStart,
-			endDate: nextEnd,
-			isCompleted: false,
-			isActive: true,
-		});
-
-		// Update daily
-		const updatedDaily = await prisma.daily.update({
-			where: { id, userId },
-			data: {
-				lastCompletedDate: new Date().toISOString().split("T")[0],
-			},
-		});
-		return this.toDomain(updatedDaily);
+		// LEGACY PATH: the main HTTP flow now completes dailies via DailyApplicationService
+		// Legacy callers now receive a minimal "mark complete" behavior (lastCompletedDate update only).
+		// Full completion orchestration (periods/logs/next period) lives in DailyApplicationService.
+		return this.toggleComplete(id);
 	}
 
 	async markIncomplete(id: string): Promise<Daily> {
@@ -147,34 +94,6 @@ export class PrismaDailyRepository implements DailyRepository {
 		});
 
 		return this.toDomain(updated);
-	}
-
-	private calculateNextPeriodStart(type: string, fromDate: Date, frequency: number): Date {
-		const nextStart = new Date(fromDate);
-		switch (type) {
-			case "Diariamente":
-				nextStart.setDate(nextStart.getDate() + frequency);
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			case "Semanalmente":
-				nextStart.setDate(nextStart.getDate() + (7 * frequency));
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			case "Mensalmente":
-				nextStart.setMonth(nextStart.getMonth() + frequency);
-				nextStart.setDate(1); // Primeiro dia do mês
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			case "Anualmente":
-				nextStart.setFullYear(nextStart.getFullYear() + frequency);
-				nextStart.setMonth(0, 1); // 1 de janeiro
-				nextStart.setHours(0, 0, 0, 0);
-				break;
-			default:
-				nextStart.setDate(nextStart.getDate() + frequency);
-				nextStart.setHours(0, 0, 0, 0);
-		}
-		return nextStart;
 	}
 
 	private calculatePeriodEnd(type: string, startDate: Date, frequency: number): Date {

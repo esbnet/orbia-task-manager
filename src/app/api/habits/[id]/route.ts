@@ -1,4 +1,5 @@
 import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
+import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { idSchema } from "@/infra/validation/schemas";
@@ -8,12 +9,19 @@ import type { NextRequest } from "next/server";
 const habitRepository = new PrismaHabitRepository();
 
 export async function GET(
-	request: NextRequest,
+	_request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const { id } = await params;
-		const habit = await habitRepository.findById(id);
+		const validatedId = idSchema.parse(id);
+		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
+		const habit = await habitRepository.findById(sanitizedId);
 
 		if (!habit) {
 			return Response.json({ error: "Habit not found" }, { status: 404 });
@@ -21,8 +29,11 @@ export async function GET(
 
 		return Response.json({ habit });
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
 		return Response.json(
-			{ error: "Internal server error" },
+			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }
 		);
 	}
@@ -33,6 +44,11 @@ export async function PATCH(
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const { id } = await params;
 		const body = await request.json();
 
@@ -42,9 +58,13 @@ export async function PATCH(
 		const updateSchema = z.object({
 			habit: z.object({
 				title: z.string().optional(),
+				observations: z.string().optional(),
 				description: z.string().optional(),
 				difficulty: z.enum(["Trivial", "Fácil", "Médio", "Difícil"]).optional(),
+				reset: z.enum(["Sempre disponível", "Diariamente", "Semanalmente", "Mensalmente"]).optional(),
 				resetType: z.enum(["daily", "weekly", "monthly"]).optional(),
+				priority: z.enum(["Baixa", "Média", "Alta", "Urgente"]).optional(),
+				status: z.enum(["Em Andamento", "Completo", "Cancelado"]).optional(),
 				tags: z.array(z.string()).optional(),
 			}).passthrough(),
 		});
@@ -57,11 +77,27 @@ export async function PATCH(
 		}
 
 		// Sanitizar dados de atualização
+		const resetMap: Record<"daily" | "weekly" | "monthly", "Diariamente" | "Semanalmente" | "Mensalmente"> = {
+			daily: "Diariamente",
+			weekly: "Semanalmente",
+			monthly: "Mensalmente",
+		};
+
+		const mappedReset =
+			validated.habit.reset ??
+			(validated.habit.resetType ? resetMap[validated.habit.resetType] : undefined);
+
+		const mappedObservations =
+			validated.habit.observations ??
+			validated.habit.description;
+
 		const sanitizedUpdate = {
 			...(validated.habit.title && { title: String(validated.habit.title) }),
-			...(validated.habit.description && { description: String(validated.habit.description) }),
+			...(mappedObservations !== undefined && { observations: String(mappedObservations) }),
 			...(validated.habit.difficulty && { difficulty: validated.habit.difficulty }),
-			...(validated.habit.resetType && { resetType: validated.habit.resetType }),
+			...(mappedReset && { reset: mappedReset }),
+			...(validated.habit.priority && { priority: validated.habit.priority }),
+			...(validated.habit.status && { status: validated.habit.status }),
 			...(validated.habit.tags && { tags: validated.habit.tags.map(String) }),
 		};
 
@@ -82,23 +118,33 @@ export async function PATCH(
 			return Response.json({ error: error.issues }, { status: 400 });
 		}
 		return Response.json(
-			{ error: "Internal server error" },
+			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }
 		);
 	}
 }
 
 export async function DELETE(
-	request: NextRequest,
+	_request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const { id } = await params;
-		await habitRepository.delete(id);
+		const validatedId = idSchema.parse(id);
+		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
+		await habitRepository.delete(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
 		return Response.json(
-			{ error: "Internal server error" },
+			{ error: error instanceof Error ? error.message : "Internal server error" },
 			{ status: 500 }
 		);
 	}

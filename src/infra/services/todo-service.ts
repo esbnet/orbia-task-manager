@@ -1,6 +1,8 @@
 import type { TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
 import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
+import { CompleteTodoWithLogUseCase } from "@/application/use-cases/todo/complete-todo-with-log/complete-todo-with-log-use-case";
+import { ToggleTodoUseCase } from "@/application/use-cases/todo/toggle-todo/toggle-todo-use-case";
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoLog } from "@/domain/entities/todo-log";
 import { TodoTypeValueObject } from "@/domain/value-objects/todo-type";
@@ -43,31 +45,22 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 	// Todo-specific methods
 	async completeTodo(todoId: string): Promise<{ todo: Todo; log?: TodoLog }> {
 		try {
-			// Get current todo
-			const todos = await this.repository.list();
-			const todo = todos.find((t) => t.id === todoId);
+			const todo = await this.repository.findById(todoId);
 			if (!todo) {
 				throw new Error("Todo not found");
 			}
 
-			// Mark as completed
+			if (this.todoLogRepository) {
+				const useCase = new CompleteTodoWithLogUseCase(this.repository as TodoRepository, this.todoLogRepository);
+				const result = await useCase.execute({ todo });
+				return { todo: result.updatedTodo };
+			}
+
 			const completedTodo = await this.update(todoId, {
 				lastCompletedDate: new Date().toISOString().split("T")[0]
 			});
 
-			// Create log if repository is available
-			let log: TodoLog | undefined;
-			if (this.todoLogRepository) {
-				log = await this.todoLogRepository.create({
-					todoId: todo.id,
-					todoTitle: todo.title,
-					difficulty: todo.difficulty,
-					tags: todo.tags,
-					completedAt: new Date(),
-				});
-			}
-
-			return { todo: completedTodo, log };
+			return { todo: completedTodo };
 		} catch (error) {
 			return handleServiceError(error, "completar todo");
 		}
@@ -76,6 +69,11 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 	async toggleComplete(todoId: string): Promise<Todo> {
 		try {
 			const todoRepo = this.repository as TodoRepository;
+			if (this.todoLogRepository) {
+				const useCase = new ToggleTodoUseCase(todoRepo, this.todoLogRepository);
+				const result = await useCase.execute(todoId);
+				return result.todo;
+			}
 			return await todoRepo.toggleComplete(todoId);
 		} catch (error) {
 			return handleServiceError(error, "alternar status do todo");
