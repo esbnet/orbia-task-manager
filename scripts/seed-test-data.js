@@ -1,6 +1,68 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import pkg from "pg";
 
-const prisma = new PrismaClient();
+const { Pool } = pkg;
+
+function readEnvFile() {
+  const envPath = path.join(process.cwd(), ".env");
+  if (!existsSync(envPath)) return {};
+
+  const data = readFileSync(envPath, "utf8");
+  const result = {};
+
+  for (const rawLine of data.split("\n")) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+
+    const eqIndex = line.indexOf("=");
+    if (eqIndex <= 0) continue;
+
+    const key = line.slice(0, eqIndex).trim();
+    const value = line
+      .slice(eqIndex + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
+
+    if (key) result[key] = value;
+  }
+
+  return result;
+}
+
+const envFromFile = readEnvFile();
+const env = (key) => process.env[key] ?? envFromFile[key];
+
+const isProduction = env("NODE_ENV") === "production";
+
+const connectionString = isProduction
+  ? env("PROD_DIRECT_URL") ||
+    env("PROD_DATABASE_URL") ||
+    env("DIRECT_URL") ||
+    env("DATABASE_URL") ||
+    env("DEV_DIRECT_URL") ||
+    env("DEV_DATABASE_URL")
+  : env("DIRECT_URL") ||
+    env("DATABASE_URL") ||
+    env("DEV_DIRECT_URL") ||
+    env("DEV_DATABASE_URL") ||
+    env("PROD_DIRECT_URL") ||
+    env("PROD_DATABASE_URL");
+
+if (!connectionString) {
+  throw new Error(
+    "DATABASE_URL/DIRECT_URL não definida para executar o seed do Prisma.",
+  );
+}
+
+const pool = new Pool({
+  connectionString,
+});
+
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Populando banco com dados de teste...');
@@ -141,9 +203,10 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('❌ Erro ao popular banco:', e);
+    console.error("❌ Erro ao popular banco:", e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });
