@@ -51,7 +51,7 @@ const shadowDatabaseUrl = isProduction
 export default defineConfig({
 	schema: "./prisma/schema.prisma",
 	migrations: {
-		seed: "node scripts/seed-test-data.js",
+		seed: "node scripts/prisma-seed.js",
 	},
 	datasource: {
 		url: databaseUrl,

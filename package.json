@@ -13,7 +13,7 @@
     "test:ui": "vitest --ui",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "node scripts/prisma-migrate-deploy.js",
-    "prisma:seed": "prisma db seed",
+    "prisma:seed": "node scripts/prisma-seed.js",
     "prisma:setup": "pnpm run prisma:generate && pnpm run prisma:migrate:deploy && pnpm run prisma:seed",
     "db:dev": "node scripts/db-config.js development",
     "db:prod": "node scripts/db-config.js production",
@@ -29,7 +29,7 @@
     "prepare": "prisma generate"
   },
   "prisma": {
-    "seed": "node scripts/seed-test-data.js"
+    "seed": "node scripts/prisma-seed.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
