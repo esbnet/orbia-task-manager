@@ -4,13 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/db-config.js development && next dev",
-    "build": "node scripts/db-config.js production && next build",
-    "start": "next start",
+    "dev": "node scripts/db-config.js development && pnpm run prisma:generate && next dev",
+    "build": "node scripts/db-config.js production && NODE_ENV=production pnpm run prisma:setup && next build",
+    "start": "pnpm run prisma:generate && next start",
     "lint": "next lint",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:deploy": "node scripts/prisma-migrate-deploy.js",
+    "prisma:seed": "node scripts/prisma-seed.js",
+    "prisma:setup": "pnpm run prisma:generate && pnpm run prisma:migrate:deploy && pnpm run prisma:seed",
     "db:dev": "node scripts/db-config.js development",
     "db:prod": "node scripts/db-config.js production",
     "db:push:dev": "pnpm run db:dev && npx prisma db push",
@@ -21,7 +25,11 @@
     "i18n:find": "node scripts/find-hardcoded-strings.js",
     "analyze": "node scripts/analyze-bundle.js",
     "analyze:bundle": "ANALYZE=true npm run build",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "prepare": "prisma generate"
+  },
+  "prisma": {
+    "seed": "node scripts/prisma-seed.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -79,6 +87,7 @@
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^20",
+    "@types/pg": "^8.11.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/supertest": "^6.0.3",

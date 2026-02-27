@@ -116,16 +116,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log apenas em desenvolvimento
-    if (process.env.NODE_ENV === "development") {
-        userId: session.user.id,
-        taskId,
-        taskType,
-        category,
-        duration,
-        date: entryDate
-      });
-    }
+	    // Log apenas em desenvolvimento
+	    if (process.env.NODE_ENV === "development") {
+	      console.log("Time entry payload", {
+	        userId: session.user.id,
+	        taskId,
+	        taskType,
+	        category,
+	        duration,
+	        date: entryDate,
+	      });
+	    }
 
     // TODO: Implementar salvamento no banco de dados
     // Por enquanto, apenas simular sucesso

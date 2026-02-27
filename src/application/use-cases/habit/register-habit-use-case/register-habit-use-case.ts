@@ -34,10 +34,11 @@ export class RegisterHabitUseCase {
 		let activePeriod = await this.habitPeriodRepository.findActiveByHabitId(input.habitId);
 		
 		if (!activePeriod) {
+			const periodType = this.mapResetToPeriodType(habit.reset);
 			// Criar novo período baseado no reset do hábito
 			activePeriod = await this.habitPeriodRepository.create({
 				habitId: input.habitId,
-				periodType: habit.reset,
+				periodType,
 				startDate: new Date(),
 			});
 		}
@@ -49,10 +50,11 @@ export class RegisterHabitUseCase {
 			// Finalizar período atual
 			await this.habitPeriodRepository.finalizePeriod(activePeriod.id);
 			
+			const periodType = this.mapResetToPeriodType(habit.reset);
 			// Criar novo período
 			activePeriod = await this.habitPeriodRepository.create({
 				habitId: input.habitId,
-				periodType: habit.reset,
+				periodType,
 				startDate: new Date(),
 			});
 		}
@@ -89,6 +91,21 @@ export class RegisterHabitUseCase {
 				return now.getMonth() !== start.getMonth() || now.getFullYear() !== start.getFullYear();
 			default:
 				return false;
+		}
+	}
+
+	private mapResetToPeriodType(
+		reset: string,
+	): "Diariamente" | "Semanalmente" | "Mensalmente" {
+		switch (reset) {
+			case "Semanalmente":
+				return "Semanalmente";
+			case "Mensalmente":
+				return "Mensalmente";
+			case "Diariamente":
+			case "Sempre disponível":
+			default:
+				return "Diariamente";
 		}
 	}
 }

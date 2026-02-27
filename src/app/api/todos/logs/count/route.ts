@@ -1,4 +1,5 @@
 import { container } from "@/infra/di/container";
+import type { TodoLog } from "@/domain/entities/todo-log";
 
 /**
  * @swagger
@@ -17,10 +18,10 @@ export async function GET() {
 	try {
 		const todoLogRepo = container.getTodoLogRepository();
 		// Buscar todos os logs de todos (APENAS completados)
-		const logs = await todoLogRepo.list();
+		const logs: TodoLog[] = await todoLogRepo.list();
 
 		// Retornar apenas os logs como todos "completados"
-		const completedTodos = logs.map(log => ({
+		const completedTodos = logs.map((log: TodoLog) => ({
 			id: log.todoId,
 			title: log.todoTitle,
 			difficulty: log.difficulty,

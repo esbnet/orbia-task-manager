@@ -1,15 +1,22 @@
-import { PrismaTagRepository } from "@/infra/database/prisma/prisma-tag-repository";
 import { useQuery } from "@tanstack/react-query";
-
-const tagRepository = new PrismaTagRepository();
+import type { Tag } from "@/domain/entities/tag";
 
 export function useAnalyticsTags() {
-  return useQuery({
+  return useQuery<Tag[]>({
     queryKey: ["analytics-tags"],
     queryFn: async () => {
       try {
-        const tags = await tagRepository.list();
-        return tags;
+        const response = await fetch("/api/tags", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          return [];
+        }
+
+        const data = await response.json();
+        return Array.isArray(data?.tags) ? data.tags : [];
       } catch (error) {
         return [];
       }

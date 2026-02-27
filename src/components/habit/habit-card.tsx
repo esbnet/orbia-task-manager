@@ -32,10 +32,12 @@ const priorityColors = {
 	"Urgente": "border-red-300 text-red-600",
 };
 
-const statusColors = {
+const statusColors: Record<Habit["status"], string> = {
 	"Em Andamento": "bg-blue-50 text-blue-700 border border-blue-200",
 	"Completo": "bg-green-50 text-green-700 border border-green-200",
 	"Cancelado": "bg-gray-50 text-gray-700 border border-gray-200",
+	"active": "bg-blue-50 text-blue-700 border border-blue-200",
+	"archived": "bg-zinc-50 text-zinc-700 border border-zinc-200",
 };
 
 type DifficultyLevel = "Trivial" | "Fácil" | "Médio" | "Difícil";
