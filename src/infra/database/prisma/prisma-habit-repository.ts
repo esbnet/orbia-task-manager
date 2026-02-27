@@ -82,17 +82,8 @@ export class PrismaHabitRepository implements HabitRepository {
 	}
 
 	async toggleComplete(id: string): Promise<Habit> {
-		const userId = await getCurrentUserIdWithFallback();
-		if (!userId) throw new Error("User not authenticated");
-
-		const habit = await prisma.habit.findUnique({ where: { id, userId } });
-		if (!habit) throw new Error("Habit not found");
-
-		const updated = await prisma.habit.update({
-			where: { id, userId },
-			data: { lastCompletedDate: new Date().toISOString().split("T")[0] },
-		});
-		return this.toDomain(updated);
+		// Alias maintained for compatibility with existing use cases/services.
+		return this.markComplete(id);
 	}
 
 	async delete(id: string): Promise<void> {
@@ -143,8 +134,12 @@ export class PrismaHabitRepository implements HabitRepository {
 
 	// CompletableRepository methods
 	async markComplete(id: string): Promise<Habit> {
+		// Canonical completion method in the repository layer.
 		const userId = await getCurrentUserIdWithFallback();
 		if (!userId) throw new Error("User not authenticated");
+
+		const habit = await prisma.habit.findUnique({ where: { id, userId } });
+		if (!habit) throw new Error("Habit not found");
 
 		const updated = await prisma.habit.update({
 			where: { id, userId },

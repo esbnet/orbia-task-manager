@@ -1,5 +1,6 @@
 import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
 import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
+import { PrismaHabitLogRepository } from "@/infra/database/prisma/prisma-habit-log-repository";
 import { HttpGoalRepository } from "@/infra/repositories/http/http-goal-repository";
 import { DailyService } from "./daily-service";
 import { GoalService } from "./goal-service";
@@ -7,6 +8,7 @@ import { HabitService } from "./habit-service";
 // Dependency Injection Container
 import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
+import { PrismaTodoLogRepository } from "@/infra/database/prisma/prisma-todo-log-repository";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import { TodoService } from "./todo-service";
 
@@ -66,6 +68,20 @@ class ServiceContainer {
 		return this.repositories.get("dailyPeriod");
 	}
 
+	private getHabitLogRepository() {
+		if (!this.repositories.has("habitLog")) {
+			this.repositories.set("habitLog", new PrismaHabitLogRepository());
+		}
+		return this.repositories.get("habitLog");
+	}
+
+	private getTodoLogRepository() {
+		if (!this.repositories.has("todoLog")) {
+			this.repositories.set("todoLog", new PrismaTodoLogRepository());
+		}
+		return this.repositories.get("todoLog");
+	}
+
 	// Service getters with lazy initialization
 	getGoalService(): GoalService {
 		if (!this.services.goalService) {
@@ -76,14 +92,20 @@ class ServiceContainer {
 
 	getHabitService(): HabitService {
 		if (!this.services.habitService) {
-			this.services.habitService = new HabitService(this.getHabitRepository());
+			this.services.habitService = new HabitService(
+				this.getHabitRepository(),
+				this.getHabitLogRepository()
+			);
 		}
 		return this.services.habitService;
 	}
 
 	getTodoService(): TodoService {
 		if (!this.services.todoService) {
-			this.services.todoService = new TodoService(this.getTodoRepository());
+			this.services.todoService = new TodoService(
+				this.getTodoRepository(),
+				this.getTodoLogRepository()
+			);
 		}
 		return this.services.todoService;
 	}
@@ -122,5 +144,4 @@ const container = new ServiceContainer();
 export { container };
 
 // Export types for type safety
-    export type { ServiceRegistry };
-
+export type { ServiceRegistry };

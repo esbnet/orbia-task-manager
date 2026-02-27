@@ -21,6 +21,7 @@ export interface EntityService<TEntity extends BaseEntity, TFormData extends Bas
 // Generic repository interface
 export interface GenericRepository<T extends BaseEntity> {
 	list(): Promise<T[]>;
+	findById?(id: string): Promise<T | null>;
 	create(data: Omit<T, "id" | "createdAt" | "updatedAt">): Promise<T>;
 	update(entity: T): Promise<T>;
 	delete(id: string): Promise<void>;
@@ -42,9 +43,10 @@ export abstract class BaseEntityService<TEntity extends BaseEntity, TFormData ex
 	}
 
 	async update(id: string, data: Partial<TEntity>): Promise<TEntity> {
-		// Get current entity
-		const entities = await this.repository.list();
-		const currentEntity = entities.find((e) => e.id === id);
+		// Prefer direct lookup when the repository supports it; fallback to list for legacy repos.
+		const currentEntity = typeof this.repository.findById === "function"
+			? await this.repository.findById(id)
+			: (await this.repository.list()).find((e) => e.id === id) ?? null;
 		if (!currentEntity) {
 			throw new Error("Entity not found");
 		}

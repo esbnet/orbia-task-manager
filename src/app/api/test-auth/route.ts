@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
+  const debugEnabled =
+    process.env.NODE_ENV !== "production" || process.env.ENABLE_DEBUG_API === "true"
+  if (!debugEnabled) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
+
   return NextResponse.json({
     message: 'Auth API is working',
     env: {

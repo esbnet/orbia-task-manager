@@ -5,11 +5,20 @@ import { getCurrentUserId } from "@/hooks/use-current-user";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaTodoRepository implements TodoRepository {
-	findByUserId(userId: string): Promise<Todo[]> {
-		throw new Error("Method not implemented." + userId);
+	async findByUserId(userId: string): Promise<Todo[]> {
+		const todos = await prisma.todo.findMany({
+			where: { userId },
+			include: {
+				subtasks: {
+					orderBy: { order: "asc" },
+				},
+			},
+			orderBy: { order: "asc" },
+		});
+		return todos.map(this.toDomain);
 	}
-	deleteByUserId(userId: string): Promise<void> {
-		throw new Error("Method not implemented." + userId);
+	async deleteByUserId(userId: string): Promise<void> {
+		await prisma.todo.deleteMany({ where: { userId } });
 	}
 	async findById(id: string): Promise<Todo | null> {
 		const userId = await getCurrentUserId();
@@ -26,17 +35,41 @@ export class PrismaTodoRepository implements TodoRepository {
 
 		return todo ? this.toDomain(todo) : null;
 	}
-	markComplete(id: string): Promise<Todo> {
-		throw new Error("Method not implemented." + id);
+	async markComplete(id: string): Promise<Todo> {
+		return this.toggleComplete(id);
 	}
-	markIncomplete(id: string): Promise<Todo> {
-		throw new Error("Method not implemented." + id);
+	async markIncomplete(id: string): Promise<Todo> {
+		const userId = await getCurrentUserId();
+		if (!userId) throw new Error("User not authenticated");
+
+		const updated = await prisma.todo.update({
+			where: { id, userId },
+			data: { lastCompletedDate: null },
+		});
+		return this.toDomain(updated);
 	}
-	reorder(ids: string[]): Promise<void> {
-		throw new Error("Method not implemented." + ids);
+	async reorder(ids: string[]): Promise<void> {
+		const userId = await getCurrentUserId();
+		if (!userId) throw new Error("User not authenticated");
+
+		await Promise.all(
+			ids.map((id, index) =>
+				prisma.todo.update({
+					where: { id, userId },
+					data: { order: index },
+				})
+			)
+		);
 	}
-	moveToPosition(id: string, position: number): Promise<Todo> {
-		throw new Error("Method not implemented." + position + id);
+	async moveToPosition(id: string, position: number): Promise<Todo> {
+		const userId = await getCurrentUserId();
+		if (!userId) throw new Error("User not authenticated");
+
+		const updated = await prisma.todo.update({
+			where: { id, userId },
+			data: { order: position },
+		});
+		return this.toDomain(updated);
 	}
 	async findByTags(tags: string[]): Promise<Todo[]> {
 		const userId = await getCurrentUserId();

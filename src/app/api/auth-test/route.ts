@@ -3,6 +3,12 @@ import { auth } from '@/auth'
 
 export async function GET() {
   try {
+    const debugEnabled =
+      process.env.NODE_ENV !== "production" || process.env.ENABLE_DEBUG_API === "true"
+    if (!debugEnabled) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
     const session = await auth()
     
     return NextResponse.json({

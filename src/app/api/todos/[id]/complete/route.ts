@@ -1,11 +1,9 @@
-import { ToggleTodoUseCase } from "@/application/use-cases/todo/toggle-todo/toggle-todo-use-case";
-import { PrismaTodoLogRepository } from "@/infra/database/prisma/prisma-todo-log-repository";
-import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
+import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
+import { UseCaseFactory } from "@/infra/di/use-case-factory";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import { idSchema } from "@/infra/validation/schemas";
 import type { NextRequest } from "next/server";
-
-const todoRepo = new PrismaTodoRepository();
-const todoLogRepo = new PrismaTodoLogRepository();
-const toggleCompleteUseCase = new ToggleTodoUseCase(todoRepo, todoLogRepo);
+import { z } from "zod";
 
 /**
  * @swagger
@@ -26,16 +24,26 @@ const toggleCompleteUseCase = new ToggleTodoUseCase(todoRepo, todoLogRepo);
  *         description: Todo não encontrado
  */
 export async function POST(
-	request: NextRequest,
+	_request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const { id } = await params;
-		const result = await toggleCompleteUseCase.execute(id);
+		const validatedId = idSchema.parse(id);
+		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
+		const result = await UseCaseFactory.createToggleTodoUseCase().execute(sanitizedId);
 		return Response.json({ todo: result.todo });
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
 		return Response.json(
-			{ error: "Erro interno do servidor" },
+			{ error: error instanceof Error ? error.message : "Erro interno do servidor" },
 			{ status: 500 }
 		);
 	}

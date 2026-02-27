@@ -1,21 +1,20 @@
-import { RegisterHabitUseCase } from "@/application/use-cases/habit/register-habit-use-case/register-habit-use-case";
-import { PrismaHabitEntryRepository } from "@/infra/database/prisma/prisma-habit-entry-repository";
-import { PrismaHabitPeriodRepository } from "@/infra/database/prisma/prisma-habit-period-repository";
-import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
+import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
+import { UseCaseFactory } from "@/infra/di/use-case-factory";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { idSchema } from "@/infra/validation/schemas";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
-
-const habitRepository = new PrismaHabitRepository();
-const habitPeriodRepository = new PrismaHabitPeriodRepository();
-const habitEntryRepository = new PrismaHabitEntryRepository();
 
 export async function POST(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const { id } = await params;
 		const body = await request.json();
 
@@ -27,13 +26,7 @@ export async function POST(
 		});
 		const validatedBody = bodySchema.parse(body);
 
-		const useCase = new RegisterHabitUseCase(
-			habitRepository,
-			habitPeriodRepository,
-			habitEntryRepository
-		);
-
-		const result = await useCase.execute({
+		const result = await UseCaseFactory.createRegisterHabitUseCase().execute({
 			habitId: sanitizedId,
 			note: validatedBody.note ? String(validatedBody.note) : undefined,
 		});

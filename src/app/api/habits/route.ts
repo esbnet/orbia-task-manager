@@ -3,8 +3,9 @@ import { createHabitSchema, idSchema } from "@/infra/validation/schemas";
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
 import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
 import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
-import { ToggleCompleteUseCase as ToggleCompleteHabitUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
+import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
+import { UseCaseFactory } from "@/infra/di/use-case-factory";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { NextRequest } from "next/server";
@@ -73,6 +74,11 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const body = await request.json();
 		const validated = createHabitSchema.parse(body);
 
@@ -118,19 +124,26 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const body = await request.json();
 		const schema = z.object({ id: idSchema });
 		const validated = schema.parse(body);
 		const sanitizedId = InputSanitizer.sanitizeId(validated.id);
 
-		const useCase = new ToggleCompleteHabitUseCase(habitRepository);
-		await useCase.execute(sanitizedId);
+		await UseCaseFactory.createToggleCompleteHabitUseCase().execute(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 });
 		}
-		return Response.json({ error: "Internal server error" }, { status: 500 });
+		return Response.json(
+			{ error: error instanceof Error ? error.message : "Internal server error" },
+			{ status: 500 }
+		);
 	}
 }
 
@@ -154,10 +167,37 @@ export async function PUT(request: NextRequest) {
  *         description: Hábito atualizado
  */
 export async function PATCH(request: NextRequest) {
-	const { habit } = await request.json();
-	const useCase = new UpdateHabitUseCase(habitRepository);
-	const updatedHabit = await useCase.execute(habit);
-	return Response.json({ habit: updatedHabit }, { status: 200 });
+	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
+		const body = await request.json();
+		const schema = z.object({
+			habit: z.object({
+				id: idSchema,
+			}).passthrough(),
+		});
+		const validated = schema.parse(body);
+
+		const sanitizedId = InputSanitizer.sanitizeId(validated.habit.id);
+		const useCase = new UpdateHabitUseCase(habitRepository);
+		const updatedHabit = await useCase.execute({
+			...validated.habit,
+			id: sanitizedId,
+		});
+
+		return Response.json({ habit: updatedHabit }, { status: 200 });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json(
+			{ error: error instanceof Error ? error.message : "Internal server error" },
+			{ status: 500 }
+		);
+	}
 }
 
 /**
@@ -179,14 +219,32 @@ export async function PATCH(request: NextRequest) {
  *         description: ID obrigatório
  */
 export async function DELETE(request: NextRequest) {
-	const url = new URL(request.url);
-	const id = url.searchParams.get("id");
+	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
 
-	if (!id) {
-		return Response.json({ error: "ID is required" }, { status: 400 });
+		const url = new URL(request.url);
+		const id = url.searchParams.get("id");
+
+		if (!id) {
+			return Response.json({ error: "ID is required" }, { status: 400 });
+		}
+
+		const validatedId = idSchema.parse(id);
+		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
+
+		const useCase = new DeleteHabitUseCase(habitRepository);
+		await useCase.execute(sanitizedId);
+		return new Response(null, { status: 204 });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return Response.json({ error: error.issues }, { status: 400 });
+		}
+		return Response.json(
+			{ error: error instanceof Error ? error.message : "Internal server error" },
+			{ status: 500 }
+		);
 	}
-
-	const useCase = new DeleteHabitUseCase(habitRepository);
-	await useCase.execute(id);
-	return new Response(null, { status: 204 });
 }

@@ -1,19 +1,14 @@
 import { createTodoSchema, idSchema } from "@/infra/validation/schemas";
 
-import { CreateTodoUseCase } from "@/application/use-cases/todo/create-todo/create-todo-use-case";
-import { DeleteTodoUseCase } from "@/application/use-cases/todo/delete-todo/delete-todo-use-case";
-import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
-import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
+import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
+import { UseCaseFactory } from "@/infra/di/use-case-factory";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
 // Instâncias únicas
 const todoRepo = new PrismaTodoRepository();
-const listTodosUseCase = new ListTodosUseCase(todoRepo);
-const createTodoUseCase = new CreateTodoUseCase(todoRepo);
-const updateTodoUseCase = new UpdateTodoUseCase(todoRepo);
-const deleteTodoUseCase = new DeleteTodoUseCase(todoRepo);
 
 /**
  * @swagger
@@ -27,7 +22,12 @@ const deleteTodoUseCase = new DeleteTodoUseCase(todoRepo);
  */
 export async function GET() {
 	try {
-		const result = await listTodosUseCase.execute();
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
+		const result = await UseCaseFactory.createListTodosUseCase().execute();
 		return Response.json({ todos: result.todos });
 	} catch (error) {
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
@@ -73,6 +73,11 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const body = await request.json();
 		const validated = createTodoSchema.omit({ userId: true }).parse(body);
 		
@@ -89,7 +94,7 @@ export async function POST(request: NextRequest) {
 			createdAt: new Date(),
 		};
 
-		const result = await createTodoUseCase.execute(sanitizedInput);
+		const result = await UseCaseFactory.createCreateTodoUseCase().execute(sanitizedInput);
 		return Response.json(result, { status: 201 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -140,10 +145,16 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const body = await request.json();
 		const validated = createTodoSchema.partial().extend({ id: idSchema }).parse(body);
+		const sanitizedId = InputSanitizer.sanitizeId(validated.id);
 		
-		const existing = await todoRepo.findById(validated.id!);
+		const existing = await todoRepo.findById(sanitizedId);
 		if (!existing) {
 			return Response.json({ error: "Todo not found" }, { status: 404 });
 		}
@@ -160,12 +171,12 @@ export async function PATCH(request: NextRequest) {
 		const todoData = { 
 			...existing, 
 			...sanitizedUpdate,
-			id: String(validated.id),
+			id: sanitizedId,
 			// Ensure we're passing a primitive (string) todoType to the use case,
 			// not a TodoTypeValueObject instance.
 			todoType: (existing as any)?.todoType?.getValue?.() ?? (existing as any)?.todoType,
 		};
-		const updatedTodo = await updateTodoUseCase.execute(todoData);
+		const updatedTodo = await UseCaseFactory.createUpdateTodoUseCase().execute(todoData);
 		return Response.json({ todo: updatedTodo }, { status: 200 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -198,6 +209,11 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
 	try {
+		const userId = await getCurrentUserIdWithFallback();
+		if (!userId) {
+			return Response.json({ error: "Não autorizado" }, { status: 401 });
+		}
+
 		const url = new URL(request.url);
 		const id = url.searchParams.get("id");
 
@@ -206,7 +222,8 @@ export async function DELETE(request: NextRequest) {
 		}
 
 		const validatedId = idSchema.parse(id);
-		await deleteTodoUseCase.execute(validatedId);
+		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
+		await UseCaseFactory.createDeleteTodoUseCase().execute(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {

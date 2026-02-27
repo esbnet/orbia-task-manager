@@ -194,6 +194,19 @@ A codebase tem uma base arquitetural forte, mas com **estilos coexistindo**.
 
 Em resumo: a direção arquitetural é correta, mas a consolidação ainda não está completa.
 
+### Atualização de status (após refactors executados)
+
+Desde a criação desta visão, alguns pontos já foram parcialmente endereçados:
+
+- `src/app/api/dailies/*` foi consolidado como alias de `src/app/api/daily/*` (redução de duplicação de rotas)
+- `src/app/api/daily/available/route.ts` passou a usar `UseCaseFactory` + `ReactivateDailyPeriodsUseCase` + `GetAvailableDailiesUseCase`
+- fluxo de conclusão de daily foi consolidado nas rotas para usar `DailyApplicationService`
+- `DailyApplicationService.completeDaily()` passou a concentrar a orquestração principal (período + log + próximo período)
+- `PrismaDailyRepository.markComplete()` foi reduzido para caminho legado/minimalista
+- rotas de `habits` e `todos` receberam endurecimento de `auth`, sanitização de IDs e padronização de erros
+- `UseCaseFactory` e `src/infra/di/container.ts` foram ampliados para cobrir mais casos de `habit` e `todo`
+- rotas de debug/migração (`debug-session`, `auth-test`, `test-auth`, `migrate-*`) receberam guardrails por ambiente (`ENABLE_DEBUG_API`, `ENABLE_MIGRATION_API`)
+
 ## Autenticação e Segurança
 
 ### NextAuth
@@ -345,12 +358,12 @@ Isso é um ponto forte: o repositório preserva contexto de decisões e refatora
 
 ## Pontos de Atenção / Dívida Técnica
 
-- **Coexistência de rotas duplicadas** (`/api/daily/*` e `/api/dailies/*`) pode gerar divergência funcional
+- **Coexistência de rotas duplicadas** (`/api/daily/*` e `/api/dailies/*`) ainda existe no namespace, embora os handlers de `dailies` já estejam reexportando/aliasando `daily` em pontos-chave
 - **Lógica de negócio em rotas** ainda aparece em alguns endpoints (ex.: disponibilidade de dailies)
-- **Regra de negócio/orquestração em repositórios Prisma** em alguns casos, reduzindo pureza da separação por camadas
+- **Regra de negócio/orquestração em repositórios Prisma** ainda existe em alguns casos, embora o fluxo principal de `daily` tenha sido movido para `DailyApplicationService`
 - **Fallback temporário de usuário (`temp-dev-user`)** pode mascarar bugs de autenticação
 - **Mistura de estilos de composição** (factory, instanciação direta, application service) aumenta custo cognitivo
-- **Rotas experimentais/admin** convivendo com rotas de produto sem separação explícita de ciclo de vida
+- **Rotas experimentais/admin** convivem com rotas de produto, agora com guardrails básicos por ambiente, mas ainda sem uma política de ciclo de vida/documentação centralizada
 
 ## Observações de Atualização
 
@@ -360,4 +373,3 @@ Isso é um ponto forte: o repositório preserva contexto de decisões e refatora
   - código atual está em **Next.js 15.3.6**
   - código atual usa **React 19**
 - Para consultas futuras, esta visão deve ser considerada mais fiel ao estado atual da implementação do que o README (até que o README seja atualizado).
-
