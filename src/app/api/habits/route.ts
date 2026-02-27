@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 		const validated = createHabitSchema.parse(body);
 
 		const sanitizedInput = {
+			userId,
 			title: String(validated.title),
 			observations: String(validated.description || ""),
 			difficulty: validated.difficulty,
@@ -182,10 +183,41 @@ export async function PATCH(request: NextRequest) {
 		const validated = schema.parse(body);
 
 		const sanitizedId = InputSanitizer.sanitizeId(validated.habit.id);
+		const existingHabit = await habitRepository.findById(sanitizedId);
+		if (!existingHabit) {
+			return Response.json({ error: "Hábito não encontrado" }, { status: 404 });
+		}
+
+		const habitPatch = validated.habit as Partial<typeof existingHabit>;
 		const useCase = new UpdateHabitUseCase(habitRepository);
 		const updatedHabit = await useCase.execute({
-			...validated.habit,
 			id: sanitizedId,
+			userId,
+			title: String(habitPatch.title ?? existingHabit.title),
+			observations: String(
+				habitPatch.observations ?? existingHabit.observations ?? ""
+			),
+			difficulty: (habitPatch.difficulty ??
+				existingHabit.difficulty) as typeof existingHabit.difficulty,
+			status: (habitPatch.status ??
+				existingHabit.status) as typeof existingHabit.status,
+			priority: (habitPatch.priority ??
+				existingHabit.priority) as typeof existingHabit.priority,
+			tags: Array.isArray(habitPatch.tags)
+				? habitPatch.tags.map(String)
+				: existingHabit.tags,
+			reset: (habitPatch.reset ??
+				existingHabit.reset) as typeof existingHabit.reset,
+			createdAt: existingHabit.createdAt,
+			updatedAt: new Date(),
+			order:
+				typeof habitPatch.order === "number"
+					? habitPatch.order
+					: existingHabit.order,
+			lastCompletedDate:
+				typeof habitPatch.lastCompletedDate === "string"
+					? habitPatch.lastCompletedDate
+					: existingHabit.lastCompletedDate,
 		});
 
 		return Response.json({ habit: updatedHabit }, { status: 200 });

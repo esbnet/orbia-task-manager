@@ -35,7 +35,9 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 	// Habit-specific methods
 	async completeHabit(habitId: string): Promise<{ habit: Habit; log?: HabitLog }> {
 		try {
-			const habit = await this.repository.findById(habitId);
+			const habit = typeof this.repository.findById === "function"
+				? await this.repository.findById(habitId)
+				: (await this.repository.list()).find((h) => h.id === habitId) ?? null;
 			if (!habit) {
 				throw new Error("Habit not found");
 			}
@@ -65,7 +67,11 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 			const habitRepo = this.repository as HabitRepository;
 			const useCase = new ToggleCompleteUseCase(habitRepo);
 			const result = await useCase.execute(habitId);
-			return result.habit;
+			return {
+				...result.habit,
+				currentPeriod: result.habit.currentPeriod ?? null,
+				todayEntries: result.habit.todayEntries ?? 0,
+			};
 		} catch (error) {
 			return handleServiceError(error, "alternar status do hábito");
 		}

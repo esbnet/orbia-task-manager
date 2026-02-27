@@ -28,6 +28,7 @@ export class CompleteDailyUseCase {
       dailyTitle: daily.title,
       difficulty: daily.difficulty,
       tags: daily.tags,
+      status: "success",
       completedAt: new Date(),
     });
 

@@ -1,16 +1,5 @@
-export type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
-
-export type TodoReset = "Diária" | "Semanal" | "Mensal";
+import type { Todo } from "@/domain/entities/todo";
 
 export type TodoOutput = {
-	todo: {
-		id: string;
-		title: string;
-		observations: string;
-		tasks: string[];
-		difficulty: TodoDifficulty;
-		startDate: Date;
-		tags: string[];
-		createdAt: Date;
-	};
+	todo: Todo;
 };

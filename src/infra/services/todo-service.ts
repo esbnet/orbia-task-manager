@@ -45,7 +45,9 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 	// Todo-specific methods
 	async completeTodo(todoId: string): Promise<{ todo: Todo; log?: TodoLog }> {
 		try {
-			const todo = await this.repository.findById(todoId);
+			const todo = typeof this.repository.findById === "function"
+				? await this.repository.findById(todoId)
+				: (await this.repository.list()).find((t) => t.id === todoId) ?? null;
 			if (!todo) {
 				throw new Error("Todo not found");
 			}
