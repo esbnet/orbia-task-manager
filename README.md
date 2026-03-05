@@ -360,3 +360,5 @@ npm run db:push:prod
 ✅ Recursos avançados: Arrays, JSON, etc. em desenvolvimento
 ✅ Paridade: Mesmo comportamento local e produção
 ✅ Alternância fácil: Scripts automatizados
+
+teste
