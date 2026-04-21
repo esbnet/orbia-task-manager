@@ -1,8 +1,4 @@
-import { DailyApplicationService } from "@/application/services/daily-application-service";
 import { FetchTodoHttpAdapter } from "@/infra/adapters/http/todo-http-adapter";
-import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
-import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
-import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import { PrismaHabitEntryRepository } from "@/infra/database/prisma/prisma-habit-entry-repository";
 import { PrismaHabitPeriodRepository } from "@/infra/database/prisma/prisma-habit-period-repository";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
@@ -37,27 +33,6 @@ class DIContainer {
       this.instances.set('todoRepository', new TodoRepositoryImpl(this.getTodoHttpAdapter()));
     }
     return this.instances.get('todoRepository');
-  }
-
-  getDailyRepository() {
-    if (!this.instances.has('dailyRepository')) {
-      this.instances.set('dailyRepository', new PrismaDailyRepository());
-    }
-    return this.instances.get('dailyRepository');
-  }
-
-  getDailyLogRepository() {
-    if (!this.instances.has('dailyLogRepository')) {
-      this.instances.set('dailyLogRepository', new PrismaDailyLogRepository());
-    }
-    return this.instances.get('dailyLogRepository');
-  }
-
-  getDailyPeriodRepository() {
-    if (!this.instances.has('dailyPeriodRepository')) {
-      this.instances.set('dailyPeriodRepository', new PrismaDailyPeriodRepository());
-    }
-    return this.instances.get('dailyPeriodRepository');
   }
 
   getHabitRepository() {
@@ -100,18 +75,6 @@ class DIContainer {
       this.instances.set('prismaTodoRepository', new PrismaTodoRepository());
     }
     return this.instances.get('prismaTodoRepository');
-  }
-
-  // Application Services
-  getDailyApplicationService() {
-    if (!this.instances.has('dailyApplicationService')) {
-      this.instances.set('dailyApplicationService', new DailyApplicationService(
-        this.getDailyRepository(),
-        this.getDailyLogRepository(),
-        this.getDailyPeriodRepository()
-      ));
-    }
-    return this.instances.get('dailyApplicationService');
   }
 
   // Clear instances (useful for testing)

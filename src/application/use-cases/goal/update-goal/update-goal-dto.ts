@@ -5,5 +5,5 @@ export interface UpdateGoalDto {
 	targetDate?: Date;
 	priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 	tags?: string[];
-	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
+	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "todo" }>;
 }

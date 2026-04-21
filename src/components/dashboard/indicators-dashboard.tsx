@@ -25,7 +25,6 @@ import {
 
 import { useGoals } from "@/contexts/goal-context";
 import { useActiveTasks } from "@/hooks/use-active-tasks";
-import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useHabits } from "@/hooks/use-habits";
 import { useHabitsAnalytics } from "@/hooks/use-habits-analytics";
 import { useTodos } from "@/hooks/use-todos";
@@ -34,7 +33,6 @@ import { useMemo } from "react";
 export function IndicatorsDashboard() {
     const { data: habits } = useHabits();
     const { data: habitsAnalytics } = useHabitsAnalytics("week");
-    const { data: dailiesData } = useAvailableDailies();
     const { data: todos } = useTodos();
     const { goals } = useGoals();
     const { data: activeTasks } = useActiveTasks();
@@ -57,11 +55,6 @@ export function IndicatorsDashboard() {
         const totalTodos = recentTodos.length;
         const pendingTodos = activeTodos.length; // Mostrar tarefas ativas pendentes
 
-        // Dados de dailies - já vem do banco com lógica de disponibilidade
-        const completedDailies = dailiesData?.completedToday?.length || 0;
-        const totalDailies = dailiesData?.availableDailies?.length || 0;
-        const availableDailies = totalDailies - completedDailies;
-
         // Dados de hábitos - usar analytics do banco para maior precisão
         const activeHabits = habitsAnalytics?.activeHabits || 0;
         const habitCompletionRate = habitsAnalytics?.completionRate || 0;
@@ -80,12 +73,6 @@ export function IndicatorsDashboard() {
             return sum + (isCompleted ? 10 * difficultyMultiplier : 0);
         }, 0);
 
-        const dailyPoints = (dailiesData?.completedToday || []).reduce((sum, daily) => {
-            const difficultyMultiplier = daily.difficulty === 'Difícil' ? 3 :
-                daily.difficulty === 'Médio' ? 2 : 1;
-            return sum + (15 * difficultyMultiplier);
-        }, 0);
-
         // Pontos de hábitos baseados em streaks e consistência
         const habitPoints = habitsAnalytics?.currentStreaks?.reduce((sum, streak) => {
             const streakBonus = Math.min(streak.streakDays, 30); // Máximo 30 dias de bônus
@@ -101,12 +88,10 @@ export function IndicatorsDashboard() {
         }, 0);
 
         // Bônus por completar todas as tarefas do dia (incluindo metas)
-        const allTasksCompleted = (completedTodos === totalTodos && totalTodos > 0) ||
-            (completedDailies === totalDailies && totalDailies > 0) ||
-            completedGoals.length > 0;
+        const allTasksCompleted = (completedTodos === totalTodos && totalTodos > 0) || completedGoals.length > 0;
         const completionBonus = allTasksCompleted ? 50 : 0;
 
-        const totalPoints = todoPoints + dailyPoints + habitPoints + goalPoints + completionBonus;
+        const totalPoints = todoPoints + habitPoints + goalPoints + completionBonus;
 
         // Calcular streak universal baseado em todos os tipos de tarefas
         const today = new Date();
@@ -118,12 +103,7 @@ export function IndicatorsDashboard() {
         // Coletar todas as datas de atividades dos 4 tipos de tarefas
         const activityDates: Date[] = [];
 
-        // 1. Diárias concluídas hoje
-        if (dailiesData?.completedToday && dailiesData.completedToday.length > 0) {
-            activityDates.push(today);
-        }
-
-        // 2. Todos concluídos (última conclusão)
+        // 1. Todos concluídos (última conclusão)
         const completedTodosList = allTodos.filter(todo => todo.lastCompletedDate);
         completedTodosList.forEach(todo => {
             const completedDate = new Date(todo.lastCompletedDate!);
@@ -133,7 +113,7 @@ export function IndicatorsDashboard() {
             }
         });
 
-        // 3. Hábitos (dos streaks existentes)
+        // 2. Hábitos (dos streaks existentes)
         if (habitsAnalytics?.currentStreaks) {
             habitsAnalytics.currentStreaks.forEach(streak => {
                 // Adicionar os últimos dias do streak
@@ -147,7 +127,7 @@ export function IndicatorsDashboard() {
             });
         }
 
-        // 4. Metas concluídas
+        // 3. Metas concluídas
         completedGoals.forEach(goal => {
             const completedDate = new Date(goal.updatedAt);
             completedDate.setHours(0, 0, 0, 0);
@@ -178,33 +158,31 @@ export function IndicatorsDashboard() {
 
         // Taxa de conclusão ponderada por tipo de tarefa (incluindo metas)
         const weightedCompletionRate = (() => {
-            const todoWeight = 0.3;
-            const dailyWeight = 0.3;
-            const habitWeight = 0.2;
-            const goalWeight = 0.2;
+            const todoWeight = 0.4;
+            const habitWeight = 0.3;
+            const goalWeight = 0.3;
 
             const todoRate = totalTodos > 0 ? (completedTodos / totalTodos) : 0;
-            const dailyRate = totalDailies > 0 ? (completedDailies / totalDailies) : 0;
             const habitRate = habitCompletionRate / 100;
             const goalRate = completedGoalsRate / 100;
 
-            return (todoRate * todoWeight + dailyRate * dailyWeight + habitRate * habitWeight + goalRate * goalWeight) * 100;
+            return (todoRate * todoWeight + habitRate * habitWeight + goalRate * goalWeight) * 100;
         })();
 
         // Calcular produtividade geral baseada em atividades reais
         const generalProductivity = (() => {
-            const totalActivities = completedTodos + completedDailies + completedGoals.length;
-            const totalPossibleActivities = totalTodos + totalDailies + totalGoals;
+            const totalActivities = completedTodos + completedGoals.length;
+            const totalPossibleActivities = totalTodos + totalGoals;
             return totalPossibleActivities > 0 ? (totalActivities / totalPossibleActivities) * 100 : 0;
         })();
 
         // Calcular métricas gerais incluindo todas as tarefas ativas
         const allActiveTodos = allTodos.filter(todo => !todo.lastCompletedDate).length;
-        const totalActiveTasks = allActiveTodos + availableDailies;
+        const totalActiveTasks = allActiveTodos;
 
         return {
-            completedTasks: completedTodos + completedDailies,
-            totalTasks: totalTodos + totalDailies, // Métricas baseadas em tarefas recentes
+            completedTasks: completedTodos,
+            totalTasks: totalTodos, // Métricas baseadas em tarefas recentes
             pendingTasks: totalActiveTasks, // Mostrar tarefas ativas pendentes
             dailyScore: totalPoints,
             activeStreak,
@@ -214,12 +192,11 @@ export function IndicatorsDashboard() {
             inProgressGoals,
             breakdown: {
                 todos: { completed: completedTodos, total: totalTodos, rate: totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0 },
-                dailies: { completed: completedDailies, total: totalDailies, rate: totalDailies > 0 ? (completedDailies / totalDailies) * 100 : 0 },
                 habits: { active: activeHabits, completionRate: habitCompletionRate },
                 goals: { completed: completedGoals.length, total: totalGoals, rate: completedGoalsRate }
             }
         };
-    }, [todos, dailiesData, habitsAnalytics, goals]);
+    }, [todos, habitsAnalytics, goals]);
 
     // Dados para gráficos de hábitos
     const habitsChartData = useMemo(() => {
@@ -365,7 +342,6 @@ export function IndicatorsDashboard() {
                             </p>
                             <div className="flex flex-wrap gap-4 mt-2 text-yellow-700 text-xs">
                                 <span>✅ Todos: {dailySummary.breakdown.todos.completed}/{dailySummary.breakdown.todos.total}</span>
-                                <span>📅 Diárias: {dailySummary.breakdown.dailies.completed}/{dailySummary.breakdown.dailies.total}</span>
                                 <span>🏃 Hábitos: {dailySummary.breakdown.habits.completionRate.toFixed(0)}%</span>
                                 <span>🎯 Metas: {dailySummary.breakdown.goals.completed}/{dailySummary.breakdown.goals.total}</span>
                             </div>

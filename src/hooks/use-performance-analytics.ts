@@ -59,7 +59,6 @@ export interface PerformanceAnalyticsData {
   difficultyAnalysis: DifficultyAnalysis[];
   completionLogs: {
     habits: CompletionLog[];
-    dailies: CompletionLog[];
     todos: CompletionLog[];
     goals: CompletionLog[];
   };
@@ -82,7 +81,7 @@ export interface CompletionLog {
   completedAt: string;
   difficulty?: string;
   tags?: string[];
-  type: "habit" | "daily" | "todo" | "goal";
+  type: "habit" | "todo" | "goal";
 }
 
 export function usePerformanceAnalytics(timeRange: "week" | "month" | "quarter" = "month") {

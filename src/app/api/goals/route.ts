@@ -274,13 +274,13 @@ export async function POST(request: NextRequest) {
 		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
 
 		// Validação de tarefas anexadas
-		let validatedAttachedTasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }> = [];
+		let validatedAttachedTasks: Array<{ taskId: string; taskType: "habit" | "todo" }> = [];
 		if (attachedTasks && Array.isArray(attachedTasks)) {
 			validatedAttachedTasks = attachedTasks.filter(task =>
 				task &&
 				typeof task.taskId === "string" &&
 				typeof task.taskType === "string" &&
-				["habit", "daily", "todo"].includes(task.taskType)
+				["habit", "todo"].includes(task.taskType)
 			);
 		}
 

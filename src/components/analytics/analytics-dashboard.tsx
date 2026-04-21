@@ -28,7 +28,6 @@ import {
 } from "recharts";
 
 import { useGoals } from "@/contexts/goal-context";
-import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useHabitsAnalytics, type HabitAnalyticsData } from "@/hooks/use-habits-analytics";
 import { useTodos } from "@/hooks/use-todos";
 import { ptBR } from "date-fns/locale";
@@ -54,12 +53,6 @@ interface AnalyticsData {
 	pendingTodos: number;
 	todosCompletionRate: number;
 
-	// Dailies data
-	totalDailies: number;
-	completedDailies: number;
-	availableDailies: number;
-	dailiesCompletionRate: number;
-
 	// Consolidated metrics
 	totalTasks: number;
 	completedTasks: number;
@@ -71,7 +64,6 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 export function AnalyticsDashboard() {
 	const { goals } = useGoals();
 	const { data: todos } = useTodos();
-	const { data: dailiesData } = useAvailableDailies();
 	const [timeRange, setTimeRange] = useState<
 		"week" | "month" | "quarter" | "year"
 	>("month");
@@ -137,16 +129,9 @@ export function AnalyticsDashboard() {
 		const todosCompletionRate =
 			totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0;
 
-		// Dailies analytics
-		const availableDailies = dailiesData?.availableDailies?.length || 0;
-		const completedDailies = dailiesData?.completedToday?.length || 0;
-		const totalDailies = availableDailies + completedDailies;
-		const dailiesCompletionRate =
-			totalDailies > 0 ? (completedDailies / totalDailies) * 100 : 0;
-
 		// Consolidated metrics
-		const totalTasks = totalGoals + totalTodos + totalDailies;
-		const completedTasks = completedGoals + completedTodos + completedDailies;
+		const totalTasks = totalGoals + totalTodos;
+		const completedTasks = completedGoals + completedTodos;
 		const overallCompletionRate =
 			totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
@@ -164,15 +149,11 @@ export function AnalyticsDashboard() {
 			completedTodos,
 			pendingTodos,
 			todosCompletionRate,
-			totalDailies,
-			completedDailies,
-			availableDailies,
-			dailiesCompletionRate,
 			totalTasks,
 			completedTasks,
 			overallCompletionRate,
 		});
-	}, [timeRange, goals, todos, dailiesData]);
+	}, [timeRange, goals, todos]);
 
 	useEffect(() => {
 		if (goals.length > 0) {
@@ -385,17 +366,17 @@ export function AnalyticsDashboard() {
 				<Card>
 					<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
 						<CardTitle className="font-medium text-sm">
-							Dailies Hoje
+							Todos no Período
 						</CardTitle>
 						<AlertTriangle className="w-4 h-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
 						<div className="font-bold text-2xl">
-							{analyticsData.dailiesCompletionRate.toFixed(1)}%
+							{analyticsData.todosCompletionRate.toFixed(1)}%
 						</div>
 						<p className="text-muted-foreground text-xs">
-							{analyticsData.completedDailies} de{" "}
-							{analyticsData.totalDailies} concluídos
+							{analyticsData.completedTodos} de{" "}
+							{analyticsData.totalTodos} concluídos
 						</p>
 					</CardContent>
 				</Card>
@@ -563,23 +544,6 @@ export function AnalyticsDashboard() {
 						<Card>
 							<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
 								<CardTitle className="font-medium text-sm">
-									Dailies
-								</CardTitle>
-								<Clock className="w-4 h-4 text-muted-foreground" />
-							</CardHeader>
-							<CardContent>
-								<div className="font-bold text-2xl">
-									{analyticsData.totalDailies}
-								</div>
-								<p className="text-muted-foreground text-xs">
-									{analyticsData.dailiesCompletionRate.toFixed(1)}% concluídos
-								</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
-								<CardTitle className="font-medium text-sm">
 									Hábitos
 								</CardTitle>
 								<AlertTriangle className="w-4 h-4 text-muted-foreground" />
@@ -615,12 +579,6 @@ export function AnalyticsDashboard() {
 											total: analyticsData.totalTodos,
 											completed: analyticsData.completedTodos,
 											rate: analyticsData.todosCompletionRate,
-										},
-										{
-											category: "Dailies",
-											total: analyticsData.totalDailies,
-											completed: analyticsData.completedDailies,
-											rate: analyticsData.dailiesCompletionRate,
 										},
 										{
 											category: "Hábitos",
@@ -767,7 +725,6 @@ export function AnalyticsDashboard() {
 										...trend,
 										habitsEntries: habitsAnalytics?.weeklyTrends[index]?.totalEntries || 0,
 										todosCompleted: Math.floor(analyticsData.totalTodos * (trend.completed / trend.goals || 0)),
-										dailiesCompleted: Math.floor(analyticsData.totalDailies * 0.7), // Mock data for dailies
 									}))}
 								>
 									<CartesianGrid strokeDasharray="3 3" />
@@ -797,12 +754,6 @@ export function AnalyticsDashboard() {
 										dataKey="todosCompleted"
 										stroke="#FF8042"
 										name="Todos Concluídos"
-									/>
-									<Line
-										type="monotone"
-										dataKey="dailiesCompleted"
-										stroke="#00C49F"
-										name="Dailies Concluídos"
 									/>
 								</LineChart>
 							</ResponsiveContainer>

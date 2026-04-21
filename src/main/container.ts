@@ -1,10 +1,5 @@
-import type { DailyRepository, HabitRepository, TagRepository, TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
+import type { HabitRepository, TagRepository, TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
 
-import { CreateDailyUseCase } from "@/application/use-cases/daily/create-daily/create-daily-use-case";
-import { DeleteDailyUseCase } from "@/application/use-cases/daily/delete-daily/delete-daily-use-case";
-import { ListDailyUseCase as ListDailiesUseCase } from "@/application/use-cases/daily/list-daily/list-daily-use-case";
-import { ToggleCompleteUseCase as ToggleCompleteDailyUseCase } from "@/application/use-cases/daily/toggle-complete-daily/toggle-complete-daily-use-case";
-import { UpdateDailyUseCase } from "@/application/use-cases/daily/update-daily/update-daily-use-case";
 import { CreateGoalUseCase } from "@/application/use-cases/goal/create-goal/create-goal-use-case";
 import { ListGoalsUseCase } from "@/application/use-cases/goal/list-goals/list-goals-use-case";
 import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
@@ -22,7 +17,6 @@ import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-to
 import { ToggleTodoUseCase } from "@/application/use-cases/todo/toggle-todo/toggle-todo-use-case";
 import { UpdateTodoUseCase } from "@/application/use-cases/todo/update-todo/update-todo-use-case";
 import type { GoalRepository } from "@/domain/repositories/goal-repository";
-import { ApiDailyRepository } from "@/infra/repositories/http/api-daily-repository";
 import { ApiHabitRepository } from "@/infra/repositories/http/api-habit-repository";
 import { ApiTodoLogRepository } from "@/infra/repositories/http/api-todo-log-repository";
 import { ApiTodoRepository } from "@/infra/repositories/http/api-todo-repository";
@@ -54,7 +48,6 @@ export class DIContainer {
 		this.repositories.set("habitRepository", new ApiHabitRepository());
 		this.repositories.set("todoRepository", new ApiTodoRepository());
 		this.repositories.set("todoLogRepository", new ApiTodoLogRepository());
-		this.repositories.set("dailyRepository", new ApiDailyRepository());
 		this.repositories.set("goalRepository", new HttpGoalRepository());
 		// Tag repository can be added when implemented
 	}
@@ -73,13 +66,6 @@ export class DIContainer {
 		this.useCases.set("updateTodoUseCase", new UpdateTodoUseCase(this.getTodoRepository()));
 		this.useCases.set("deleteTodoUseCase", new DeleteTodoUseCase(this.getTodoRepository()));
 		this.useCases.set("toggleTodoUseCase", new ToggleTodoUseCase(this.getTodoRepository(), {} as any));
-
-		// Daily Use Cases
-		this.useCases.set("createDailyUseCase", new CreateDailyUseCase(this.getDailyRepository()));
-		this.useCases.set("listDailiesUseCase", new ListDailiesUseCase(this.getDailyRepository()));
-		this.useCases.set("updateDailyUseCase", new UpdateDailyUseCase(this.getDailyRepository()));
-		this.useCases.set("deleteDailyUseCase", new DeleteDailyUseCase(this.getDailyRepository()));
-		this.useCases.set("toggleCompleteDailyUseCase", new ToggleCompleteDailyUseCase(this.getDailyRepository()));
 
 		// Tag Use Cases
 		this.useCases.set("createTagUseCase", new CreateTagUseCase(this.getTagRepository()));
@@ -103,10 +89,6 @@ export class DIContainer {
 
 	public getTodoLogRepository(): TodoLogRepository {
 		return this.repositories.get("todoLogRepository");
-	}
-
-	public getDailyRepository(): DailyRepository {
-		return this.repositories.get("dailyRepository");
 	}
 
 	public getTagRepository(): TagRepository {
@@ -156,26 +138,6 @@ export class DIContainer {
 
 	public getToggleTodoUseCase(): ToggleTodoUseCase {
 		return this.useCases.get("toggleTodoUseCase");
-	}
-
-	public getCreateDailyUseCase(): CreateDailyUseCase {
-		return this.useCases.get("createDailyUseCase");
-	}
-
-	public getListDailiesUseCase(): ListDailiesUseCase {
-		return this.useCases.get("listDailiesUseCase");
-	}
-
-	public getUpdateDailyUseCase(): UpdateDailyUseCase {
-		return this.useCases.get("updateDailyUseCase");
-	}
-
-	public getDeleteDailyUseCase(): DeleteDailyUseCase {
-		return this.useCases.get("deleteDailyUseCase");
-	}
-
-	public getToggleCompleteDailyUseCase(): ToggleCompleteDailyUseCase {
-		return this.useCases.get("toggleCompleteDailyUseCase");
 	}
 
 	public getCreateTagUseCase(): CreateTagUseCase {

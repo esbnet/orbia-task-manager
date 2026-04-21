@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 
 interface TimeEntry {
   taskId: string;
-  taskType: "habit" | "daily" | "todo" | "goal";
+  taskType: "habit" | "todo" | "goal";
   category: string;
   duration: number; // em segundos
   date: Date;
@@ -30,10 +30,10 @@ interface TimeEntry {
  *             properties:
  *               taskId:
  *                 type: string
- *                 description: ID da tarefa - habit, daily, todo ou goal
+ *                 description: ID da tarefa - habit, todo ou goal
  *               taskType:
  *                 type: string
- *                 enum: [habit, daily, todo, goal]
+ *                 enum: [habit, todo, goal]
  *               category:
  *                 type: string
  *                 description: Categoria da tarefa
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!taskType || !["habit", "daily", "todo", "goal"].includes(taskType)) {
+    if (!taskType || !["habit", "todo", "goal"].includes(taskType)) {
       return NextResponse.json(
         { error: "Tipo de tarefa inválido" },
         { status: 400 },
@@ -116,17 +116,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-	    // Log apenas em desenvolvimento
-	    if (process.env.NODE_ENV === "development") {
-	      console.log("Time entry payload", {
-	        userId: session.user.id,
-	        taskId,
-	        taskType,
-	        category,
-	        duration,
-	        date: entryDate,
-	      });
-	    }
+    // Log apenas em desenvolvimento
+    if (process.env.NODE_ENV === "development") {
+      console.log("Time entry payload", {
+        userId: session.user.id,
+        taskId,
+        taskType,
+        category,
+        duration,
+        date: entryDate,
+      });
+    }
 
     // TODO: Implementar salvamento no banco de dados
     // Por enquanto, apenas simular sucesso
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
  *         name: taskType
  *         schema:
  *           type: string
- *           enum: [habit, daily, todo, goal]
+ *           enum: [habit, todo, goal]
  *       - in: query
  *         name: category
  *         schema:

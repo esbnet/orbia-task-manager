@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CalendarCheck,
   Dumbbell,
   Grid3X3,
   ListChecks,
@@ -10,10 +9,10 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { useTaskCounts } from "@/hooks/use-task-counts";
+import { useState } from "react";
 
-type ColumnType = "all" | "habits" | "dailies" | "todos" | "goals";
+type ColumnType = "all" | "habits" | "todos" | "goals";
 
 interface ColumnFilterProps {
   onFilterChange: (filter: ColumnType) => void;
@@ -31,8 +30,6 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
         return taskCounts.total;
       case "habits":
         return taskCounts.habits;
-      case "dailies":
-        return taskCounts.dailies;
       case "todos":
         return taskCounts.todos;
       case "goals":
@@ -54,12 +51,6 @@ export function ColumnFilter({ onFilterChange }: ColumnFilterProps) {
       label: "Hábitos",
       icon: Dumbbell,
       color: "text-green-600 bg-green-50 hover:bg-green-100"
-    },
-    {
-      id: "dailies",
-      label: "Diárias",
-      icon: CalendarCheck,
-      color: "text-orange-600 bg-orange-50 hover:bg-orange-100"
     },
     {
       id: "todos",

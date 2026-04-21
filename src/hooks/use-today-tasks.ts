@@ -14,22 +14,19 @@ export function useTodayTasks() {
 	} = useQuery({
 		queryKey: ["today-tasks"],
 		queryFn: async (): Promise<TaskCategory[]> => {
-			const [habitsRes, dailiesRes, todosRes, goalsRes] = await Promise.all([
+			const [habitsRes, todosRes, goalsRes] = await Promise.all([
 				fetch("/api/habits/available"),
-				fetch("/api/daily/available"),
 				fetch("/api/todos"),
 				fetch("/api/goals"),
 			]);
 
-			const [habitsData, dailiesData, todosData, goalsData] = await Promise.all([
+			const [habitsData, todosData, goalsData] = await Promise.all([
 				habitsRes.json(),
-				dailiesRes.json(),
 				todosRes.json(),
 				goalsRes.json(),
 			]);
 
 			const habits = habitsData.availableHabits || [];
-			const dailies = dailiesData.availableDailies || [];
 			const todos = todosData.todos || [];
 			const goals = Array.isArray(goalsData) ? goalsData : [];
 
@@ -44,18 +41,6 @@ export function useTodayTasks() {
 					status: habit.status || "Em Andamento",
 					isOverdue: false, // Se está disponível, não está atrasado
 					todayEntries: habit.todayEntries || 0,
-				});
-			});
-
-			// Processar dailies disponíveis hoje
-			dailies.forEach((daily: any) => {
-				allTasks.push({
-					id: daily.id,
-					title: daily.title,
-					type: "daily",
-					status: "Ativa",
-					isOverdue: false, // Se está disponível, não está atrasado
-					lastCompletedDate: daily.lastCompletedDate,
 				});
 			});
 

@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 
 export interface AttachedTask {
 	id: string;
 	taskId: string;
-	taskType: "habit" | "daily" | "todo";
+	taskType: "habit" | "todo";
 	taskTitle: string;
 	taskDifficulty: string;
 }

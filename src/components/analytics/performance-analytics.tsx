@@ -32,14 +32,14 @@ import {
 } from "recharts";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { usePerformanceAnalytics } from "@/hooks/use-performance-analytics";
 import { useTranslation } from "@/hooks/use-translation";
-import { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp } from "lucide-react";
 import { format } from "date-fns";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import { useState } from "react";
 
 interface PerformanceData {
   productivity: number;
@@ -65,7 +65,7 @@ interface TimeSeriesData {
 export function PerformanceAnalytics() {
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter">("month");
-  const [activeCategory, setActiveCategory] = useState<"habits" | "dailies" | "todos" | "goals">("habits");
+  const [activeCategory, setActiveCategory] = useState<"habits" | "todos" | "goals">("habits");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"title" | "completedAt">("completedAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -85,7 +85,6 @@ export function PerformanceAnalytics() {
 
   const categoryMap = {
     habits: { label: "Hábitos", logs: completionLogs.habits },
-    dailies: { label: "Diárias", logs: completionLogs.dailies },
     todos: { label: "Tarefas", logs: completionLogs.todos },
     goals: { label: "Metas", logs: completionLogs.goals },
   };
@@ -180,7 +179,7 @@ export function PerformanceAnalytics() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            {(["habits", "dailies", "todos", "goals"] as const).map((key) => (
+            {(["habits", "todos", "goals"] as const).map((key) => (
               <Button
                 key={key}
                 variant={activeCategory === key ? "default" : "outline"}
@@ -223,7 +222,7 @@ export function PerformanceAnalytics() {
               <TableBody>
                 {paginatedLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    <TableCell colSpan={3} className="text-muted-foreground text-center">
                       Nenhum registro encontrado.
                     </TableCell>
                   </TableRow>
@@ -243,7 +242,7 @@ export function PerformanceAnalytics() {
             </Table>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               Página {page} de {totalPages}
             </span>
             <div className="flex gap-2">

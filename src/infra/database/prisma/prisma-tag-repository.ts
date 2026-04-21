@@ -17,14 +17,13 @@ export class PrismaTagRepository implements TagRepository {
 			// Se não há tags, criar algumas padrão baseadas nas tarefas existentes
 			if (tags.length === 0) {
 				// Buscar tags únicas das tarefas existentes
-				const [todos, dailies, habits] = await Promise.all([
+				const [todos, habits] = await Promise.all([
 					prisma.todo.findMany({ select: { tags: true } }),
-					prisma.daily.findMany({ select: { tags: true } }),
 					prisma.habit.findMany({ select: { tags: true } }),
 				]);
 
 				const allTags = new Set<string>();
-				for (const item of [...todos, ...dailies, ...habits]) {
+				for (const item of [...todos, ...habits]) {
 					if (Array.isArray(item.tags)) {
 						for (const tag of item.tags) {
 							allTags.add(tag);
@@ -115,7 +114,7 @@ export class PrismaTagRepository implements TagRepository {
 		return this.toDomain(updated);
 	}
 
-	
+
 	async toggleComplete(_id: string): Promise<Tag> {
 		throw new Error("Toggle complete not implemented for tags");
 	}

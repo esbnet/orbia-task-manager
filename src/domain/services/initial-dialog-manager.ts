@@ -6,7 +6,7 @@ export interface DialogConfig {
 export interface TaskCategory {
 	id: string;
 	title: string;
-	type: "habit" | "daily" | "todo" | "goal";
+	type: "habit" | "todo" | "goal";
 	status: string;
 	isOverdue: boolean;
 	dueDate?: Date;
@@ -50,11 +50,6 @@ export class InitialDialogManager {
 		const today = currentDate.toDateString();
 
 		return tasks.filter(task => {
-			// Para dailies, verificar se foi concluída hoje
-			if (task.type === "daily") {
-				const lastCompleted = task.lastCompletedDate ? new Date(task.lastCompletedDate).toDateString() : null;
-				return !lastCompleted || lastCompleted !== today;
-			}
 
 			// Para habits, verificar se tem entrada hoje
 			if (task.type === "habit") {

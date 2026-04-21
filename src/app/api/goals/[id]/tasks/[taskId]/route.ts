@@ -38,14 +38,14 @@ export async function DELETE(
 		const url = new URL(request.url);
 		const taskType = url.searchParams.get("taskType");
 
-		if (!taskType || !["habit", "daily", "todo"].includes(taskType)) {
+		if (!taskType || !["habit", "todo"].includes(taskType)) {
 			return NextResponse.json(
-				{ error: "taskType é obrigatório e deve ser habit, daily ou todo" },
+				{ error: "taskType é obrigatório e deve ser habit ou todo" },
 				{ status: 400 },
 			);
 		}
 
-		await goalRepository.detachTask(id, taskId, taskType as "habit" | "daily" | "todo");
+		await goalRepository.detachTask(id, taskId, taskType as "habit" | "todo");
 
 		return NextResponse.json({ message: "Tarefa removida com sucesso" });
 	} catch (error) {

@@ -79,21 +79,21 @@ export async function POST(
 		const body = await request.json();
 		const { taskId, taskType } = body;
 
-		if (!taskId || !taskType) {
+		if (!taskType || !taskId) {
 			return NextResponse.json(
 				{ error: "taskId e taskType são obrigatórios" },
 				{ status: 400 },
 			);
 		}
 
-		if (!["habit", "daily", "todo"].includes(taskType)) {
+		if (!["habit", "todo"].includes(taskType)) {
 			return NextResponse.json(
-				{ error: "taskType deve ser habit, daily ou todo" },
+				{ error: "taskType deve ser habit ou todo" },
 				{ status: 400 },
 			);
 		}
 
-		await goalRepository.attachTask(id, taskId, taskType as "habit" | "daily" | "todo");
+		await goalRepository.attachTask(id, taskId, taskType as "habit" | "todo");
 
 		return NextResponse.json({ message: "Tarefa anexada com sucesso" });
 	} catch (error) {
@@ -148,7 +148,7 @@ export async function PUT(
 			task &&
 			typeof task.taskId === "string" &&
 			typeof task.taskType === "string" &&
-			["habit", "daily", "todo"].includes(task.taskType)
+			["habit", "todo"].includes(task.taskType)
 		);
 
 		await goalRepository.updateAttachedTasks(id, validatedTasks);

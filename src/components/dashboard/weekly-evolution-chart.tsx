@@ -18,8 +18,6 @@ import {
     ChartLegend,
     ChartTooltip
 } from "@/components/ui/chart";
-import { useDailies } from "@/hooks/use-dailies";
-import { useDailyLogs } from "@/hooks/use-daily-logs";
 import { useGoals } from "@/hooks/use-goals";
 import { useHabitPeriods } from "@/hooks/use-habit-periods";
 import { useHabits } from "@/hooks/use-habits";
@@ -32,10 +30,6 @@ const chartConfig = {
     habits: {
         label: "Hábitos",
         color: "hsl(var(--chart-2, 160 60% 45%))",
-    },
-    dailies: {
-        label: "Diárias",
-        color: "hsl(var(--chart-3, 30 80% 55%))",
     },
     todos: {
         label: "Tarefas",
@@ -71,17 +65,6 @@ interface HabitPeriod {
     }[];
 }
 
-interface DailyLog {
-    id: string;
-    dailyId: string;
-    periodId?: string;
-    dailyTitle: string;
-    completedAt: Date;
-    difficulty: string;
-    tags: string[];
-    createdAt: Date;
-}
-
 interface TodoLog {
     id: string;
     todoId: string;
@@ -111,7 +94,6 @@ function CustomTooltip({ active, payload, label }: any) {
                     const { dataKey, value, color } = entry;
                     const categoryNames = {
                         habits: 'Hábitos',
-                        dailies: 'Diárias',
                         todos: 'Tarefas',
                         goals: 'Metas',
                         total: 'Total'
@@ -137,7 +119,7 @@ function CustomTooltip({ active, payload, label }: any) {
                 })}
 
                 {data.total > 0 && (
-                    <div className="mt-2 pt-2 border-t border-border">
+                    <div className="mt-2 pt-2 border-border border-t">
                         <div className="flex justify-between items-center gap-2 font-bold text-sm">
                             <span className="text-foreground">Total do dia:</span>
                             <span className="text-primary">{data.total}</span>
@@ -154,7 +136,6 @@ function CustomTooltip({ active, payload, label }: any) {
 export function WeeklyEvolutionChart() {
     const { data: todos = [], isLoading: todosLoading, dataUpdatedAt: todosUpdatedAt } = useTodos();
     const { data: habits = [], isLoading: habitsLoading, dataUpdatedAt: habitsUpdatedAt } = useHabits();
-    const { data: dailies = [], isLoading: dailiesLoading, dataUpdatedAt: dailiesUpdatedAt } = useDailies();
 
     // Usar hook useGoals para buscar metas completadas
     const { data: goals = [], isLoading: goalsLoading, error: goalsError } = useGoals("COMPLETED");
@@ -168,11 +149,10 @@ export function WeeklyEvolutionChart() {
     }
 
     const { data: habitPeriods = [], isLoading: habitPeriodsLoading, error: habitPeriodsError } = useHabitPeriods();
-    const { data: dailyLogs = [], isLoading: dailyLogsLoading, error: dailyLogsError } = useDailyLogs();
     const { data: todoLogs = [], isLoading: todoLogsLoading, error: todoLogsError } = useTodoLogs();
 
-    const isLoading = todosLoading || habitsLoading || dailiesLoading || goalsLoading || habitPeriodsLoading || dailyLogsLoading || todoLogsLoading;
-    const logsError = habitPeriodsError || dailyLogsError || todoLogsError || goalsError;
+    const isLoading = todosLoading || habitsLoading || goalsLoading || habitPeriodsLoading || todoLogsLoading;
+    const logsError = habitPeriodsError || todoLogsError || goalsError;
     const queryClient = useQueryClient();
 
     // Mostrar erro se houver problema ao carregar logs
@@ -182,7 +162,7 @@ export function WeeklyEvolutionChart() {
                 <CardHeader>
                     <CardTitle>Evolução Semanal</CardTitle>
                     <CardDescription>
-                        Atividades concluídas das 4 categorias ao longo da semana atual
+                        Atividades concluídas das categorias ativas ao longo da semana atual
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -213,19 +193,16 @@ export function WeeklyEvolutionChart() {
     const lastUpdated = Math.max(
         todosUpdatedAt || 0,
         habitsUpdatedAt || 0,
-        dailiesUpdatedAt || 0,
         Date.now() // Para goals, usar timestamp atual já que não temos updatedAt
     );
 
     const handleRefresh = () => {
         queryClient.invalidateQueries({ queryKey: ["todos"] });
         queryClient.invalidateQueries({ queryKey: ["habits"] });
-        queryClient.invalidateQueries({ queryKey: ["dailies"] });
         // Invalidar goals com a query key correta (incluindo filtros)
         queryClient.invalidateQueries({ queryKey: ["goals", "list"] });
         // Invalidar também os logs - usando query keys consistentes com os endpoints
         queryClient.invalidateQueries({ queryKey: ["habitPeriods"] });
-        queryClient.invalidateQueries({ queryKey: ["dailyLogs"] });
         queryClient.invalidateQueries({ queryKey: ["todoLogs"] });
     };
 
@@ -265,17 +242,6 @@ export function WeeklyEvolutionChart() {
                 })
             );
 
-            // Filtrar logs de diárias concluídas por dia (ignorar fails)
-            const dayDailies = dailyLogs.filter((log: DailyLog) => {
-                if ((log as any).status === "fail") return false;
-                if (!log.completedAt) return false;
-                const completed = new Date(log.completedAt);
-                const normalizedCompleted = new Date(completed.getFullYear(), completed.getMonth(), completed.getDate());
-                const normalizedDayStart = new Date(dayStart.getFullYear(), dayStart.getMonth(), dayStart.getDate());
-                const normalizedDayEnd = new Date(dayEnd.getFullYear(), dayEnd.getMonth(), dayEnd.getDate());
-                return normalizedCompleted >= normalizedDayStart && normalizedCompleted <= normalizedDayEnd;
-            });
-
             // Filtrar metas concluídas por dia
             const dayGoals = goals.filter((goal: Goal) => {
                 if (goal.status !== 'COMPLETED' || !goal.updatedAt) {
@@ -300,18 +266,17 @@ export function WeeklyEvolutionChart() {
                     year: 'numeric'
                 }),
                 habits: dayHabits.length,
-                dailies: dayDailies.length,
                 todos: dayTodos.length,
                 goals: dayGoals.length,
-                total: dayHabits.length + dayDailies.length + dayTodos.length + dayGoals.length,
+                total: dayHabits.length + dayTodos.length + dayGoals.length,
             };
         });
-    }, [todos, habits, dailies, goals, habitPeriods, dailyLogs, todoLogs]);
+    }, [todos, habits, goals, habitPeriods, todoLogs]);
 
 
     // Garantir que sempre tenhamos dados válidos para o gráfico
     const hasData = chartData.some(day =>
-        day.habits > 0 || day.dailies > 0 || day.todos > 0 || day.goals > 0
+        day.habits > 0 || day.todos > 0 || day.goals > 0
     );
 
     // Se não há dados, mostrar mensagem informativa
@@ -352,7 +317,7 @@ export function WeeklyEvolutionChart() {
                                 </svg>
                             </div>
                             <p className="mb-3 text-muted-foreground">Nenhuma atividade concluída esta semana</p>
-                            <p className="text-muted-foreground text-sm">As linhas aparecerão quando você concluir hábitos, diárias, tarefas ou metas.</p>
+                            <p className="text-muted-foreground text-sm">As linhas aparecerão quando você concluir hábitos, tarefas ou metas.</p>
                         </div>
                     </div>
                 </CardContent>
@@ -373,7 +338,7 @@ export function WeeklyEvolutionChart() {
                 <CardContent>
                     <div className="flex justify-center items-center h-[300px]">
                         <div className="text-center">
-                            <div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+                            <div className="mx-auto mb-3 border-4 border-blue-600 border-t-transparent rounded-full w-8 h-8 animate-spin"></div>
                             <p className="text-blue-600">Carregando atividades da semana...</p>
                         </div>
                     </div>
@@ -425,10 +390,6 @@ export function WeeklyEvolutionChart() {
                                 <stop offset="5%" stopColor="var(--color-habits)" stopOpacity={0.8} />
                                 <stop offset="95%" stopColor="var(--color-habits)" stopOpacity={0.1} />
                             </linearGradient>
-                            <linearGradient id="colorDailies" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="var(--color-dailies)" stopOpacity={0.8} />
-                                <stop offset="95%" stopColor="var(--color-dailies)" stopOpacity={0.1} />
-                            </linearGradient>
                             <linearGradient id="colorTodos" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="var(--color-todos)" stopOpacity={0.8} />
                                 <stop offset="95%" stopColor="var(--color-todos)" stopOpacity={0.1} />
@@ -467,14 +428,6 @@ export function WeeklyEvolutionChart() {
                         />
                         <Line
                             type="monotone"
-                            dataKey="dailies"
-                            stroke="#f59e0b"
-                            strokeWidth={3}
-                            dot={{ fill: "#f59e0b", strokeWidth: 2, r: 4 }}
-                            activeDot={{ r: 6, stroke: "#f59e0b", strokeWidth: 2 }}
-                        />
-                        <Line
-                            type="monotone"
                             dataKey="todos"
                             stroke="#3b82f6"
                             strokeWidth={3}
@@ -495,10 +448,6 @@ export function WeeklyEvolutionChart() {
                                     <div className="flex items-center gap-2">
                                         <div className="bg-green-500 rounded-full rounded-bl-sm w-4 h-4" />
                                         <span className="font-medium text-muted-foreground text-sm">Hábitos</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="bg-amber-500 rounded-full rounded-bl-sm w-4 h-4" />
-                                        <span className="font-medium text-muted-foreground text-sm">Diárias</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="bg-blue-500 rounded-full rounded-bl-sm w-4 h-4" />

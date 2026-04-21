@@ -200,7 +200,7 @@ export class HttpGoalRepository implements GoalRepository {
 		return response.json();
 	}
 
-	async attachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+	async attachTask(goalId: string, taskId: string, taskType: "habit" | "todo"): Promise<void> {
 		const response = await fetch(`${this.baseUrl}/${goalId}/tasks`, {
 			method: "POST",
 			headers: {
@@ -214,7 +214,7 @@ export class HttpGoalRepository implements GoalRepository {
 		}
 	}
 
-	async detachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+	async detachTask(goalId: string, taskId: string, taskType: "habit" | "todo"): Promise<void> {
 		const response = await fetch(`${this.baseUrl}/${goalId}/tasks/${taskId}?taskType=${taskType}`, {
 			method: "DELETE",
 		});
@@ -232,7 +232,7 @@ export class HttpGoalRepository implements GoalRepository {
 		return response.json();
 	}
 
-	async updateAttachedTasks(goalId: string, tasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>): Promise<void> {
+	async updateAttachedTasks(goalId: string, tasks: Array<{ taskId: string; taskType: "habit" | "todo" }>): Promise<void> {
 		const response = await fetch(`${this.baseUrl}/${goalId}/tasks`, {
 			method: "PUT",
 			headers: {

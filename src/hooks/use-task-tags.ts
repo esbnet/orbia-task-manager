@@ -1,5 +1,4 @@
 import { useGoals } from "@/contexts/goal-context";
-import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useTodos } from "@/hooks/use-todos";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -52,32 +51,6 @@ export function useTodoTags(): TagCount[] {
 	}, [todos]);
 }
 
-/**
- * Hook para obter distribuição de tags dos dailies
- */
-export function useDailyTags(): TagCount[] {
-	const { data: dailiesData } = useAvailableDailies();
-
-	return useMemo(() => {
-		if (!dailiesData?.availableDailies) return [];
-
-		const tagCounts: { [key: string]: number } = {};
-
-		dailiesData.availableDailies.forEach((daily) => {
-			daily.tags.forEach((tag) => {
-				tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-			});
-		});
-
-		return Object.entries(tagCounts)
-			.map(([tag, count]) => ({ tag, count }))
-			.sort((a, b) => b.count - a.count);
-	}, [dailiesData?.availableDailies]);
-}
-
-/**
- * Hook para obter distribuição de tags das metas
- */
 export function useGoalTags(): TagCount[] {
 	const { goals } = useGoals();
 

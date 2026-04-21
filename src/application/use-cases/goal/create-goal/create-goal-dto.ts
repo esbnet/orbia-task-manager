@@ -6,5 +6,5 @@ export interface CreateGoalDto {
 	category?: "PERSONAL" | "WORK" | "HEALTH" | "LEARNING";
 	tags?: string[];
 	userId: string;
-	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
+	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "todo" }>;
 }

@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 
 // Tipos para tarefas ativas
 export interface ActiveTask {
 	id: string;
 	title: string;
-	type: "habit" | "daily" | "todo";
+	type: "habit" | "todo";
 	difficulty: string;
 	icon: string;
 }
@@ -15,7 +14,7 @@ export const activeTasksKeys = {
 	all: ["active-tasks"] as const,
 };
 
-// Hook para buscar todas as tarefas ativas (habits, dailies, todos)
+// Hook para buscar todas as tarefas ativas (habits e todos)
 export function useActiveTasks() {
 	return useQuery({
 		queryKey: activeTasksKeys.all,

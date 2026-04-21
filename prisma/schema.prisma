@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-            provider  = "postgresql"
-        }
+    provider = "postgresql"
+}
 
 model Habit {
     id                String   @id @default(cuid())
@@ -72,75 +72,6 @@ model HabitEntry {
     period HabitPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
 
     @@map("habit_entries")
-}
-
-model Daily {
-    id                String   @id @default(cuid())
-    title             String
-    observations      String   @default("")
-    tasks             String[]
-    difficulty        String
-    startDate         DateTime
-    repeatType        String
-    repeatFrequency   Int      @default(1)
-    tags              String[]
-    order             Int      @default(0)
-    lastCompletedDate String?
-    status            String   @default("active") // "active", "archived"
-    userId            String
-    createdAt         DateTime @default(now())
-
-    user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-    logs     DailyLog[]
-    subtasks DailySubtask[]
-    periods  DailyPeriod[]
-
-    @@map("dailies")
-}
-
-model DailySubtask {
-    id        String   @id @default(cuid())
-    title     String
-    completed Boolean  @default(false)
-    dailyId   String
-    order     Int      @default(0)
-    createdAt DateTime @default(now())
-
-    daily Daily @relation(fields: [dailyId], references: [id], onDelete: Cascade)
-
-    @@map("daily_subtasks")
-}
-
-model DailyPeriod {
-    id          String    @id @default(cuid())
-    dailyId     String
-    periodType  String // "Diariamente", "Semanalmente", "Mensalmente"
-    startDate   DateTime
-    endDate     DateTime?
-    isCompleted Boolean   @default(false)
-    isActive    Boolean   @default(true)
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
-
-    daily Daily @relation(fields: [dailyId], references: [id], onDelete: Cascade)
-
-    @@map("daily_periods")
-}
-
-model DailyLog {
-    id          String   @id @default(cuid())
-    dailyId     String
-    periodId    String? // Referência ao período
-    dailyTitle  String
-    difficulty  String
-    tags        String[]
-    status      String   @default("success") // "success" | "fail"
-    completedAt DateTime @default(now())
-    createdAt   DateTime @default(now())
-
-    daily Daily @relation(fields: [dailyId], references: [id], onDelete: Cascade)
-
-    @@map("daily_logs")
 }
 
 model Todo {
@@ -244,7 +175,6 @@ model User {
     accounts      Account[]
     sessions      Session[]
     habits        Habit[]
-    dailies       Daily[]
     todos         Todo[]
     tags          Tag[]
     goals         Goal[]
@@ -317,7 +247,7 @@ model GoalTask {
     id        String   @id @default(cuid())
     goalId    String
     taskId    String
-    taskType  String // "habit", "daily", "todo"
+    taskType  String // "habit", "todo"
     createdAt DateTime @default(now())
 
     goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)

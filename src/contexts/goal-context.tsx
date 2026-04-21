@@ -14,7 +14,7 @@ interface GoalFormData {
 	targetDate: Date;
 	priority: Goal["priority"];
 	tags: string[];
-	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
+	attachedTasks?: Array<{ taskId: string; taskType: "habit" | "todo" }>;
 }
 
 interface GoalContextType {

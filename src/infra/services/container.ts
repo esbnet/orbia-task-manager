@@ -1,12 +1,8 @@
-import { PrismaDailyLogRepository } from "@/infra/database/prisma/prisma-daily-log-repository";
-import { PrismaDailyPeriodRepository } from "@/infra/database/prisma/prisma-daily-period-repository";
 import { PrismaHabitLogRepository } from "@/infra/database/prisma/prisma-habit-log-repository";
 import { HttpGoalRepository } from "@/infra/repositories/http/http-goal-repository";
-import { DailyService } from "./daily-service";
 import { GoalService } from "./goal-service";
 import { HabitService } from "./habit-service";
 // Dependency Injection Container
-import { PrismaDailyRepository } from "@/infra/database/prisma/prisma-daily-repository";
 import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { PrismaTodoLogRepository } from "@/infra/database/prisma/prisma-todo-log-repository";
 import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
@@ -17,13 +13,12 @@ type ServiceRegistry = {
 	goalService: GoalService;
 	habitService: HabitService;
 	todoService: TodoService;
-	dailyService: DailyService;
 };
 
 // Container class
 class ServiceContainer {
 	private services: Partial<ServiceRegistry> = {};
-	private repositories: Map<string, any> = new Map(); 
+	private repositories: Map<string, any> = new Map();
 
 	// Repository getters with lazy initialization
 	private getGoalRepository() {
@@ -45,27 +40,6 @@ class ServiceContainer {
 			this.repositories.set("todo", new PrismaTodoRepository());
 		}
 		return this.repositories.get("todo");
-	}
-
-	private getDailyRepository() {
-		if (!this.repositories.has("daily")) {
-			this.repositories.set("daily", new PrismaDailyRepository());
-		}
-		return this.repositories.get("daily");
-	}
-
-	private getDailyLogRepository() {
-		if (!this.repositories.has("dailyLog")) {
-			this.repositories.set("dailyLog", new PrismaDailyLogRepository());
-		}
-		return this.repositories.get("dailyLog");
-	}
-
-	private getDailyPeriodRepository() {
-		if (!this.repositories.has("dailyPeriod")) {
-			this.repositories.set("dailyPeriod", new PrismaDailyPeriodRepository());
-		}
-		return this.repositories.get("dailyPeriod");
 	}
 
 	private getHabitLogRepository() {
@@ -110,13 +84,6 @@ class ServiceContainer {
 		return this.services.todoService;
 	}
 
-	getDailyService(): DailyService {
-		if (!this.services.dailyService) {
-			this.services.dailyService = new DailyService(this.getDailyRepository(), this.getDailyLogRepository(), this.getDailyPeriodRepository());
-		}
-		return this.services.dailyService;
-	}
-
 	// Method to register custom services (for testing or different environments)
 	registerService<K extends keyof ServiceRegistry>(
 		key: K,
@@ -145,3 +112,4 @@ export { container };
 
 // Export types for type safety
 export type { ServiceRegistry };
+
