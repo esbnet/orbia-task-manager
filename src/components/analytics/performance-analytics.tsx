@@ -231,8 +231,8 @@ export function PerformanceAnalytics() {
                   <TableRow key={log.id}>
                     <TableCell className="font-medium">{log.title}</TableCell>
                     <TableCell className="space-x-1">
-                      {(log.tags || []).slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                      {(log.tags || []).slice(0, 3).map((tag, tagIndex) => (
+                        <Badge key={`${log.id}-${tag}-${tagIndex}`} variant="secondary">{tag}</Badge>
                       ))}
                     </TableCell>
                     <TableCell>{format(new Date(log.completedAt), "dd/MM/yyyy HH:mm")}</TableCell>
@@ -414,7 +414,7 @@ export function PerformanceAnalytics() {
           <div className="gap-4 grid grid-cols-1 md:grid-cols-3">
             {insights.map((insight, index) => (
               <div
-                key={index}
+                key={`${insight.title}-${index}`}
                 className={`p-4 rounded-lg border ${insight.type === "positive"
                   ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
                   : "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
@@ -468,7 +468,7 @@ export function PerformanceAnalytics() {
           <CardContent>
             <div className="space-y-3">
               {tagAnalysis.slice(0, 5).map((tag, index) => (
-                <div key={tag.tag} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
+                <div key={`${tag.tag}-${index}`} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div
                       className="rounded-full w-3 h-3"
@@ -504,7 +504,7 @@ export function PerformanceAnalytics() {
           <CardContent>
             <div className="space-y-3">
               {priorityAnalysis.map((priority, index) => (
-                <div key={priority.priority} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
+                <div key={`${priority.priority}-${index}`} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${priority.priority === "Urgente" ? "bg-red-500" :
                       priority.priority === "Alta" ? "bg-orange-500" :
@@ -535,7 +535,7 @@ export function PerformanceAnalytics() {
           <CardContent>
             <div className="space-y-3">
               {difficultyAnalysis.map((difficulty, index) => (
-                <div key={difficulty.difficulty} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
+                <div key={`${difficulty.difficulty}-${index}`} className="flex justify-between items-center bg-muted/50 p-2 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${difficulty.difficulty === "Difícil" ? "bg-red-500" :
                       difficulty.difficulty === "Média" ? "bg-yellow-500" : "bg-green-500"

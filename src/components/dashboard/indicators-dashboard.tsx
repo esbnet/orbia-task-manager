@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Award,
     BarChart3,
-    Calendar,
     CheckCircle,
     Flame,
     Target,
@@ -24,18 +23,14 @@ import {
 } from "recharts";
 
 import { useGoals } from "@/contexts/goal-context";
-import { useActiveTasks } from "@/hooks/use-active-tasks";
-import { useHabits } from "@/hooks/use-habits";
 import { useHabitsAnalytics } from "@/hooks/use-habits-analytics";
 import { useTodos } from "@/hooks/use-todos";
 import { useMemo } from "react";
 
 export function IndicatorsDashboard() {
-    const { data: habits } = useHabits();
     const { data: habitsAnalytics } = useHabitsAnalytics("week");
     const { data: todos } = useTodos();
     const { goals } = useGoals();
-    const { data: activeTasks } = useActiveTasks();
 
 
     // Cálculos aprimorados para o resumo do dia usando dados do banco
@@ -411,40 +406,6 @@ export function IndicatorsDashboard() {
                 </CardContent>
             </Card>
 
-            {/* ✅ Seção 3 — Diárias */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-green-500" />
-                        Diárias
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="gap-4 grid grid-cols-1 md:grid-cols-3">
-                        <div className="text-center">
-                            <p className="font-bold text-green-600 text-2xl">
-                                {dailiesData?.completedToday?.length || 0} / {dailiesData?.availableDailies?.length || 0}
-                            </p>
-                            <p className="text-gray-600 text-sm">Concluídas hoje</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="font-bold text-blue-600 text-2xl">
-                                {dailiesData?.availableDailies && dailiesData.availableDailies.length > 0
-                                    ? ((dailiesData?.completedToday?.length || 0) / dailiesData.availableDailies.length * 100).toFixed(0)
-                                    : 0}%
-                            </p>
-                            <p className="text-gray-600 text-sm">Taxa de conclusão</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="font-bold text-purple-600 text-2xl">
-                                {dailiesData?.availableDailies?.length || 0}
-                            </p>
-                            <p className="text-gray-600 text-sm">Diárias ativas</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* 📌 Seção 4 — Tarefa */}
             <Card>
                 <CardHeader>
@@ -594,10 +555,6 @@ export function IndicatorsDashboard() {
                                         habitsAnalytics.completionRate < 80 && (
                                             <li>• 🏃 Hábito consistente (70%+)</li>
                                         )}
-                                    {dailySummary.breakdown.dailies.completed === dailySummary.breakdown.dailies.total &&
-                                        dailySummary.breakdown.dailies.total > 0 && (
-                                            <li>• 📅 Dia perfeito nas diárias!</li>
-                                        )}
                                     {dailySummary.breakdown.todos.completed >= 5 && (
                                         <li>• ✅ Mestre das Tarefas (5+ concluídas)</li>
                                     )}
@@ -606,9 +563,6 @@ export function IndicatorsDashboard() {
                                     )}
                                     {dailySummary.completedGoals.length >= 1 && dailySummary.inProgressGoals.length >= 2 && (
                                         <li>• 🎯 Equilibrista (1+ meta + 2+ ativas)</li>
-                                    )}
-                                    {dailySummary.breakdown.dailies.completed >= 3 && (
-                                        <li>• 📅 Especialista em Rotina (3+ diárias)</li>
                                     )}
                                 </ul>
                                 {(!dailySummary.activeStreak || dailySummary.activeStreak < 5) &&
@@ -642,9 +596,6 @@ export function IndicatorsDashboard() {
                                         )}
                                     {habitsAnalytics?.completionRate && habitsAnalytics.completionRate < 80 && (
                                         <li>• 🏃 Hábito excepcional (+{Math.ceil(80 - habitsAnalytics.completionRate)}%)</li>
-                                    )}
-                                    {dailySummary.breakdown.dailies.completed < dailySummary.breakdown.dailies.total && (
-                                        <li>• 📅 Completar todas as diárias (+{dailySummary.breakdown.dailies.total - dailySummary.breakdown.dailies.completed} restantes)</li>
                                     )}
                                 </ul>
                                 {dailySummary.activeStreak >= 7 &&
