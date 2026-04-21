@@ -45,8 +45,16 @@ const databaseUrl = isProduction
 	: firstNonEmpty("DATABASE_URL", "DEV_DATABASE_URL", "PROD_DATABASE_URL");
 
 const shadowDatabaseUrl = isProduction
-	? firstNonEmpty("PROD_DIRECT_URL", "DIRECT_URL", "DEV_DIRECT_URL")
-	: firstNonEmpty("DIRECT_URL", "DEV_DIRECT_URL", "PROD_DIRECT_URL");
+	? firstNonEmpty(
+		"PROD_SHADOW_DATABASE_URL",
+		"SHADOW_DATABASE_URL",
+		"DEV_SHADOW_DATABASE_URL",
+	)
+	: firstNonEmpty(
+		"SHADOW_DATABASE_URL",
+		"DEV_SHADOW_DATABASE_URL",
+		"PROD_SHADOW_DATABASE_URL",
+	);
 
 export default defineConfig({
 	schema: "./prisma/schema.prisma",

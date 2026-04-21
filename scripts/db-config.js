@@ -40,8 +40,12 @@ const envVars = loadEnvVars();
 // Usar variáveis do sistema se .env não existir (produção)
 const devDatabaseUrl = envVars.DEV_DATABASE_URL || process.env.DEV_DATABASE_URL;
 const devDirectUrl = envVars.DEV_DIRECT_URL || process.env.DEV_DIRECT_URL;
+const devShadowDatabaseUrl =
+	envVars.DEV_SHADOW_DATABASE_URL || process.env.DEV_SHADOW_DATABASE_URL;
 const prodDatabaseUrl = envVars.PROD_DATABASE_URL || process.env.DATABASE_URL;
 const prodDirectUrl = envVars.PROD_DIRECT_URL || process.env.DIRECT_URL;
+const prodShadowDatabaseUrl =
+	envVars.PROD_SHADOW_DATABASE_URL || process.env.PROD_SHADOW_DATABASE_URL;
 
 if (environment === 'development' && (!devDatabaseUrl || !devDirectUrl)) {
 	console.error('❌ Variáveis de desenvolvimento não encontradas');
@@ -63,7 +67,10 @@ const configs = {
         hasDirectUrl: true,
         envVars: {
             DATABASE_URL: devDatabaseUrl,
-            DIRECT_URL: devDirectUrl
+			DIRECT_URL: devDirectUrl,
+			...(devShadowDatabaseUrl
+				? { SHADOW_DATABASE_URL: devShadowDatabaseUrl }
+				: {})
         }
     },
     production: {
@@ -72,7 +79,10 @@ const configs = {
         hasDirectUrl: true,
         envVars: {
             DATABASE_URL: prodDatabaseUrl,
-            DIRECT_URL: prodDirectUrl
+			DIRECT_URL: prodDirectUrl,
+			...(prodShadowDatabaseUrl
+				? { SHADOW_DATABASE_URL: prodShadowDatabaseUrl }
+				: {})
         }
     }
 };
@@ -106,6 +116,17 @@ if (environment === 'development' && fs.existsSync(envPath)) {
 			);
 		} else {
 			envContent += `\nDIRECT_URL="${config.envVars.DIRECT_URL}"`;
+		}
+	}
+
+	if (config.envVars.SHADOW_DATABASE_URL) {
+		if (envContent.includes('SHADOW_DATABASE_URL=')) {
+			envContent = envContent.replace(
+				/^SHADOW_DATABASE_URL=.*/m,
+				`SHADOW_DATABASE_URL="${config.envVars.SHADOW_DATABASE_URL}"`
+			);
+		} else {
+			envContent += `\nSHADOW_DATABASE_URL="${config.envVars.SHADOW_DATABASE_URL}"`;
 		}
 	}
 
