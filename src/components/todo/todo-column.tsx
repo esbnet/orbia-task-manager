@@ -1,16 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCreateTodo, useDeleteTodo, useTodos } from "@/hooks/use-todos";
-import type { Todo as DomainTodo } from "@/domain/entities/todo";
-import type { Todo, TodoDifficulty } from "@/types/todo";
 import { Info, ListChecks, Plus, SquareCheckBig } from "lucide-react";
+import type { Todo, TodoDifficulty } from "@/types/todo";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { diffDaysBetweenIsoDates, getTodayDateInSaoPaulo } from "@/lib/date-utils";
+import { useCreateTodo, useDeleteTodo, useTodos } from "@/hooks/use-todos";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useState } from "react";
-import { toast } from "sonner";
 import { TodoCard } from "./todo-card";
 import { TodoForm } from "./todo-form";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const defaultTodo: Todo = {
 	id: "",
@@ -37,7 +37,7 @@ export const TodoColumn = () => {
 	const [todoToDelete, setTodoToDelete] = useState<any>(null);
 
 
-	const today = new Date().toISOString().split("T")[0];
+	const today = getTodayDateInSaoPaulo();
 
 	// Função auxiliar para determinar se uma tarefa deve aparecer na lista
 	const shouldShowTodo = (todo: any): boolean => {
@@ -47,29 +47,25 @@ export const TodoColumn = () => {
 		}
 
 		// Para tarefas recorrentes, verificar se devem reaparecer
-		const lastCompleted = todo.lastCompletedDate ? new Date(todo.lastCompletedDate) : null;
+		const lastCompleted = todo.lastCompletedDate;
 		if (!lastCompleted) return true;
 
-		const todayDate = new Date(today);
 		let shouldRecur = false;
+		const daysSinceCompleted = diffDaysBetweenIsoDates(lastCompleted, today);
 
 		switch (todo.recurrence) {
 			case "daily":
-				const daysSinceDaily = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				shouldRecur = daysSinceDaily >= 1;
+				shouldRecur = daysSinceCompleted >= 1;
 				break;
 			case "weekly":
-				const daysSinceWeekly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				shouldRecur = daysSinceWeekly >= 7;
+				shouldRecur = daysSinceCompleted >= 7;
 				break;
 			case "monthly":
-				const daysSinceMonthly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				shouldRecur = daysSinceMonthly >= 30;
+				shouldRecur = daysSinceCompleted >= 30;
 				break;
 			case "custom":
 				if (todo.recurrenceInterval) {
-					const daysSinceCustom = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-					shouldRecur = daysSinceCustom >= todo.recurrenceInterval;
+					shouldRecur = daysSinceCompleted >= todo.recurrenceInterval;
 				}
 				break;
 		}

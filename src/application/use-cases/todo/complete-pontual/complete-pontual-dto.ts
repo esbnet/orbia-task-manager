@@ -15,6 +15,7 @@ export type CompletePontualOutput = {
 		order?: number;
 		userId: string;
 		lastCompletedDate?: string;
+		lastCompletedAt?: Date;
 		recurrence: "none" | "daily" | "weekly" | "monthly" | "custom";
 		recurrenceInterval?: number;
 		todoType: "pontual" | "recorrente";

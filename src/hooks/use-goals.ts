@@ -27,7 +27,9 @@ export function useGoals(status?: string) {
 			if (!response.ok) throw new Error("Erro ao buscar goals");
 			const data = await response.json();
 			return Array.isArray(data) ? data : (data.goals || []);
-		}
+		},
+		staleTime: 2 * 60 * 1000,
+		refetchOnWindowFocus: true,
 	});
 }
 

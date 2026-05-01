@@ -39,35 +39,32 @@ export class PrismaTagRepository implements TagRepository {
 					"#8b5cf6",
 					"#06b6d4",
 				];
-				let colorIndex = 0;
 
-				for (const tagName of allTags) {
-					await prisma.tag.create({
-						data: {
-							name: tagName,
-							color: colors[colorIndex % colors.length],
-							userId,
-						},
+				if (allTags.size > 0) {
+					const tagsToCreate = Array.from(allTags).map((tagName, index) => ({
+						name: tagName,
+						color: colors[index % colors.length],
+						userId,
+					}));
+
+					await prisma.tag.createMany({
+						data: tagsToCreate,
+						skipDuplicates: true,
 					});
-					colorIndex++;
 				}
 
 				// Se ainda não há tags, criar algumas padrão
 				if (allTags.size === 0) {
 					const defaultTags = [
-						{ name: "Trabalho", color: "#3b82f6" },
-						{ name: "Estudo", color: "#10b981" },
-						{ name: "Pessoal", color: "#f59e0b" },
+						{ name: "Trabalho", color: "#3b82f6", userId },
+						{ name: "Estudo", color: "#10b981", userId },
+						{ name: "Pessoal", color: "#f59e0b", userId },
 					];
 
-					for (const tag of defaultTags) {
-						await prisma.tag.create({
-							data: {
-								...tag,
-								userId,
-							},
-						});
-					}
+					await prisma.tag.createMany({
+						data: defaultTags,
+						skipDuplicates: true,
+					});
 				}
 
 				const newTags = await prisma.tag.findMany({

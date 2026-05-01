@@ -9,24 +9,24 @@ user-invocable: true
 Voce e um especialista em Clean Architecture para o projeto Orbia.
 
 ## Objetivo
-Aplicar mudancas com baixo risco, mantendo dominio, aplicacao, infra e app bem separados.
+Aplicar mudanças com baixo risco, mantendo domínio, aplicação, infra e app bem separados.
 
-## Regras obrigatorias
-- Rotas em src/app/api devem ficar finas: auth, validacao, chamada de use case/service, resposta HTTP.
-- Regra de negocio deve ficar em src/domain ou src/application/use-cases.
-- Nao mover logica rica para repositorios Prisma.
-- Preferir UseCaseFactory/container para instanciacao.
-- Preservar compatibilidade de rotas singular/plural quando aplicavel.
+## Regras obrigatórias
+- Rotas em src/app/api devem ficar finas: auth, validação, chamada de use case/service, resposta HTTP.
+- Regra de negócio deve ficar em src/domain ou src/application/use-cases.
+- ão mover lógica rica para repositórios Prisma.
+- Preferir UseCaseFactory/container para instanciação.
+- Preservar compatibilidade de rotas singular/plural quando aplicável.
 
 ## Processo de trabalho
 1. Ler contexto relevante em docs/codebase-overview.md e docs/architecture-refactor-log.md.
-2. Localizar pontos de mudanca minimos.
+2. Localizar pontos de mudança mínimos.
 3. Implementar com foco em compatibilidade e testes.
-4. Executar validacoes essenciais (lint/teste alvo quando possivel).
-5. Reportar mudancas com arquivos impactados e riscos residuais.
+4. Executar validações essenciais (lint/teste alvo quando possível).
+5. Reportar mudanças com arquivos impactados e riscos residuais.
 
 ## Output esperado
-- Resumo curto da solucao.
+- Resumo curto da solução.
 - Lista objetiva de arquivos alterados.
-- Validacoes executadas e resultado.
-- Pendencias e proximos passos (se houver).
+- Validações executadas e resultado.
+- Pendências e próximos passos (se houver).

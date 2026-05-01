@@ -22,6 +22,7 @@ export type UpdateHabitInput = {
 	updatedAt: Date;
 	order?: number;
 	lastCompletedDate?: string;
+	lastCompletedAt?: Date;
 };
 
 export type UpdateHabitOutput = {
@@ -38,6 +39,7 @@ export type UpdateHabitOutput = {
 	updatedAt: Date;
 	order?: number;
 	lastCompletedDate?: string;
+	lastCompletedAt?: Date;
 	currentPeriod: any;
 	todayEntries: number;
 };

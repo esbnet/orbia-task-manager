@@ -10,6 +10,9 @@ const directConnectionString = process.env.DIRECT_URL;
 // Pool padrão; usa DIRECT_URL se disponível (útil para migrações/admin)
 const pool = new Pool({
 	connectionString: directConnectionString || connectionString,
+	max: 10,
+	idleTimeoutMillis: 30000,
+	connectionTimeoutMillis: 5000,
 });
 
 const adapter = new PrismaPg(pool);

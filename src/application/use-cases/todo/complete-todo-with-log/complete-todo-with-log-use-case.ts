@@ -1,8 +1,10 @@
-import type { Todo } from "@/domain/entities/todo";
 import type {
 	TodoLogRepository,
 	TodoRepository,
 } from "@/domain/repositories/all-repository";
+
+import type { Todo } from "@/domain/entities/todo";
+import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
 
 export interface CompleteTodoWithLogInput {
 	todo: Todo;
@@ -17,7 +19,7 @@ export class CompleteTodoWithLogUseCase {
 	constructor(
 		private todoRepository: TodoRepository,
 		private todoLogRepository: TodoLogRepository,
-	) {}
+	) { }
 
 	async execute(
 		input: CompleteTodoWithLogInput,
@@ -32,8 +34,12 @@ export class CompleteTodoWithLogUseCase {
 		});
 
 		// Update todo with completion date
-		const today = new Date().toISOString().split("T")[0];
-		const updatedTodo = { ...input.todo, lastCompletedDate: today };
+		const today = getTodayDateInSaoPaulo();
+		const updatedTodo = {
+			...input.todo,
+			lastCompletedDate: today,
+			lastCompletedAt: new Date(),
+		};
 		const result = await this.todoRepository.update(updatedTodo);
 
 		return {

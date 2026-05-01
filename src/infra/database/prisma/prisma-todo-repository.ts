@@ -2,6 +2,7 @@ import type { Todo } from "@/domain/entities/todo";
 import type { TodoRepository } from "@/domain/repositories/all-repository";
 import { TodoTypeValueObject } from "@/domain/value-objects/todo-type";
 import { getCurrentUserId } from "@/hooks/use-current-user";
+import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaTodoRepository implements TodoRepository {
@@ -44,7 +45,10 @@ export class PrismaTodoRepository implements TodoRepository {
 
 		const updated = await prisma.todo.update({
 			where: { id, userId },
-			data: { lastCompletedDate: null },
+			data: {
+				lastCompletedDate: null,
+				lastCompletedAt: null,
+			},
 		});
 		return this.toDomain(updated);
 	}
@@ -175,6 +179,7 @@ export class PrismaTodoRepository implements TodoRepository {
 				tags: todo.tags,
 				order: todo.order,
 				lastCompletedDate: todo.lastCompletedDate,
+				lastCompletedAt: todo.lastCompletedAt,
 				recurrence: todo.recurrence,
 				recurrenceInterval: todo.recurrenceInterval,
 				todoType: todo.todoType.getValue(),
@@ -192,7 +197,10 @@ export class PrismaTodoRepository implements TodoRepository {
 
 		const updated = await prisma.todo.update({
 			where: { id, userId },
-			data: { lastCompletedDate: new Date().toISOString().split("T")[0] },
+			data: {
+				lastCompletedDate: getTodayDateInSaoPaulo(),
+				lastCompletedAt: new Date(),
+			},
 		});
 		return this.toDomain(updated);
 	}
@@ -215,6 +223,7 @@ export class PrismaTodoRepository implements TodoRepository {
 		tags: string[];
 		order: number;
 		lastCompletedDate: string | null;
+		lastCompletedAt: Date | null;
 		createdAt: Date;
 		recurrence: string;
 		recurrenceInterval: number | null;
@@ -239,6 +248,7 @@ export class PrismaTodoRepository implements TodoRepository {
 			tags: todo.tags,
 			order: todo.order,
 			lastCompletedDate: todo.lastCompletedDate || undefined,
+			lastCompletedAt: todo.lastCompletedAt || undefined,
 			createdAt: todo.createdAt,
 			recurrence: todo.recurrence as Todo["recurrence"],
 			recurrenceInterval: todo.recurrenceInterval || undefined,

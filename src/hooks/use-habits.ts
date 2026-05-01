@@ -14,6 +14,25 @@ export const habitKeys = {
 	available: () => [...habitKeys.all, "available"] as const,
 };
 
+export interface AvailableHabitsResponse {
+	availableHabits: Habit[];
+	completedInCurrentPeriod: Array<Habit & { nextAvailableAt: Date }>;
+	totalHabits: number;
+}
+
+export async function fetchAvailableHabits(): Promise<AvailableHabitsResponse> {
+	const response = await fetch("/api/habits/available");
+	if (!response.ok) {
+		throw new Error("Erro ao buscar hábitos disponíveis");
+	}
+	const data = await response.json();
+	return {
+		availableHabits: data.availableHabits || [],
+		completedInCurrentPeriod: data.completedInCurrentPeriod || [],
+		totalHabits: data.totalHabits || 0,
+	};
+}
+
 // Hook para buscar todos os hábitos
 export function useHabits() {
 	return useQuery({
@@ -53,18 +72,7 @@ export function useHabit(id: string) {
 export function useAvailableHabits() {
 	return useQuery({
 		queryKey: habitKeys.available(),
-		queryFn: async (): Promise<{ availableHabits: Habit[]; completedInCurrentPeriod: Array<Habit & { nextAvailableAt: Date }>; totalHabits: number }> => {
-			const response = await fetch("/api/habits/available");
-			if (!response.ok) {
-				throw new Error("Erro ao buscar hábitos disponíveis");
-			}
-			const data = await response.json();
-			return {
-				availableHabits: data.availableHabits || [],
-				completedInCurrentPeriod: data.completedInCurrentPeriod || [],
-				totalHabits: data.totalHabits || 0
-			};
-		},
+		queryFn: fetchAvailableHabits,
 		staleTime: 1 * 60 * 1000, // 1 minuto
 	});
 }

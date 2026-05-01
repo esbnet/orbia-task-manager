@@ -23,6 +23,7 @@ export type ListHabitsOutput = {
 		updatedAt: Date;
 		order?: number;
 		lastCompletedDate?: string;
+		lastCompletedAt?: Date;
 		currentPeriod: any;
 		todayEntries: number;
 	}[];

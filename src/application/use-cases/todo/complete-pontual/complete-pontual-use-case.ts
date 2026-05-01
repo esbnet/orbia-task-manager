@@ -1,12 +1,13 @@
-import type { TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
 import type { CompletePontualInput, CompletePontualOutput } from "./complete-pontual-dto";
+import type { TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
 
+import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
 
 export class CompletePontualUseCase {
 	constructor(
 		private readonly todoRepository: TodoRepository,
 		private readonly todoLogRepository: TodoLogRepository
-	) {}
+	) { }
 
 	async execute(input: CompletePontualInput): Promise<CompletePontualOutput> {
 		// Buscar o todo atual para obter os dados necessários
@@ -37,7 +38,8 @@ export class CompletePontualUseCase {
 		// Marcar como completa (definir data de conclusão)
 		const completedTodo = await this.todoRepository.update({
 			...currentTodo,
-			lastCompletedDate: new Date().toISOString().split("T")[0],
+			lastCompletedDate: getTodayDateInSaoPaulo(),
+			lastCompletedAt: new Date(),
 		});
 
 		return {
@@ -56,6 +58,7 @@ export class CompletePontualUseCase {
 				recurrence: completedTodo.recurrence,
 				recurrenceInterval: completedTodo.recurrenceInterval,
 				todoType: completedTodo.todoType.getValue(),
+				lastCompletedAt: completedTodo.lastCompletedAt,
 				subtasks: completedTodo.subtasks,
 			},
 			log: {

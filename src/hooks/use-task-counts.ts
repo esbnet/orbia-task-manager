@@ -1,16 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
+
 // Tipos para melhor type safety
 interface TaskCountsResponse {
   habits: number;
   todos: number;
   goals: number;
   total: number;
-}
-
-interface ApiError {
-  message: string;
-  status?: number;
 }
 
 // Query keys para contagens de tarefas
@@ -46,74 +43,76 @@ export function useInvalidateTaskCounts() {
 
 // Hook para buscar contagens de tarefas por tipo
 export function useTaskCounts() {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: taskCountKeys.counts(),
-    staleTime: 0, // Sempre considerar dados como stale para forçar refetch
-    gcTime: 30 * 1000, // Manter cache por 30 segundos
+    staleTime: 60 * 1000,
+    gcTime: 30 * 1000,
     refetchOnWindowFocus: true,
     queryFn: async (): Promise<TaskCountsResponse> => {
-      // Buscar contagens em paralelo
-      const [habitsResponse, todosActiveResponse, goalsResponse] = await Promise.all([
-        fetch("/api/habits/available"),
-        fetch("/api/todos"),
-        fetch("/api/goals?status=IN_PROGRESS")
-      ]);
+      const habitsData = await queryClient.fetchQuery({
+        queryKey: ["habits", "available"] as const,
+        queryFn: async (): Promise<{ availableHabits: any[]; completedInCurrentPeriod: any[]; totalHabits: number }> => {
+          const response = await fetch("/api/habits/available");
+          if (!response.ok) {
+            throw new Error(`habits: ${response.status}`);
+          }
+          const data = await response.json();
+          return {
+            availableHabits: data.availableHabits || [],
+            completedInCurrentPeriod: data.completedInCurrentPeriod || [],
+            totalHabits: data.totalHabits || 0,
+          };
+        },
+        staleTime: 60 * 1000,
+        gcTime: 30 * 1000,
+      });
 
-      // Verificar se todas as respostas são OK com tratamento de erro específico
-      const responses = [
-        { name: "habits", response: habitsResponse },
-        { name: "todosActive", response: todosActiveResponse },
-        { name: "goals", response: goalsResponse }
-      ];
+      const todos = await queryClient.fetchQuery({
+        queryKey: ["todos", "list"] as const,
+        queryFn: async (): Promise<any[]> => {
+          const response = await fetch("/api/todos");
+          if (!response.ok) {
+            throw new Error(`todos: ${response.status}`);
+          }
+          const data = await response.json();
+          return data.todos || [];
+        },
+        staleTime: 30 * 1000,
+        gcTime: 30 * 1000,
+      });
 
-      const failedRequests = responses.filter(({ response }) => !response.ok);
+      const goals = await queryClient.fetchQuery({
+        queryKey: ["goals", "IN_PROGRESS"] as const,
+        queryFn: async (): Promise<any[]> => {
+          const response = await fetch("/api/goals?status=IN_PROGRESS");
+          if (!response.ok) {
+            throw new Error(`goals: ${response.status}`);
+          }
+          const data = await response.json();
+          return Array.isArray(data) ? data : (data.goals || []);
+        },
+        staleTime: 60 * 1000,
+        gcTime: 30 * 1000,
+      });
 
-      if (failedRequests.length > 0) {
-        const errorMessages = await Promise.all(
-          failedRequests.map(async ({ name, response }) => {
-            const errorData = await response.json().catch(() => ({}));
-            return `${name}: ${response.status} - ${errorData.message || "Erro desconhecido"}`;
-          })
-        );
-
-        throw new Error(`Falha ao buscar contagens: ${errorMessages.join(", ")}`);
-      }
-
-      // Extrair dados das respostas
-      const [habitsData, todosActiveData, goalsData] = await Promise.all([
-        habitsResponse.json(),
-        todosActiveResponse.json(),
-        goalsResponse.json()
-      ]);
-
-      // Calcular contagens com validação
-      const habitsCount = habitsData?.availableHabits?.length || 0;
-
-      // Todos: contar apenas os ativos (não completados hoje)
-      const todosActive = todosActiveData?.todos || [];
-      const today = new Date().toISOString().split("T")[0];
-      const todosActiveCount = todosActive.filter((todo: any) => todo.lastCompletedDate !== today).length;
-      const todosCount = todosActiveCount;
-
-      const goalsCount = Array.isArray(goalsData) ? goalsData.length : (goalsData?.goals?.length || 0);
-
-      const total = habitsCount + todosCount + goalsCount;
-
-      // Log detalhado para debug
+      const habitsCount = habitsData.availableHabits.length;
+      const goalsCount = goals.length;
+      const today = getTodayDateInSaoPaulo();
+      const todosCount = todos.filter((todo: any) => todo.lastCompletedDate !== today).length;
 
       return {
         habits: habitsCount,
         todos: todosCount,
         goals: goalsCount,
-        total
+        total: habitsCount + todosCount + goalsCount,
       };
     },
     retry: (failureCount, error) => {
-      // Não retry para erros de autenticação (401, 403)
       if (error instanceof Error && error.message.includes("401")) {
         return false;
       }
-      // Retry até 2 vezes para outros erros
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -153,7 +152,7 @@ export function useDetailedTaskCounts() {
       // Todos: separar logs (completados) e ativos (não completados hoje)
       const todosLogsCount = todosLogsData?.todos?.length || 0;
       const todosActive = todosActiveData?.todos || [];
-      const today = new Date().toISOString().split("T")[0];
+      const today = getTodayDateInSaoPaulo();
       const todosActiveCount = todosActive.filter((todo: any) => todo.lastCompletedDate !== today).length;
       const todosCount = todosLogsCount + todosActiveCount;
 

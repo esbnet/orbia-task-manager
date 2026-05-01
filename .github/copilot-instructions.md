@@ -5,7 +5,6 @@
 - Antes de propor mudanças estruturais, consulte:
   - docs/codebase-overview.md
   - docs/architecture-refactor-log.md
-  - docs/DAILY_REQUIREMENTS_REVIEW.md
   - ARCHITECTURE_REVIEW.md
 
 ## Regras Gerais

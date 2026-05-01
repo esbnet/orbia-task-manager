@@ -2,10 +2,11 @@ import { BaseEntityService, handleServiceError } from "./base/entity-service";
 import type { HabitLogRepository, HabitRepository } from "@/domain/repositories/all-repository";
 
 import { CompleteHabitUseCase } from "@/application/use-cases/habit/complete-habit/complete-habit-use-case";
-import { ToggleCompleteUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitFormData } from "@/types/habit";
 import type { HabitLog } from "@/domain/entities/habit-log";
+import { ToggleCompleteUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
+import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
 
 // Habit service implementation
 export class HabitService extends BaseEntityService<Habit, HabitFormData> {
@@ -45,7 +46,7 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 			// Mark as completed
 			const completedHabit = await this.update(habitId, {
 				status: "Completo",
-				lastCompletedDate: new Date().toISOString().split("T")[0]
+				lastCompletedDate: getTodayDateInSaoPaulo()
 			});
 
 			// Create log if repository is available

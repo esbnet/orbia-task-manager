@@ -1,18 +1,18 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell, Info, Plus, RefreshCcw, TrendingUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAvailableHabits, useCreateHabit, useDeleteHabit, useRegisterHabit, useUpdateHabit } from "@/hooks/use-habits";
+import { Dumbbell, Info, Plus, RefreshCcw, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
-import { HabitCard } from "./habit-card";
-import { HabitForm } from "./habit-form";
-import { toast } from "sonner";
 import { useMultipleHabitStats } from "@/hooks/use-habit-stats";
 import { useState } from "react";
+import { toast } from "sonner";
+import { HabitCard } from "./habit-card";
+import { HabitForm } from "./habit-form";
 
 export function HabitColumn() {
 	const { data: habitsData, isLoading } = useAvailableHabits();
@@ -169,7 +169,7 @@ export function HabitColumn() {
 			{isLoading && (
 				<Card className="bg-blue-50 border-blue-200">
 					<CardContent className="py-8 text-center">
-						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<div className="mx-auto mb-3 border-4 border-blue-600 border-t-transparent rounded-full w-8 h-8 animate-spin"></div>
 						<p className="text-blue-600">Carregando hábitos...</p>
 					</CardContent>
 				</Card>
@@ -180,7 +180,6 @@ export function HabitColumn() {
 				{!isLoading && availableHabits.length > 0 && (
 					<div className="space-y-3">
 						{availableHabits
-							.filter(habit => habit.status === "Em Andamento") // Filtro adicional de segurança
 							.map((habit) => {
 								const stats = habitStats?.[habit.id];
 								return (

@@ -1,4 +1,4 @@
-# Revisão dos Requisitos de Tarefas Diárias
+# Revisão dos Requisitos de Tarefas 
 
 ## ✅ Requisitos Implementados
 
