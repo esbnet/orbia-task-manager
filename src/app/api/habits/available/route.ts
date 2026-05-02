@@ -1,5 +1,5 @@
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { UseCaseFactory } from "@/infra/di/use-case-factory";
+import { HabitModule } from "@/modules/habit";
 
 // Força a rota a ser dinâmica devido ao uso de headers na autenticação
 export const dynamic = 'force-dynamic'
@@ -16,9 +16,7 @@ export async function GET() {
       });
     }
 
-    const getAvailableHabitsUseCase = UseCaseFactory.createGetAvailableHabitsUseCase();
-
-    const result = await getAvailableHabitsUseCase.execute({ userId });
+    const result = await HabitModule.available(userId);
 
     return Response.json({
       ...result,

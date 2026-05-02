@@ -1,8 +1,6 @@
 import type { TodoLogRepository, TodoRepository } from "@/domain/repositories/all-repository";
 import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
-import { CompleteTodoWithLogUseCase } from "@/application/use-cases/todo/complete-todo-with-log/complete-todo-with-log-use-case";
-import { ToggleTodoUseCase } from "@/application/use-cases/todo/toggle-todo/toggle-todo-use-case";
 import type { Todo } from "@/domain/entities/todo";
 import type { TodoLog } from "@/domain/entities/todo-log";
 import { TodoTypeValueObject } from "@/domain/value-objects/todo-type";
@@ -53,9 +51,11 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 			}
 
 			if (this.todoLogRepository) {
-				const useCase = new CompleteTodoWithLogUseCase(this.repository as TodoRepository, this.todoLogRepository);
-				const result = await useCase.execute({ todo });
-				return { todo: result.updatedTodo };
+				await this.todoLogRepository.create({
+					todoId,
+					completedAt: new Date().toISOString(),
+				} as any);
+				return { todo };
 			}
 
 			const completedTodo = await this.update(todoId, {
@@ -71,11 +71,6 @@ export class TodoService extends BaseEntityService<Todo, TodoFormData> {
 	async toggleComplete(todoId: string): Promise<Todo> {
 		try {
 			const todoRepo = this.repository as TodoRepository;
-			if (this.todoLogRepository) {
-				const useCase = new ToggleTodoUseCase(todoRepo, this.todoLogRepository);
-				const result = await useCase.execute(todoId);
-				return result.todo;
-			}
 			return await todoRepo.toggleComplete(todoId);
 		} catch (error) {
 			return handleServiceError(error, "alternar status do todo");

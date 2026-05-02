@@ -1,7 +1,7 @@
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { UseCaseFactory } from "@/infra/di/use-case-factory";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { idSchema } from "@/infra/validation/schemas";
+import { TodoModule } from "@/modules/todo";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -58,7 +58,7 @@ export async function POST(
 		const { id } = await params;
 		const validatedId = idSchema.parse(id);
 		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
-		const result = await UseCaseFactory.createCompletePontualTodoUseCase().execute({ id: sanitizedId });
+		const result = await TodoModule.completePontual(sanitizedId);
 
 		return Response.json({
 			todo: result.todo,

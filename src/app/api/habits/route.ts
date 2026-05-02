@@ -1,19 +1,10 @@
 import { createHabitSchema, idSchema } from "@/infra/validation/schemas";
 
-import { CreateHabitUseCase } from "@/application/use-cases/habit/create-habit/create-habit-use-case";
-import { DeleteHabitUseCase } from "@/application/use-cases/habit/delete-habit/delete-habit-use-case";
-import { ListHabitsUseCase } from "@/application/use-cases/habit/list-habit/list-task-use-case";
-import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { UseCaseFactory } from "@/infra/di/use-case-factory";
-import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import { HabitModule } from "@/modules/habit";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-
-// Instância única do repositório
-//const habitRepository = new InJsonFileHabitRepository();
-const habitRepository = new PrismaHabitRepository();
 
 /**
  * @swagger
@@ -27,9 +18,8 @@ const habitRepository = new PrismaHabitRepository();
  */
 export async function GET() {
 	try {
-		const useCase = new ListHabitsUseCase(habitRepository);
-		const result = await useCase.execute();
-		return Response.json({ habits: result.habits });
+		const habits = await HabitModule.list();
+		return Response.json({ habits });
 	} catch (error) {
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
 		return Response.json({ habits: [] });
@@ -82,7 +72,7 @@ export async function POST(request: NextRequest) {
 		const body = await request.json();
 		const validated = createHabitSchema.parse(body);
 
-		const sanitizedInput = {
+		const habit = await HabitModule.create({
 			userId,
 			title: String(validated.title),
 			observations: String(validated.description || ""),
@@ -90,12 +80,9 @@ export async function POST(request: NextRequest) {
 			priority: "Média" as const,
 			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
 			reset: "Sempre disponível" as const,
-			createdAt: new Date(),
-		};
+		});
 
-		const useCase = new CreateHabitUseCase(habitRepository);
-		const result = await useCase.execute(sanitizedInput);
-		return Response.json(result, { status: 201 });
+		return Response.json({ habit }, { status: 201 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 });
@@ -135,7 +122,7 @@ export async function PUT(request: NextRequest) {
 		const validated = schema.parse(body);
 		const sanitizedId = InputSanitizer.sanitizeId(validated.id);
 
-		await UseCaseFactory.createToggleCompleteHabitUseCase().execute(sanitizedId);
+		await HabitModule.toggle(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -183,14 +170,15 @@ export async function PATCH(request: NextRequest) {
 		const validated = schema.parse(body);
 
 		const sanitizedId = InputSanitizer.sanitizeId(validated.habit.id);
-		const existingHabit = await habitRepository.findById(sanitizedId);
+		const existingHabit = await HabitModule.list().then((items) =>
+			items.find((item) => item.id === sanitizedId),
+		);
 		if (!existingHabit) {
 			return Response.json({ error: "Hábito não encontrado" }, { status: 404 });
 		}
 
 		const habitPatch = validated.habit as Partial<typeof existingHabit>;
-		const useCase = new UpdateHabitUseCase(habitRepository);
-		const updatedHabit = await useCase.execute({
+		const updatedHabit = await HabitModule.update({
 			id: sanitizedId,
 			userId,
 			title: String(habitPatch.title ?? existingHabit.title),
@@ -267,8 +255,7 @@ export async function DELETE(request: NextRequest) {
 		const validatedId = idSchema.parse(id);
 		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
 
-		const useCase = new DeleteHabitUseCase(habitRepository);
-		await useCase.execute(sanitizedId);
+		await HabitModule.delete(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {

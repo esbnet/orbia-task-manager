@@ -1,12 +1,9 @@
-import { UpdateHabitUseCase } from "@/application/use-cases/habit/update-habit/update-habit-use-case";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { PrismaHabitRepository } from "@/infra/database/prisma/prisma-habit-repository";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { idSchema } from "@/infra/validation/schemas";
-import { z } from "zod";
+import { HabitModule } from "@/modules/habit";
 import type { NextRequest } from "next/server";
-
-const habitRepository = new PrismaHabitRepository();
+import { z } from "zod";
 
 export async function GET(
 	_request: NextRequest,
@@ -21,7 +18,7 @@ export async function GET(
 		const { id } = await params;
 		const validatedId = idSchema.parse(id);
 		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
-		const habit = await habitRepository.findById(sanitizedId);
+		const habit = await HabitModule.findById(sanitizedId);
 
 		if (!habit) {
 			return Response.json({ error: "Habit not found" }, { status: 404 });
@@ -70,12 +67,6 @@ export async function PATCH(
 		});
 		const validated = updateSchema.parse(body);
 
-		// Buscar o hábito existente
-		const existingHabit = await habitRepository.findById(sanitizedId);
-		if (!existingHabit) {
-			return Response.json({ error: "Habit not found" }, { status: 404 });
-		}
-
 		// Sanitizar dados de atualização
 		const resetMap: Record<"daily" | "weekly" | "monthly", "Diariamente" | "Semanalmente" | "Mensalmente"> = {
 			daily: "Diariamente",
@@ -101,16 +92,7 @@ export async function PATCH(
 			...(validated.habit.tags && { tags: validated.habit.tags.map(String) }),
 		};
 
-		// Mesclar os dados existentes com as atualizações
-		const updatedHabitData = {
-			...existingHabit,
-			...sanitizedUpdate,
-			id: sanitizedId,
-			updatedAt: new Date(),
-		};
-
-		const useCase = new UpdateHabitUseCase(habitRepository);
-		const result = await useCase.execute(updatedHabitData);
+		const result = await HabitModule.update({ id: sanitizedId, ...sanitizedUpdate });
 
 		return Response.json({ habit: result });
 	} catch (error) {
@@ -137,7 +119,7 @@ export async function DELETE(
 		const { id } = await params;
 		const validatedId = idSchema.parse(id);
 		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
-		await habitRepository.delete(sanitizedId);
+		await HabitModule.delete(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {

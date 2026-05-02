@@ -1,12 +1,10 @@
-import { BaseEntityService, handleServiceError } from "./base/entity-service";
 import type { HabitLogRepository, HabitRepository } from "@/domain/repositories/all-repository";
+import { BaseEntityService, handleServiceError } from "./base/entity-service";
 
-import { CompleteHabitUseCase } from "@/application/use-cases/habit/complete-habit/complete-habit-use-case";
 import type { Habit } from "@/domain/entities/habit";
-import type { HabitFormData } from "@/types/habit";
 import type { HabitLog } from "@/domain/entities/habit-log";
-import { ToggleCompleteUseCase } from "@/application/use-cases/habit/toggle-complete-habit/toggle-complete-habit-use-case";
 import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
+import type { HabitFormData } from "@/types/habit";
 
 // Habit service implementation
 export class HabitService extends BaseEntityService<Habit, HabitFormData> {
@@ -52,9 +50,7 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 			// Create log if repository is available
 			let log: HabitLog | undefined;
 			if (this.habitLogRepository) {
-				const completeHabitUseCase = new CompleteHabitUseCase(this.habitLogRepository);
-				const logResult = await completeHabitUseCase.execute({ habit });
-				log = await this.habitLogRepository.findById(logResult.logId) ?? undefined;
+				log = await this.habitLogRepository.create({ habitId } as any) ?? undefined;
 			}
 
 			return { habit: completedHabit, log };
@@ -66,12 +62,11 @@ export class HabitService extends BaseEntityService<Habit, HabitFormData> {
 	async toggleComplete(habitId: string): Promise<Habit> {
 		try {
 			const habitRepo = this.repository as HabitRepository;
-			const useCase = new ToggleCompleteUseCase(habitRepo);
-			const result = await useCase.execute(habitId);
+			const result = await habitRepo.toggleComplete(habitId);
 			return {
-				...result.habit,
-				currentPeriod: result.habit.currentPeriod ?? null,
-				todayEntries: result.habit.todayEntries ?? 0,
+				...result,
+				currentPeriod: result.currentPeriod ?? null,
+				todayEntries: result.todayEntries ?? 0,
 			};
 		} catch (error) {
 			return handleServiceError(error, "alternar status do hábito");

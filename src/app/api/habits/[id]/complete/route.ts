@@ -1,6 +1,6 @@
-import { UseCaseFactory } from "@/infra/di/use-case-factory";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import { HabitModule } from "@/modules/habit";
 import type { NextRequest } from "next/server";
 
 export async function PATCH(
@@ -15,8 +15,8 @@ export async function PATCH(
 		}
 
 		const sanitizedId = InputSanitizer.sanitizeId(id);
-		const result = await UseCaseFactory.createToggleCompleteHabitUseCase().execute(sanitizedId);
-		return Response.json(result);
+		const habit = await HabitModule.toggle(sanitizedId);
+		return Response.json({ habit });
 	} catch (error) {
 		if (error instanceof Error && error.message.includes("Invalid ID")) {
 			return Response.json({ error: error.message }, { status: 400 });
@@ -40,8 +40,8 @@ export async function DELETE(
 		}
 
 		const sanitizedId = InputSanitizer.sanitizeId(id);
-		const result = await UseCaseFactory.createMarkIncompleteHabitUseCase().execute(sanitizedId);
-		return Response.json(result);
+		const habit = await HabitModule.markIncomplete(sanitizedId);
+		return Response.json({ habit });
 	} catch (error) {
 		if (error instanceof Error && error.message.includes("Invalid ID")) {
 			return Response.json({ error: error.message }, { status: 400 });

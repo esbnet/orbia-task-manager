@@ -1,9 +1,9 @@
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { UseCaseFactory } from "@/infra/di/use-case-factory";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { idSchema } from "@/infra/validation/schemas";
-import { z } from "zod";
+import { HabitModule } from "@/modules/habit";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 
 export async function POST(
 	request: NextRequest,
@@ -26,7 +26,7 @@ export async function POST(
 		});
 		const validatedBody = bodySchema.parse(body);
 
-		const result = await UseCaseFactory.createRegisterHabitUseCase().execute({
+		const result = await HabitModule.register({
 			habitId: sanitizedId,
 			note: validatedBody.note ? String(validatedBody.note) : undefined,
 		});

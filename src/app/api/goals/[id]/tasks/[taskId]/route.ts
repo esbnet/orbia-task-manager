@@ -1,9 +1,7 @@
 import { auth } from "@/auth";
-import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
+import { GoalModule } from "@/modules/goal";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-const goalRepository = new PrismaGoalRepository();
 
 export async function DELETE(
 	request: NextRequest,
@@ -20,7 +18,7 @@ export async function DELETE(
 			);
 		}
 
-		const goal = await goalRepository.findById(id);
+		const goal = await GoalModule.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -45,7 +43,7 @@ export async function DELETE(
 			);
 		}
 
-		await goalRepository.detachTask(id, taskId, taskType as "habit" | "todo");
+		await GoalModule.detachTask(id, taskId, taskType as "habit" | "todo");
 
 		return NextResponse.json({ message: "Tarefa removida com sucesso" });
 	} catch (error) {

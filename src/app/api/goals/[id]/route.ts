@@ -1,16 +1,13 @@
 import { auth } from "@/auth";
-import type { Goal } from "@/domain/entities/goal";
-import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
+import { GoalModule } from "@/modules/goal";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-const goalRepository = new PrismaGoalRepository();
 
 export async function GET(
 	_request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
-			const { id } = await params;
+	const { id } = await params;
 
 	try {
 		const session = await auth();
@@ -21,7 +18,7 @@ export async function GET(
 			);
 		}
 
-		const goal = await goalRepository.findById(id);
+		const goal = await GoalModule.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -49,7 +46,7 @@ export async function PUT(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
-			const { id } = await params;
+	const { id } = await params;
 	try {
 		const session = await auth();
 		if (!session?.user?.id) {
@@ -59,7 +56,7 @@ export async function PUT(
 			);
 		}
 
-		const goal = await goalRepository.findById(id);
+		const goal = await GoalModule.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -75,15 +72,7 @@ export async function PUT(
 		}
 
 		const body = await request.json();
-
-		// Criar objeto Goal completo para o update
-		const goalData: Goal = {
-			...goal,
-			...body,
-			updatedAt: new Date(),
-		};
-
-		const updatedGoal = await goalRepository.update(goalData);
+		const updatedGoal = await GoalModule.update({ id, ...body });
 
 		return NextResponse.json(updatedGoal);
 	} catch (error) {
@@ -98,7 +87,8 @@ export async function DELETE(
 	_request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
-			const { id } = await params;	try {
+	const { id } = await params;
+	try {
 		const session = await auth();
 		if (!session?.user?.id) {
 			return NextResponse.json(
@@ -107,7 +97,7 @@ export async function DELETE(
 			);
 		}
 
-		const goal = await goalRepository.findById(id);
+		const goal = await GoalModule.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -122,7 +112,7 @@ export async function DELETE(
 			);
 		}
 
-		await goalRepository.delete(id);
+		await GoalModule.delete(id);
 
 		return NextResponse.json({ message: "Meta excluída com sucesso" });
 	} catch (error) {
