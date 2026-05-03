@@ -1,5 +1,7 @@
-import { container } from "@/infra/di/container";
+import { PrismaTodoLogRepository } from "@/infra/database/prisma/prisma-todo-log-repository";
 import type { TodoLog } from "@/domain/entities/todo-log";
+
+const todoLogRepo = new PrismaTodoLogRepository();
 
 /**
  * @swagger
@@ -16,7 +18,6 @@ import type { TodoLog } from "@/domain/entities/todo-log";
  */
 export async function GET() {
 	try {
-		const todoLogRepo = container.getTodoLogRepository();
 		// Buscar todos os logs de todos (APENAS completados)
 		const logs: TodoLog[] = await todoLogRepo.list();
 

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
+import { isTodoPendingForToday } from "@/lib/todo-recurrence";
 
 // Tipos para melhor type safety
 interface TaskCountsResponse {
@@ -100,7 +101,7 @@ export function useTaskCounts() {
       const habitsCount = habitsData.availableHabits.length;
       const goalsCount = goals.length;
       const today = getTodayDateInSaoPaulo();
-      const todosCount = todos.filter((todo: any) => todo.lastCompletedDate !== today).length;
+      const todosCount = todos.filter((todo: any) => isTodoPendingForToday(todo, today)).length;
 
       return {
         habits: habitsCount,
@@ -153,7 +154,7 @@ export function useDetailedTaskCounts() {
       const todosLogsCount = todosLogsData?.todos?.length || 0;
       const todosActive = todosActiveData?.todos || [];
       const today = getTodayDateInSaoPaulo();
-      const todosActiveCount = todosActive.filter((todo: any) => todo.lastCompletedDate !== today).length;
+      const todosActiveCount = todosActive.filter((todo: any) => isTodoPendingForToday(todo, today)).length;
       const todosCount = todosLogsCount + todosActiveCount;
 
       const total = habitsCount + todosCount + goalsCount;

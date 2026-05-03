@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Calendar,
 	CheckCircle,
@@ -7,11 +6,13 @@ import {
 	LoaderCircle,
 	Tag
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCompleteTodo, useIncompleteTodo } from "@/hooks/use-complete-todo";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Todo } from "@/domain/entities/todo";
-import { useCompleteTodo, useIncompleteTodo } from "@/hooks/use-complete-todo";
+import { isTodoPendingForToday } from "@/lib/todo-recurrence";
 import { useState } from "react";
 
 interface TodoCardProps {
@@ -42,43 +43,9 @@ export function TodoCard({
 	const [isExpanded, setIsExpanded] = useState(false);
 	const difficulty = difficultyConfig[todo.difficulty as keyof typeof difficultyConfig] || difficultyConfig["Fácil"];
 
-	// Determinar se a tarefa está completa baseado na recorrência
-	const isCompleted = (() => {
-		if (!todo.lastCompletedDate) return false;
-		
-		const lastCompleted = new Date(todo.lastCompletedDate);
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-		lastCompleted.setHours(0, 0, 0, 0);
-
-		switch (todo.recurrence) {
-			case "daily":
-				return lastCompleted.getTime() === today.getTime();
-			case "weekly": {
-				const weekStart = new Date(today);
-				weekStart.setDate(today.getDate() - today.getDay());
-				return lastCompleted >= weekStart;
-			}
-			case "monthly": {
-				return lastCompleted.getMonth() === today.getMonth() && 
-					   lastCompleted.getFullYear() === today.getFullYear();
-			}
-			case "custom": {
-				const daysDiff = Math.floor((today.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				return daysDiff < (todo.recurrenceInterval || 1);
-			}
-			default: // "none" ou pontual
-				return !!todo.lastCompletedDate;
-		}
-	})();
-
-	// Determinar se a tarefa deve aparecer (não está no período de cooldown)
-	const shouldShow = (() => {
-		if (todo.recurrence === "none" || todo.todoType.isPontual()) {
-			return !todo.lastCompletedDate; // Tarefas pontuais desaparecem após conclusão
-		}
-		return true; // Tarefas recorrentes sempre aparecem
-	})();
+	const isPending = isTodoPendingForToday(todo);
+	const isCompleted = !isPending;
+	const shouldShow = isPending;
 
 	if (!shouldShow) return null;
 
@@ -95,14 +62,14 @@ export function TodoCard({
 	return (
 		<Card className={`hover:shadow-md gap-0 transition-shadow duration-200 relative overflow-hidden border border-gray-200/50 dark:border-gray-700/50 ${isLoading ? "opacity-50 pointer-events-none" : ""}`}>
 			{/* Barra de controles fixa no canto superior direito */}
-			<div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+			<div className="top-2 right-2 z-10 absolute flex items-center gap-1">
 				{isCompleted ? (
 					<Button
 						title="Desmarcar como concluído"
 						variant="ghost"
 						onClick={handleIncomplete}
 						size="icon"
-						className="hover:bg-orange-100 dark:hover:bg-orange-900/30 border border-orange-200/50 dark:border-orange-700/50 p-2 rounded-full w-7 h-7 text-orange-600"
+						className="hover:bg-orange-100 dark:hover:bg-orange-900/30 p-2 border border-orange-200/50 dark:border-orange-700/50 rounded-full w-7 h-7 text-orange-600"
 						disabled={isLoading}
 					>
 						{isLoading ? (
@@ -117,7 +84,7 @@ export function TodoCard({
 						variant="ghost"
 						onClick={handleComplete}
 						size="icon"
-						className="hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200/50 dark:border-blue-700/50 p-2 rounded-full w-7 h-7 text-blue-600"
+						className="hover:bg-blue-100 dark:hover:bg-blue-900/30 p-2 border border-blue-200/50 dark:border-blue-700/50 rounded-full w-7 h-7 text-blue-600"
 						disabled={isLoading}
 					>
 						{isLoading ? (
@@ -133,7 +100,7 @@ export function TodoCard({
 						onClick={() => onEdit(todo)}
 						variant="ghost"
 						size="icon"
-						className="hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/50 dark:border-gray-600/50 p-2 rounded-full w-7 h-7 text-gray-600"
+						className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 border border-gray-200/50 dark:border-gray-600/50 rounded-full w-7 h-7 text-gray-600"
 					>
 						<Edit className="w-3 h-3" />
 					</Button>
@@ -143,7 +110,7 @@ export function TodoCard({
 					size="sm"
 					variant="ghost"
 					onClick={() => setIsExpanded(!isExpanded)}
-					className="border border-gray-200/50 dark:border-gray-600/50 p-0 w-7 h-7"
+					className="p-0 border border-gray-200/50 dark:border-gray-600/50 w-7 h-7"
 				>
 					<ChevronDown className={`w-3 h-3 transition-all duration-200 ${isExpanded ? "rotate-180" : "rotate-0"}`} />
 				</Button>

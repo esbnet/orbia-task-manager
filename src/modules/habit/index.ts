@@ -77,6 +77,9 @@ export const HabitModule = {
     list(): Promise<Habit[]> {
         return listHabits(habitRepo);
     },
+    findById(id: string): Promise<Habit | null> {
+        return habitRepo.findById(id);
+    },
     create(input: CreateHabitInput): Promise<Habit> {
         return createHabit(habitRepo, input);
     },

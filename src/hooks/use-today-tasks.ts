@@ -1,8 +1,9 @@
 import { InitialDialogManager } from "@/domain/services/initial-dialog-manager";
 import { fetchAvailableHabits } from "@/hooks/use-habits";
 import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
-import { useMemo } from "react";
+import { isTodoPendingForToday } from "@/lib/todo-recurrence";
 import { useQueries } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 export function useTodayTasks() {
 	const [habitsQuery, todosQuery, goalsQuery] = useQueries({
@@ -61,13 +62,14 @@ export function useTodayTasks() {
 
 		const today = getTodayDateInSaoPaulo();
 		todos.forEach((todo: any) => {
-			const isCompletedToday = todo.lastCompletedDate === today;
+			const isPending = isTodoPendingForToday(todo, today);
+			const isCompletedToday = !isPending;
 			allTasks.push({
 				id: todo.id,
 				title: todo.title,
 				type: "todo",
 				status: isCompletedToday ? "Completa" : "Pendente",
-				isOverdue: !isCompletedToday,
+				isOverdue: isPending,
 			});
 		});
 

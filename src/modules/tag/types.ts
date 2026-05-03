@@ -2,7 +2,7 @@
  * Tipos canônicos do módulo Tag.
  * Fonte única de verdade — substitui:
  *   - src/domain/entities/tag.ts
- *   - src/application/use-cases/tag/*/
+ *   - use-cases legados de Tag
  */
 
 export interface Tag {

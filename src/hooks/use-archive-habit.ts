@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { habitKeys } from "./use-habits";
+import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
 
 export function useArchiveHabit() {
 	const queryClient = useQueryClient();
+	const { playArchive } = useSound();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<void> => {
@@ -16,6 +18,7 @@ export function useArchiveHabit() {
 			}
 		},
 		onSuccess: (_, id) => {
+			playArchive();
 			queryClient.removeQueries({ queryKey: habitKeys.detail(id) });
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: habitKeys.available() });

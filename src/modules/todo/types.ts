@@ -3,8 +3,6 @@
  * Fonte única de verdade — substitui:
  *   - src/domain/entities/todo.ts
  *   - src/types/todo.ts
- *   - src/application/dto/todo-dto.ts
- *   - src/application/use-cases/todo/create-todo/create-todo-dto.ts (tipos)
  */
 
 export type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";

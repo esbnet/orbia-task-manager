@@ -6,8 +6,21 @@
  */
 
 import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
+import {
+    isCompletedInCurrentRecurrencePeriod,
+    shouldReopenForNextRecurrencePeriod,
+} from "@/lib/todo-recurrence";
 import type { TodoLog, TodoLogRepository, TodoRepository } from "./repository";
 import type { CreateTodoInput, Todo, UpdateTodoInput } from "./types";
+
+function resolveTodoType(
+    recurrence: CreateTodoInput["recurrence"] | UpdateTodoInput["recurrence"],
+    todoType?: CreateTodoInput["todoType"] | UpdateTodoInput["todoType"],
+): "pontual" | "recorrente" {
+    // Recorrências diferentes de "none" devem ser recorrentes.
+    if (recurrence && recurrence !== "none") return "recorrente";
+    return todoType ?? "pontual";
+}
 
 export async function createCompletionLog(
     logRepo: TodoLogRepository,
@@ -25,7 +38,20 @@ export async function createCompletionLog(
 // ---- List ----
 
 export async function listTodos(repo: TodoRepository): Promise<Todo[]> {
-    return repo.list();
+    const todos = await repo.list();
+    const today = getTodayDateInSaoPaulo();
+
+    // Redisponibiliza tarefas recorrentes no início do novo período.
+    const normalized = await Promise.all(
+        todos.map(async (todo) => {
+            if (shouldReopenForNextRecurrencePeriod(todo, today)) {
+                return repo.markIncomplete(todo.id);
+            }
+            return todo;
+        }),
+    );
+
+    return normalized;
 }
 
 // ---- Create ----
@@ -34,6 +60,8 @@ export async function createTodo(
     repo: TodoRepository,
     input: CreateTodoInput,
 ): Promise<Todo> {
+    const recurrence = input.recurrence ?? "none";
+
     return repo.create({
         userId: input.userId,
         title: input.title,
@@ -42,9 +70,9 @@ export async function createTodo(
         difficulty: input.difficulty,
         startDate: input.startDate,
         tags: input.tags,
-        recurrence: input.recurrence ?? "none",
+        recurrence,
         recurrenceInterval: input.recurrenceInterval,
-        todoType: input.todoType ?? "pontual",
+        todoType: resolveTodoType(recurrence, input.todoType),
     });
 }
 
@@ -67,7 +95,7 @@ export async function updateTodo(
         tags: input.tags,
         recurrence: input.recurrence,
         recurrenceInterval: input.recurrenceInterval,
-        todoType: input.todoType,
+        todoType: resolveTodoType(input.recurrence, input.todoType),
     });
 }
 
@@ -90,19 +118,28 @@ export async function toggleTodo(
     const current = await repo.findById(id);
     if (!current) throw new Error("Todo not found");
 
-    const isCompleting = !current.lastCompletedDate;
+    const today = getTodayDateInSaoPaulo();
+    const isCompletedInCurrentPeriod = isCompletedInCurrentRecurrencePeriod(current, today);
 
-    if (isCompleting) {
-        await logRepo.create({
-            todoId: current.id,
-            todoTitle: current.title,
-            difficulty: current.difficulty,
-            tags: current.tags,
-            completedAt: new Date(),
-        });
+    // Se já está concluída no período atual, desmarca.
+    if (isCompletedInCurrentPeriod) {
+        return repo.markIncomplete(id);
     }
 
-    return repo.toggleComplete(id);
+    // Conclusão nova no período atual: registra histórico e marca conclusão.
+    await logRepo.create({
+        todoId: current.id,
+        todoTitle: current.title,
+        difficulty: current.difficulty,
+        tags: current.tags,
+        completedAt: new Date(),
+    });
+
+    return repo.update({
+        ...current,
+        lastCompletedDate: today,
+        lastCompletedAt: new Date(),
+    });
 }
 
 // ---- Complete pontual (tarefa única, não reaparece) ----
@@ -146,6 +183,11 @@ export async function completeTodoWithLog(
     logRepo: TodoLogRepository,
     todo: Todo,
 ): Promise<Todo> {
+    const today = getTodayDateInSaoPaulo();
+    if (isCompletedInCurrentRecurrencePeriod(todo, today)) {
+        return todo;
+    }
+
     await logRepo.create({
         todoId: todo.id,
         todoTitle: todo.title,
@@ -156,7 +198,7 @@ export async function completeTodoWithLog(
 
     return repo.update({
         ...todo,
-        lastCompletedDate: getTodayDateInSaoPaulo(),
+        lastCompletedDate: today,
         lastCompletedAt: new Date(),
     });
 }

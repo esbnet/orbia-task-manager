@@ -1,12 +1,13 @@
+import type { NextRequest } from "next/server";
+import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import { PrismaTodoSubtaskRepository } from "@/infra/database/prisma/prisma-todo-subtask-repository";
 import { VerifyTodoOwnershipUseCase } from "@/application/use-cases/todo-subtask/verify-todo-ownership-use-case";
-import { container } from "@/infra/di/container";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import type { NextRequest } from "next/server";
 
 const subtaskRepo = new PrismaTodoSubtaskRepository();
+const todoRepo = new PrismaTodoRepository();
 const verifyOwnershipUseCase = new VerifyTodoOwnershipUseCase(
-	container.getTodoRepository()
+	todoRepo
 );
 
 /**

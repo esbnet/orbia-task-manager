@@ -37,19 +37,6 @@ export interface CreateHabitInput {
     reset: HabitReset;
 }
 
-export interface UpdateHabitInput {
+export type UpdateHabitInput = {
     id: string;
-    userId: string;
-    title: string;
-    observations: string;
-    difficulty: HabitDifficulty;
-    status: HabitStatus;
-    priority: HabitPriority;
-    tags: string[];
-    reset: HabitReset;
-    createdAt: Date;
-    updatedAt: Date;
-    order?: number;
-    lastCompletedDate?: string;
-    lastCompletedAt?: Date;
-}
+} & Partial<Omit<Habit, "id">>;

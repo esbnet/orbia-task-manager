@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { Goal } from "@/types";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import type { Goal } from "@/types";
+import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
 
 // Query keys para goals
@@ -17,7 +18,7 @@ export const goalKeys = {
 export function useGoals(status?: string) {
 	const safeStatus = status ? InputSanitizer.sanitizeForLog(status) : 'none';
 	const queryKey = status ? ["goals", status] : ["goals"];
-	
+
 	return useQuery({
 		queryKey,
 		queryFn: async (): Promise<Goal[]> => {
@@ -67,6 +68,7 @@ export function useGoal(id: string) {
 // Hook para criar goal
 export function useCreateGoal() {
 	const queryClient = useQueryClient();
+	const { playCreate } = useSound();
 
 	return useMutation({
 		mutationFn: async (data: Omit<Goal, "id" | "createdAt" | "updatedAt">): Promise<Goal> => {
@@ -86,6 +88,7 @@ export function useCreateGoal() {
 			return result.goal;
 		},
 		onSuccess: () => {
+			playCreate();
 			// Invalidate all goal queries
 			queryClient.invalidateQueries({ queryKey: goalKeys.all });
 
@@ -107,6 +110,7 @@ export function useCreateGoal() {
 // Hook para atualizar goal
 export function useUpdateGoal() {
 	const queryClient = useQueryClient();
+	const { playUpdate } = useSound();
 
 	return useMutation({
 		mutationFn: async ({ id, data }: { id: string; data: Partial<Goal> }): Promise<Goal> => {
@@ -126,6 +130,7 @@ export function useUpdateGoal() {
 			return result.goal;
 		},
 		onSuccess: (data, { id }) => {
+			playUpdate();
 			// Update cache
 			queryClient.setQueryData(goalKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
@@ -151,6 +156,7 @@ export function useUpdateGoal() {
 // Hook para deletar goal
 export function useDeleteGoal() {
 	const queryClient = useQueryClient();
+	const { playDelete } = useSound();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<void> => {
@@ -163,6 +169,7 @@ export function useDeleteGoal() {
 			}
 		},
 		onSuccess: (_, id) => {
+			playDelete();
 			// Remove from cache
 			queryClient.removeQueries({ queryKey: goalKeys.detail(id) });
 			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
