@@ -1,13 +1,11 @@
-import { ListTodosUseCase } from "@/application/use-cases/todo/list-todo/list-todo-use-case";
 import { InMemoryTodoRepository } from "@/infra/repositories/memory/in-memory-todo-repository";
+import { listTodos } from "@/modules/todo/use-cases";
 
-describe("Use Case: ListTodosUseCase", () => {
+describe("Use Case: listTodos", () => {
 	let repository: InMemoryTodoRepository;
-	let useCase: ListTodosUseCase;
 
 	beforeEach(() => {
 		repository = new InMemoryTodoRepository();
-		useCase = new ListTodosUseCase(repository);
 	});
 
 	afterEach(() => {
@@ -15,14 +13,13 @@ describe("Use Case: ListTodosUseCase", () => {
 	});
 
 	it("deve retornar uma lista vazia quando não há tarefas", async () => {
-		const result = await useCase.execute();
+		const result = await listTodos(repository);
 
-		expect(result.todos).toEqual([]);
-		expect(result.todos.length).toBe(0);
+		expect(result).toEqual([]);
+		expect(result.length).toBe(0);
 	});
 
 	it("deve retornar uma lista de tarefas quando existem tarefas", async () => {
-		// Arrange
 		const todoData = {
 			title: "Tarefa de Teste",
 			observations: "Observações de teste",
@@ -36,12 +33,10 @@ describe("Use Case: ListTodosUseCase", () => {
 
 		await repository.create(todoData);
 
-		// Act
-		const result = await useCase.execute();
+		const result = await listTodos(repository);
 
-		// Assert
-		expect(result.todos.length).toBe(1);
-		expect(result.todos[0].title).toBe("Tarefa de Teste");
-		expect(result.todos[0].difficulty).toBe("Fácil");
+		expect(result.length).toBe(1);
+		expect(result[0].title).toBe("Tarefa de Teste");
+		expect(result[0].difficulty).toBe("Fácil");
 	});
 });

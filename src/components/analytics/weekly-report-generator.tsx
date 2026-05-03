@@ -16,12 +16,11 @@ import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { useAdvancedAnalytics } from "@/hooks/use-advanced-analytics";
-import { useDailies } from "@/hooks/use-dailies";
 import { useGoals } from "@/hooks/use-goals";
 import { useHabits } from "@/hooks/use-habits";
 import { useTodos } from "@/hooks/use-todos";
+import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 
 export function WeeklyReportGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -29,7 +28,6 @@ export function WeeklyReportGenerator() {
   // Hooks para dados em tempo real
   const { data: todos, isLoading: todosLoading, error: todosError } = useTodos();
   const { data: habits, isLoading: habitsLoading, error: habitsError } = useHabits();
-  const { data: dailies, isLoading: dailiesLoading, error: dailiesError } = useDailies();
   const { data: goals, isLoading: goalsLoading, error: goalsError } = useGoals("COMPLETED");
   const { data: analytics, isLoading: analyticsLoading, error: analyticsError } = useAdvancedAnalytics("week");
 
@@ -42,7 +40,7 @@ export function WeeklyReportGenerator() {
 
   // Calcular métricas em tempo real baseadas nos dados locais
   const realTimeMetrics = useMemo(() => {
-    if (!todos || !habits || !dailies || !goals) return null;
+    if (!todos || !habits || !goals) return null;
 
     const now = new Date();
     const weekStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
@@ -61,7 +59,6 @@ export function WeeklyReportGenerator() {
     // Filtrar dados da semana atual
     const weekTodos = todos.filter((todo: any) => new Date(todo.createdAt) >= weekStart);
     const weekHabits = habits.filter((habit: any) => habit.createdAt && new Date(habit.createdAt) >= weekStart);
-    const weekDailies = dailies.filter((daily: any) => new Date(daily.createdAt) >= weekStart);
     const weekGoals = goals.filter((goal: any) => {
       if (!goal || !goal.updatedAt) {
         if (process.env.NODE_ENV === 'development') {
@@ -95,7 +92,6 @@ export function WeeklyReportGenerator() {
       console.log('[WEEKLY-REPORT] Metas da semana:', weekGoals.length);
       console.log('[WEEKLY-REPORT] Todos da semana:', weekTodos.length);
       console.log('[WEEKLY-REPORT] Hábitos da semana:', weekHabits.length);
-      console.log('[WEEKLY-REPORT] Diárias da semana:', weekDailies.length);
 
       if (weekGoals.length > 0) {
         console.log('[WEEKLY-REPORT] ✅ METAS DA SEMANA ENCONTRADAS:');
@@ -112,10 +108,9 @@ export function WeeklyReportGenerator() {
     }
 
     // Calcular métricas
-    const totalTasks = weekTodos.length + weekHabits.length + weekDailies.length + weekGoals.length;
+    const totalTasks = weekTodos.length + weekHabits.length + weekGoals.length;
     const completedTasks = weekTodos.filter((t: any) => t.completed).length +
       weekHabits.filter((h: any) => h.completedToday).length +
-      weekDailies.filter((d: any) => d.completed).length +
       weekGoals.length; // Todas as metas filtradas já são completadas
 
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -128,12 +123,11 @@ export function WeeklyReportGenerator() {
       console.log('[WEEKLY-REPORT] Detalhamento:');
       console.log('[WEEKLY-REPORT]  - Todos:', weekTodos.length);
       console.log('[WEEKLY-REPORT]  - Hábitos:', weekHabits.length);
-      console.log('[WEEKLY-REPORT]  - Diárias:', weekDailies.length);
       console.log('[WEEKLY-REPORT]  - Metas:', weekGoals.length);
     }
 
     // Calcular tempo estimado (em minutos)
-    const estimatedTime = (weekTodos.length * 30) + (weekHabits.length * 15) + (weekDailies.length * 10);
+    const estimatedTime = (weekTodos.length * 30) + (weekHabits.length * 15);
     const averageDaily = Math.round(estimatedTime / 7);
 
     // Encontrar melhor e pior dia (baseado em volume de tarefas)
@@ -159,7 +153,6 @@ export function WeeklyReportGenerator() {
     const categoryStats = {
       'Tarefas': weekTodos.length,
       'Hábitos': weekHabits.length,
-      'Diárias': weekDailies.length,
       'Metas': weekGoals.length
     };
     const topCategories = Object.entries(categoryStats)
@@ -177,7 +170,7 @@ export function WeeklyReportGenerator() {
       worstDay: worstDay.day,
       topCategories
     };
-  }, [todos, habits, dailies, goals]);
+  }, [todos, habits, goals]);
 
   const generateReport = async () => {
     setIsGenerating(true);
@@ -195,7 +188,7 @@ export function WeeklyReportGenerator() {
   };
 
   // Loading state
-  const isLoading = todosLoading || habitsLoading || dailiesLoading || goalsLoading || analyticsLoading;
+  const isLoading = todosLoading || habitsLoading || goalsLoading || analyticsLoading;
   if (isLoading) {
     return (
       <Card>
@@ -210,7 +203,7 @@ export function WeeklyReportGenerator() {
   }
 
   // Error state
-  const hasError = todosError || habitsError || dailiesError || goalsError || analyticsError;
+  const hasError = todosError || habitsError || goalsError || analyticsError;
   if (hasError) {
     return (
       <Card>

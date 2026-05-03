@@ -5,5 +5,8 @@
 	"avdmanager.executable": "/home/esbdev/android_sdk/cmdline-tools/latest/bin/avdmanager",
 	"avdmanager.sdkManager": "/home/esbdev/android_sdk/cmdline-tools/latest/bin/sdkmanager",
 	"MutableAI.upsell": true,
-	"CodeGPT.apiKey": "OpenAI"
+	"CodeGPT.apiKey": "OpenAI",
+	"cSpell.words": [
+		"Orbia"
+	]
 }

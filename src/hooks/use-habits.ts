@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitFormData } from "@/types/habit";
+import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
 
 // Query keys para melhor organização
@@ -13,6 +14,25 @@ export const habitKeys = {
 	detail: (id: string) => [...habitKeys.details(), id] as const,
 	available: () => [...habitKeys.all, "available"] as const,
 };
+
+export interface AvailableHabitsResponse {
+	availableHabits: Habit[];
+	completedInCurrentPeriod: Array<Habit & { nextAvailableAt: Date }>;
+	totalHabits: number;
+}
+
+export async function fetchAvailableHabits(): Promise<AvailableHabitsResponse> {
+	const response = await fetch("/api/habits/available");
+	if (!response.ok) {
+		throw new Error("Erro ao buscar hábitos disponíveis");
+	}
+	const data = await response.json();
+	return {
+		availableHabits: data.availableHabits || [],
+		completedInCurrentPeriod: data.completedInCurrentPeriod || [],
+		totalHabits: data.totalHabits || 0,
+	};
+}
 
 // Hook para buscar todos os hábitos
 export function useHabits() {
@@ -53,18 +73,7 @@ export function useHabit(id: string) {
 export function useAvailableHabits() {
 	return useQuery({
 		queryKey: habitKeys.available(),
-		queryFn: async (): Promise<{ availableHabits: Habit[]; completedInCurrentPeriod: Array<Habit & { nextAvailableAt: Date }>; totalHabits: number }> => {
-			const response = await fetch("/api/habits/available");
-			if (!response.ok) {
-				throw new Error("Erro ao buscar hábitos disponíveis");
-			}
-			const data = await response.json();
-			return {
-				availableHabits: data.availableHabits || [],
-				completedInCurrentPeriod: data.completedInCurrentPeriod || [],
-				totalHabits: data.totalHabits || 0
-			};
-		},
+		queryFn: fetchAvailableHabits,
 		staleTime: 1 * 60 * 1000, // 1 minuto
 	});
 }
@@ -72,6 +81,7 @@ export function useAvailableHabits() {
 // Hook para criar hábito
 export function useCreateHabit() {
 	const queryClient = useQueryClient();
+	const { playCreate } = useSound();
 
 	return useMutation({
 		mutationFn: async (data: HabitFormData): Promise<Habit> => {
@@ -91,6 +101,7 @@ export function useCreateHabit() {
 			return result.habit;
 		},
 		onSuccess: () => {
+			playCreate();
 			// Invalidate e refetch da lista de hábitos
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
 			// Invalidate hábitos disponíveis
@@ -112,6 +123,7 @@ export function useCreateHabit() {
 // Hook para atualizar hábito
 export function useUpdateHabit() {
 	const queryClient = useQueryClient();
+	const { playUpdate } = useSound();
 
 	return useMutation({
 		mutationFn: async ({
@@ -137,6 +149,7 @@ export function useUpdateHabit() {
 			return result.habit;
 		},
 		onSuccess: (data, variables) => {
+			playUpdate();
 			// Update cache do hábito específico
 			queryClient.setQueryData(habitKeys.detail(variables.id), data);
 			// Invalidate lista
@@ -158,6 +171,7 @@ export function useUpdateHabit() {
 // Hook para deletar hábito
 export function useDeleteHabit() {
 	const queryClient = useQueryClient();
+	const { playDelete } = useSound();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<void> => {
@@ -170,6 +184,7 @@ export function useDeleteHabit() {
 			}
 		},
 		onSuccess: (_, id) => {
+			playDelete();
 			// Remove do cache
 			queryClient.removeQueries({ queryKey: habitKeys.detail(id) });
 			// Invalidate lista
@@ -191,6 +206,7 @@ export function useDeleteHabit() {
 // Hook para completar hábito
 export function useCompleteHabit() {
 	const queryClient = useQueryClient();
+	const { playComplete } = useSound();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<Habit> => {
@@ -206,6 +222,7 @@ export function useCompleteHabit() {
 			return result.habit;
 		},
 		onSuccess: (data, id) => {
+			playComplete();
 			// Update cache
 			queryClient.setQueryData(habitKeys.detail(id), data);
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
@@ -226,6 +243,7 @@ export function useCompleteHabit() {
 // Hook para registrar execução de hábito
 export function useRegisterHabit() {
 	const queryClient = useQueryClient();
+	const { playComplete } = useSound();
 
 	return useMutation({
 		mutationFn: async ({
@@ -256,6 +274,7 @@ export function useRegisterHabit() {
 			return result;
 		},
 		onSuccess: (_, variables) => {
+			playComplete();
 			// Invalidate queries relacionadas ao hábito para atualizar estatísticas
 			queryClient.invalidateQueries({ queryKey: habitKeys.detail(variables.id) });
 			queryClient.invalidateQueries({ queryKey: habitKeys.lists() });

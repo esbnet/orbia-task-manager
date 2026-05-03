@@ -1,12 +1,11 @@
 "use client";
 
 import type { Tag } from "@/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	type ReactNode,
 	createContext,
 	useContext,
-	useEffect,
-	useState,
 } from "react";
 
 interface TagsContextType {
@@ -26,33 +25,26 @@ interface TagsProviderProps {
 }
 
 export function TagsProvider({ children }: TagsProviderProps) {
-	const [tags, setTags] = useState<Tag[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [lastFetch, setLastFetch] = useState<number>(0);
+	const queryClient = useQueryClient();
 
-	const fetchTags = async (force = false) => {
-		// Cache por 5 minutos
-		const now = Date.now();
-		if (!force && tags.length > 0 && now - lastFetch < 5 * 60 * 1000) {
-			return;
-		}
-
-		try {
-			setIsLoading(true);
+	const {
+		data: tags = [],
+		isLoading,
+		refetch: refetchTags,
+	} = useQuery({
+		queryKey: ["tags"],
+		queryFn: async (): Promise<Tag[]> => {
 			const response = await fetch("/api/tags");
+			if (!response.ok) {
+				throw new Error("Erro ao buscar tags");
+			}
 			const data = await response.json();
-			setTags(data.tags || []);
-			setLastFetch(now);
-		} catch (error) {
-			setTags([]);
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		fetchTags();
-	}, []);
+			return data.tags || [];
+		},
+		staleTime: 5 * 60 * 1000,
+		gcTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: true,
+	});
 
 	const tagOptions = tags.map((tag) => ({
 		label: tag.name,
@@ -67,9 +59,8 @@ export function TagsProvider({ children }: TagsProviderProps) {
 			body: JSON.stringify(data),
 		});
 		const { tag: newTag } = await response.json();
-		setTags(prev => [...prev, newTag]);
-		// Invalidar cache para forçar atualização
-		setLastFetch(0);
+		queryClient.setQueryData<Tag[]>(["tags"], (previous = []) => [...previous, newTag]);
+		await queryClient.invalidateQueries({ queryKey: ["tags"] });
 		return newTag;
 	};
 
@@ -80,31 +71,28 @@ export function TagsProvider({ children }: TagsProviderProps) {
 			body: JSON.stringify(tagToUpdate),
 		});
 		const { tag: updatedTag } = await response.json();
-		setTags(prev =>
-			prev.map(tag => {
-				if (tag.id === updatedTag.id) {
-					return updatedTag;
-				}
-				return tag;
-			}),
+		queryClient.setQueryData<Tag[]>(["tags"], (previous = []) =>
+			previous.map((tag) => (tag.id === updatedTag.id ? updatedTag : tag)),
 		);
-		// Invalidar cache para forçar atualização
-		setLastFetch(0);
+		await queryClient.invalidateQueries({ queryKey: ["tags"] });
 		return updatedTag;
 	};
 
 	const deleteTag = async (id: string) => {
 		await fetch(`/api/tags?id=${id}`, { method: "DELETE" });
-		setTags(prev => prev.filter(t => t.id !== id));
-		// Invalidar cache para forçar atualização
-		setLastFetch(0);
+		queryClient.setQueryData<Tag[]>(["tags"], (previous = []) =>
+			previous.filter((tag) => tag.id !== id),
+		);
+		await queryClient.invalidateQueries({ queryKey: ["tags"] });
 	};
 
 	const value = {
 		tags,
 		tagOptions,
 		isLoading,
-		refetch: fetchTags,
+		refetch: async () => {
+			await refetchTags();
+		},
 		createTag,
 		updateTag,
 		deleteTag,

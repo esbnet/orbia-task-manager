@@ -1,15 +1,9 @@
-import { CreateGoalUseCase } from "@/application/use-cases/goal/create-goal/create-goal-use-case";
-import { ListGoalsUseCase } from "@/application/use-cases/goal/list-goals/list-goals-use-case";
 import { auth } from "@/auth";
-import type { Goal } from "@/domain/entities/goal";
-import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import type { Goal } from "@/modules/goal";
+import { GoalModule } from "@/modules/goal";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-const goalRepository = new PrismaGoalRepository();
-const createGoalUseCase = new CreateGoalUseCase(goalRepository);
-const listGoalsUseCase = new ListGoalsUseCase(goalRepository);
 /**
  * @swagger
  * /api/goals:
@@ -113,7 +107,7 @@ export async function GET(request: NextRequest) {
 		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
 
 		// Execução do use case
-		const goals = await listGoalsUseCase.execute({
+		const goals = await GoalModule.list({
 			userId: sanitizedUserId,
 			status,
 			priority,
@@ -274,18 +268,18 @@ export async function POST(request: NextRequest) {
 		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
 
 		// Validação de tarefas anexadas
-		let validatedAttachedTasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }> = [];
+		let validatedAttachedTasks: Array<{ taskId: string; taskType: "habit" | "todo" }> = [];
 		if (attachedTasks && Array.isArray(attachedTasks)) {
 			validatedAttachedTasks = attachedTasks.filter(task =>
 				task &&
 				typeof task.taskId === "string" &&
 				typeof task.taskType === "string" &&
-				["habit", "daily", "todo"].includes(task.taskType)
+				["habit", "todo"].includes(task.taskType)
 			);
 		}
 
 		// Execução do use case
-		const goal = await createGoalUseCase.execute({
+		const goal = await GoalModule.create({
 			title: title.trim(),
 			description: (description || "").trim(),
 			targetDate: parsedDate,

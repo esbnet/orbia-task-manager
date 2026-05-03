@@ -224,7 +224,7 @@ export class PrismaGoalRepository implements GoalRepository {
 
 	async findByUserIdAndStatus(
 		userId: string,
-		status: Goal["status"] ,
+		status: Goal["status"],
 	): Promise<Goal[]> {
 		const goals = await prisma.goal.findMany({
 			where: { userId, status },
@@ -295,7 +295,7 @@ export class PrismaGoalRepository implements GoalRepository {
 	}
 
 	// Métodos para tarefas anexadas
-	async attachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+	async attachTask(goalId: string, taskId: string, taskType: "habit" | "todo"): Promise<void> {
 		const userId = await getCurrentUserId();
 		if (!userId) throw new Error("User not authenticated");
 
@@ -318,15 +318,6 @@ export class PrismaGoalRepository implements GoalRepository {
 				taskExists = true;
 				taskTitle = habit.title;
 				taskDifficulty = habit.difficulty;
-			}
-		} else if (taskType === "daily") {
-			const daily = await prisma.daily.findUnique({
-				where: { id: taskId, userId },
-			});
-			if (daily) {
-				taskExists = true;
-				taskTitle = daily.title;
-				taskDifficulty = daily.difficulty;
 			}
 		} else if (taskType === "todo") {
 			const todo = await prisma.todo.findUnique({
@@ -351,7 +342,7 @@ export class PrismaGoalRepository implements GoalRepository {
 		});
 	}
 
-	async detachTask(goalId: string, taskId: string, taskType: "habit" | "daily" | "todo"): Promise<void> {
+	async detachTask(goalId: string, taskId: string, taskType: "habit" | "todo"): Promise<void> {
 		const userId = await getCurrentUserId();
 		if (!userId) throw new Error("User not authenticated");
 
@@ -399,14 +390,6 @@ export class PrismaGoalRepository implements GoalRepository {
 					taskTitle = habit.title;
 					taskDifficulty = habit.difficulty;
 				}
-			} else if (goalTask.taskType === "daily") {
-				const daily = await prisma.daily.findUnique({
-					where: { id: goalTask.taskId },
-				});
-				if (daily) {
-					taskTitle = daily.title;
-					taskDifficulty = daily.difficulty;
-				}
 			} else if (goalTask.taskType === "todo") {
 				const todo = await prisma.todo.findUnique({
 					where: { id: goalTask.taskId },
@@ -421,7 +404,7 @@ export class PrismaGoalRepository implements GoalRepository {
 				attachedTasks.push({
 					id: goalTask.id,
 					taskId: goalTask.taskId,
-					taskType: goalTask.taskType as "habit" | "daily" | "todo",
+					taskType: goalTask.taskType as "habit" | "todo",
 					taskTitle,
 					taskDifficulty,
 				});
@@ -431,7 +414,7 @@ export class PrismaGoalRepository implements GoalRepository {
 		return attachedTasks;
 	}
 
-	async updateAttachedTasks(goalId: string, tasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>): Promise<void> {
+	async updateAttachedTasks(goalId: string, tasks: Array<{ taskId: string; taskType: "habit" | "todo" }>): Promise<void> {
 		const userId = await getCurrentUserId();
 		if (!userId) throw new Error("User not authenticated");
 
@@ -456,11 +439,6 @@ export class PrismaGoalRepository implements GoalRepository {
 					where: { id: task.taskId, userId },
 				});
 				if (habit) taskExists = true;
-			} else if (task.taskType === "daily") {
-				const daily = await prisma.daily.findUnique({
-					where: { id: task.taskId, userId },
-				});
-				if (daily) taskExists = true;
 			} else if (task.taskType === "todo") {
 				const todo = await prisma.todo.findUnique({
 					where: { id: task.taskId, userId },

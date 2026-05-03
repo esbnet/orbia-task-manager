@@ -1,6 +1,5 @@
 "use client";
 
-import { AlertTriangle, CalendarCheck, CheckCircle, Clock, Dumbbell, ListChecks, Target } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -8,6 +7,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { AlertTriangle, CheckCircle, Clock, Dumbbell, ListChecks, Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,6 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
     const getTaskIcon = (type: string) => {
         switch (type) {
             case "habit": return <Dumbbell className="w-6 h-6 text-green-600" />;
-            case "daily": return <CalendarCheck className="w-6 h-6 text-amber-600" />;
             case "todo": return <ListChecks className="w-6 h-6 text-blue-600" />;
             case "goal": return <Target className="w-6 h-6 text-purple-600" />;
             default: return <Target className="w-4 h-4" />;
@@ -40,7 +39,6 @@ export function TasksOverviewDialog({ open, onOpenChange }: TasksOverviewDialogP
     const getTaskTypeLabel = (type: string) => {
         switch (type) {
             case "habit": return t("taskTypes.habit");
-            case "daily": return t("taskTypes.daily");
             case "todo": return t("taskTypes.todo");
             case "goal": return t("taskTypes.goal");
             default: return type;

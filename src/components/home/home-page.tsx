@@ -17,7 +17,7 @@ export default function HomePage() {
     const { t } = useTranslation();
     const { shouldShowDialog, markDialogAsShown } = useInitialDialog();
     const { totalCount, isLoading: tasksLoading } = useTodayTasks();
-    const [columnFilter, setColumnFilter] = useState<"all" | "habits" | "dailies" | "todos" | "goals">("all");
+    const [columnFilter, setColumnFilter] = useState<"all" | "habits" | "todos" | "goals">("all");
     const [isChartVisible, setIsChartVisible] = useState(false);
 
     // Determinar qual ícone mostrar baseado na presença de atividades

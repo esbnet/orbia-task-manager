@@ -18,7 +18,7 @@ export type GoalCategory = "PERSONAL" | "WORK" | "HEALTH" | "LEARNING";
 export interface GoalAttachedTask {
 	id: string;
 	taskId: string;
-	taskType: "habit" | "daily" | "todo";
+	taskType: "habit" | "todo";
 	taskTitle: string;
 	taskDifficulty: string;
 }

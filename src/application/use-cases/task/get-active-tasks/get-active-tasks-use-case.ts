@@ -1,9 +1,9 @@
-import type { HabitRepository, DailyRepository, TodoRepository } from "@/domain/repositories/all-repository";
+import type { HabitRepository, TodoRepository } from "@/domain/repositories/all-repository";
 
 export interface ActiveTask {
   id: string;
   title: string;
-  type: "habit" | "daily" | "todo";
+  type: "habit" | "todo";
   difficulty: string;
   icon: string;
 }
@@ -15,14 +15,12 @@ export interface GetActiveTasksOutput {
 export class GetActiveTasksUseCase {
   constructor(
     private habitRepository: HabitRepository,
-    private dailyRepository: DailyRepository,
     private todoRepository: TodoRepository
-  ) {}
+  ) { }
 
   async execute(): Promise<GetActiveTasksOutput> {
-    const [habits, dailies, todos] = await Promise.all([
+    const [habits, todos] = await Promise.all([
       this.habitRepository.list().catch(() => []),
-      this.dailyRepository.list().catch(() => []),
       this.todoRepository.list().catch(() => []),
     ]);
 
@@ -39,17 +37,6 @@ export class GetActiveTasksUseCase {
           icon: "🔄",
         });
       }
-    });
-
-    // Adicionar dailies
-    dailies.forEach((daily) => {
-      activeTasks.push({
-        id: daily.id,
-        title: daily.title,
-        type: "daily",
-        difficulty: daily.difficulty,
-        icon: "📅",
-      });
     });
 
     // Adicionar todos

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 interface TimeEntry {
   id: string;
   taskId: string;
-  taskType: "habit" | "daily" | "todo" | "goal";
+  taskType: "habit" | "todo" | "goal";
   category: string;
   duration: number; // em segundos
   date: Date;

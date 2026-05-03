@@ -1,7 +1,8 @@
+import type { CreateEntityData } from "@/domain/repositories/base-repository";
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitRepository } from "@/domain/repositories/all-repository";
-import type { CreateEntityData } from "@/domain/repositories/base-repository";
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
+import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
 import { prisma } from "@/infra/database/prisma/prisma-client";
 
 export class PrismaHabitRepository implements HabitRepository {
@@ -25,6 +26,7 @@ export class PrismaHabitRepository implements HabitRepository {
 				reset: true,
 				order: true,
 				lastCompletedDate: true,
+				lastCompletedAt: true,
 				userId: true,
 				createdAt: true,
 				updatedAt: true,
@@ -76,6 +78,7 @@ export class PrismaHabitRepository implements HabitRepository {
 				reset: habit.reset,
 				order: habit.order,
 				lastCompletedDate: habit.lastCompletedDate,
+				lastCompletedAt: habit.lastCompletedAt,
 			},
 		});
 		return this.toDomain(updated);
@@ -109,6 +112,7 @@ export class PrismaHabitRepository implements HabitRepository {
 				reset: true,
 				order: true,
 				lastCompletedDate: true,
+				lastCompletedAt: true,
 				userId: true,
 				createdAt: true,
 				updatedAt: true,
@@ -143,7 +147,10 @@ export class PrismaHabitRepository implements HabitRepository {
 
 		const updated = await prisma.habit.update({
 			where: { id, userId },
-			data: { lastCompletedDate: new Date().toISOString().split("T")[0] },
+			data: {
+				lastCompletedDate: getTodayDateInSaoPaulo(),
+				lastCompletedAt: new Date(),
+			},
 		});
 		return this.toDomain(updated);
 	}
@@ -154,7 +161,10 @@ export class PrismaHabitRepository implements HabitRepository {
 
 		const updated = await prisma.habit.update({
 			where: { id, userId },
-			data: { lastCompletedDate: null },
+			data: {
+				lastCompletedDate: null,
+				lastCompletedAt: null,
+			},
 		});
 		return this.toDomain(updated);
 	}
@@ -210,6 +220,7 @@ export class PrismaHabitRepository implements HabitRepository {
 				reset: true,
 				order: true,
 				lastCompletedDate: true,
+				lastCompletedAt: true,
 				userId: true,
 				createdAt: true,
 				updatedAt: true,
@@ -253,6 +264,7 @@ export class PrismaHabitRepository implements HabitRepository {
 		reset: string;
 		order: number;
 		lastCompletedDate: string | null;
+		lastCompletedAt: Date | null;
 		userId: string;
 		createdAt: Date;
 		updatedAt: Date;
@@ -268,6 +280,7 @@ export class PrismaHabitRepository implements HabitRepository {
 			reset: habit.reset as Habit["reset"],
 			order: habit.order,
 			lastCompletedDate: habit.lastCompletedDate || undefined,
+			lastCompletedAt: habit.lastCompletedAt || undefined,
 			userId: habit.userId,
 			createdAt: habit.createdAt,
 			updatedAt: habit.updatedAt,

@@ -1,7 +1,7 @@
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { UseCaseFactory } from "@/infra/di/use-case-factory";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { idSchema } from "@/infra/validation/schemas";
+import { TodoModule } from "@/modules/todo";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -36,8 +36,8 @@ export async function POST(
 		const { id } = await params;
 		const validatedId = idSchema.parse(id);
 		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
-		const result = await UseCaseFactory.createToggleTodoUseCase().execute(sanitizedId);
-		return Response.json({ todo: result.todo });
+		const result = await TodoModule.toggle(sanitizedId);
+		return Response.json({ todo: result });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 });

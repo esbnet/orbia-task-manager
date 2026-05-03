@@ -15,6 +15,7 @@ export interface Todo {
 	order?: number;
 	userId: string;
 	lastCompletedDate?: string;
+	lastCompletedAt?: Date;
 	recurrence: TodoRecurrence;
 	recurrenceInterval?: number;
 	todoType: TodoTypeValueObject;

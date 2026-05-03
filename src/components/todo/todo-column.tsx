@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCreateTodo, useDeleteTodo, useTodos } from "@/hooks/use-todos";
-import type { Todo as DomainTodo } from "@/domain/entities/todo";
+import { isTodoPendingForToday } from "@/lib/todo-recurrence";
 import type { Todo, TodoDifficulty } from "@/types/todo";
 import { Info, ListChecks, Plus, SquareCheckBig } from "lucide-react";
 
@@ -37,45 +37,7 @@ export const TodoColumn = () => {
 	const [todoToDelete, setTodoToDelete] = useState<any>(null);
 
 
-	const today = new Date().toISOString().split("T")[0];
-
-	// Função auxiliar para determinar se uma tarefa deve aparecer na lista
-	const shouldShowTodo = (todo: any): boolean => {
-		// Tarefas pontuais sempre aparecem (não desaparecem após conclusão)
-		if (todo.recurrence === "none") {
-			return true;
-		}
-
-		// Para tarefas recorrentes, verificar se devem reaparecer
-		const lastCompleted = todo.lastCompletedDate ? new Date(todo.lastCompletedDate) : null;
-		if (!lastCompleted) return true;
-
-		const todayDate = new Date(today);
-		let shouldRecur = false;
-
-		switch (todo.recurrence) {
-			case "daily":
-				const daysSinceDaily = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				shouldRecur = daysSinceDaily >= 1;
-				break;
-			case "weekly":
-				const daysSinceWeekly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				shouldRecur = daysSinceWeekly >= 7;
-				break;
-			case "monthly":
-				const daysSinceMonthly = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-				shouldRecur = daysSinceMonthly >= 30;
-				break;
-			case "custom":
-				if (todo.recurrenceInterval) {
-					const daysSinceCustom = Math.floor((todayDate.getTime() - lastCompleted.getTime()) / (1000 * 60 * 60 * 24));
-					shouldRecur = daysSinceCustom >= todo.recurrenceInterval;
-				}
-				break;
-		}
-
-		return shouldRecur;
-	};
+	const shouldShowTodo = (todo: any): boolean => isTodoPendingForToday(todo);
 
 	const inProgressTodos = todos.filter(shouldShowTodo).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -179,7 +141,7 @@ export const TodoColumn = () => {
 			{isLoading && (
 				<Card className="bg-blue-50 border-blue-200">
 					<CardContent className="py-8 text-center">
-						<div className="mx-auto mb-3 border-4 border-t-transparent border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
+						<div className="mx-auto mb-3 border-4 border-blue-600 border-t-transparent rounded-full w-8 h-8 animate-spin"></div>
 						<p className="text-blue-600">Carregando tarefa...</p>
 					</CardContent>
 				</Card>

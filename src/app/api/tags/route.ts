@@ -1,5 +1,11 @@
 import { auth } from "@/auth";
-import { prisma } from "@/infra/database/prisma/prisma-client";
+import { TagModule } from "@/modules/tag";
+import { z } from "zod";
+
+const createTagSchema = z.object({
+    name: z.string().min(1).max(50),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#3b82f6"),
+});
 
 export async function GET() {
     try {
@@ -8,14 +14,10 @@ export async function GET() {
             return Response.json({ error: "Não autorizado" }, { status: 401 });
         }
 
-        const tags = await prisma.tag.findMany({
-            where: { userId: session.user.id },
-            orderBy: { name: 'asc' }
-        });
-
+        const tags = await TagModule.list(session.user.id);
         return Response.json({ tags });
     } catch (error) {
-        return Response.json({ error: 'Failed to fetch tags' }, { status: 500 });
+        return Response.json({ error: "Failed to fetch tags" }, { status: 500 });
     }
 }
 
@@ -26,18 +28,15 @@ export async function POST(request: Request) {
             return Response.json({ error: "Não autorizado" }, { status: 401 });
         }
 
-        const { name, color } = await request.json();
+        const body = await request.json();
+        const { name, color } = createTagSchema.parse(body);
 
-        const tag = await prisma.tag.create({
-            data: {
-                name,
-                color: color || "#3b82f6",
-                userId: session.user.id
-            }
-        });
-
+        const tag = await TagModule.create({ name, color, userId: session.user.id });
         return Response.json({ tag }, { status: 201 });
     } catch (error) {
-        return Response.json({ error: 'Failed to create tag' }, { status: 500 });
+        if (error instanceof z.ZodError) {
+            return Response.json({ error: error.issues }, { status: 400 });
+        }
+        return Response.json({ error: "Failed to create tag" }, { status: 500 });
     }
 }

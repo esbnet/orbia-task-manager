@@ -44,7 +44,7 @@ import { SpinCircle } from "../ui/spin-circle";
 interface AttachedTask {
 	id: string;
 	taskId: string;
-	taskType: "habit" | "daily" | "todo";
+	taskType: "habit" | "todo";
 	taskTitle: string;
 	taskDifficulty: string;
 }
@@ -78,7 +78,7 @@ interface GoalFormData {
 	targetDate: Date;
 	priority: Goal["priority"];
 	tags: string[];
-	attachedTasks: Array<{ taskId: string; taskType: "habit" | "daily" | "todo" }>;
+	attachedTasks: Array<{ taskId: string; taskType: "habit" | "todo" }>;
 }
 
 interface GoalFormProps {
@@ -298,12 +298,12 @@ export function GoalForm({ goal, onSubmit, onCancel, open = true, isLoading = fa
 							options={activeTasks?.map(task => ({
 								label: `${task.icon} ${task.title}`,
 								value: `${task.type}:${task.id}`,
-								color: task.type === "habit" ? "#10b981" : task.type === "daily" ? "#3b82f6" : "#f59e0b"
+								color: task.type === "habit" ? "#10b981" : "#f59e0b"
 							})) || []}
 							onValueChange={(value: string[]) => {
 								const attachedTasks = value.map(v => {
 									const [taskType, taskId] = v.split(":");
-									return { taskId, taskType: taskType as "habit" | "daily" | "todo" };
+									return { taskId, taskType: taskType as "habit" | "todo" };
 								});
 								setFormData((prev) => ({ ...prev, attachedTasks }));
 							}}

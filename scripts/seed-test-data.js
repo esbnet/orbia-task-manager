@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import pkg from "pg";
@@ -122,38 +122,6 @@ async function main() {
 
   console.log('🔄 Hábitos criados:', habits.length);
 
-  // Criar dailies de teste
-  const dailies = await Promise.all([
-    prisma.daily.create({
-      data: {
-        title: 'Revisar código',
-        observations: 'Revisão diária do código desenvolvido',
-        tasks: ['Verificar qualidade', 'Testar funcionalidades'],
-        difficulty: 'Difícil',
-        startDate: new Date(),
-        repeatType: 'Diariamente',
-        repeatFrequency: 1,
-        tags: ['trabalho', 'desenvolvimento'],
-        userId: user.id,
-      },
-    }),
-    prisma.daily.create({
-      data: {
-        title: 'Fazer reunião diária',
-        observations: 'Reunião stand-up com a equipe',
-        tasks: ['Apresentar progresso', 'Discutir impedimentos'],
-        difficulty: 'Médio',
-        startDate: new Date(),
-        repeatType: 'Diariamente',
-        repeatFrequency: 1,
-        tags: ['trabalho', 'comunicação'],
-        userId: user.id,
-      },
-    }),
-  ]);
-
-  console.log('📅 Dailies criados:', dailies.length);
-
   // Criar todos de teste
   const todos = await Promise.all([
     prisma.todo.create({
@@ -196,9 +164,8 @@ async function main() {
   console.log('🎉 Dados de teste criados com sucesso!');
   console.log('📊 Resumo:');
   console.log(`   - Hábitos: ${habits.length}`);
-  console.log(`   - Dailies: ${dailies.length}`);
   console.log(`   - Todos: ${todos.length}`);
-  console.log(`   - Total: ${habits.length + dailies.length + todos.length} tarefas`);
+  console.log(`   - Total: ${habits.length + todos.length} tarefas`);
 }
 
 main()

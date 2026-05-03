@@ -1,14 +1,10 @@
 import { createTodoSchema, idSchema } from "@/infra/validation/schemas";
 
 import { getCurrentUserIdWithFallback } from "@/hooks/use-current-user";
-import { UseCaseFactory } from "@/infra/di/use-case-factory";
-import { PrismaTodoRepository } from "@/infra/database/prisma/prisma-todo-repository";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
+import { TodoModule } from "@/modules/todo";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-
-// Instâncias únicas
-const todoRepo = new PrismaTodoRepository();
 
 /**
  * @swagger
@@ -27,8 +23,8 @@ export async function GET() {
 			return Response.json({ error: "Não autorizado" }, { status: 401 });
 		}
 
-		const result = await UseCaseFactory.createListTodosUseCase().execute();
-		return Response.json({ todos: result.todos });
+		const todos = await TodoModule.list();
+		return Response.json({ todos });
 	} catch (error) {
 		// Retorna dados vazios em caso de erro para não quebrar o frontend
 		return Response.json({ todos: [] });
@@ -80,22 +76,20 @@ export async function POST(request: NextRequest) {
 
 		const body = await request.json();
 		const validated = createTodoSchema.omit({ userId: true }).parse(body);
-		
-		const sanitizedInput = {
-			userId: "",
+
+		const todo = await TodoModule.create({
+			userId,
 			title: String(validated.title),
 			observations: String(validated.observations),
 			tasks: [],
-			difficulty: validated.difficulty,
+			difficulty: validated.difficulty as any,
 			startDate: new Date(),
 			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
-			recurrence: validated.recurrence,
+			recurrence: validated.recurrence as any,
 			recurrenceInterval: validated.recurrenceInterval ? Number(validated.recurrenceInterval) : undefined,
-			createdAt: new Date(),
-		};
+		});
 
-		const result = await UseCaseFactory.createCreateTodoUseCase().execute(sanitizedInput);
-		return Response.json(result, { status: 201 });
+		return Response.json({ todo }, { status: 201 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 });
@@ -153,31 +147,25 @@ export async function PATCH(request: NextRequest) {
 		const body = await request.json();
 		const validated = createTodoSchema.partial().extend({ id: idSchema }).parse(body);
 		const sanitizedId = InputSanitizer.sanitizeId(validated.id);
-		
-		const existing = await todoRepo.findById(sanitizedId);
+
+		const todos = await TodoModule.list();
+		const existing = todos.find(t => t.id === sanitizedId);
 		if (!existing) {
 			return Response.json({ error: "Todo not found" }, { status: 404 });
 		}
 
-		const sanitizedUpdate = {
+		const todo = await TodoModule.update({
+			...existing,
+			id: sanitizedId,
+			userId,
 			...(validated.title && { title: String(validated.title) }),
 			...(validated.observations && { observations: String(validated.observations) }),
-			...(validated.difficulty && { difficulty: validated.difficulty }),
-			...(validated.tags && { tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [] }),
-			...(validated.recurrence && { recurrence: validated.recurrence }),
+			...(validated.difficulty && { difficulty: validated.difficulty as any }),
+			...(validated.tags && { tags: Array.isArray(validated.tags) ? validated.tags.map(String) : existing.tags }),
+			...(validated.recurrence && { recurrence: validated.recurrence as any }),
 			...(validated.recurrenceInterval && { recurrenceInterval: Number(validated.recurrenceInterval) }),
-		};
-		
-		const todoData = { 
-			...existing, 
-			...sanitizedUpdate,
-			id: sanitizedId,
-			// Ensure we're passing a primitive (string) todoType to the use case,
-			// not a TodoTypeValueObject instance.
-			todoType: (existing as any)?.todoType?.getValue?.() ?? (existing as any)?.todoType,
-		};
-		const updatedTodo = await UseCaseFactory.createUpdateTodoUseCase().execute(todoData);
-		return Response.json({ todo: updatedTodo }, { status: 200 });
+		});
+		return Response.json({ todo });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 });
@@ -223,7 +211,7 @@ export async function DELETE(request: NextRequest) {
 
 		const validatedId = idSchema.parse(id);
 		const sanitizedId = InputSanitizer.sanitizeId(validatedId);
-		await UseCaseFactory.createDeleteTodoUseCase().execute(sanitizedId);
+		await TodoModule.delete(sanitizedId);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {

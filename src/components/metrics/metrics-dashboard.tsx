@@ -46,9 +46,7 @@ import {
     YAxis
 } from "recharts";
 
-import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import { useGoals } from "@/contexts/goal-context";
-import { useAvailableDailies } from "@/hooks/use-dailies";
 import { useHabits } from "@/hooks/use-habits";
 import { useHabitsAnalytics } from "@/hooks/use-habits-analytics";
 import { useTodos } from "@/hooks/use-todos";
@@ -79,7 +77,7 @@ interface MetricsData {
         suggestions: string[];
     };
 
-    dailiesInsights: {
+    recurringTodosInsights: {
         completionRate: number;
         mostConsistent: string[];
         struggleAreas: string[];
@@ -112,7 +110,7 @@ function RecommendationsDialog({
     recommendations,
     habits,
     todos,
-    dailies,
+    recurringTodos,
     goals
 }: {
     isOpen: boolean;
@@ -120,7 +118,7 @@ function RecommendationsDialog({
     recommendations: MetricsData['recommendations'];
     habits: any[];
     todos: any[];
-    dailies: any;
+    recurringTodos: any[];
     goals: any[];
 }) {
     const getTaskLinks = (text: string) => {
@@ -150,14 +148,14 @@ function RecommendationsDialog({
             }
         });
 
-        // Procurar por dailies mencionados
-        dailies?.availableDailies?.forEach((daily: any) => {
-            if (text.toLowerCase().includes(daily.title.toLowerCase())) {
+        // Procurar por tarefas recorrentes mencionadas
+        recurringTodos?.forEach((todo: any) => {
+            if (text.toLowerCase().includes(todo.title.toLowerCase())) {
                 links.push({
-                    type: 'daily',
-                    id: daily.id,
-                    title: daily.title,
-                    icon: '📅'
+                    type: 'todo',
+                    id: todo.id,
+                    title: todo.title,
+                    icon: '🔁'
                 });
             }
         });
@@ -324,19 +322,21 @@ function RecommendationsDialog({
 export function MetricsDashboard() {
     const { goals } = useGoals();
     const { data: todos } = useTodos();
-    const { data: dailiesData } = useAvailableDailies();
     const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("month");
     const { data: habitsAnalytics } = useHabitsAnalytics(timeRange);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
     const [isRecommendationsDialogOpen, setIsRecommendationsDialogOpen] = useState(false);
     const [attachedTasksStats, setAttachedTasksStats] = useState<{
         habits: number;
-        dailies: number;
         todos: number;
     } | null>(null);
 
     // Hooks para obter estatísticas de tags
     const { data: habits } = useHabits();
+    const recurringTodos = useMemo(
+        () => (todos || []).filter((todo: any) => todo.recurrence !== "none" || todo.todoType === "recorrente"),
+        [todos],
+    );
 
     const habitTags = useMemo(() => {
         if (!habits) return [];
@@ -367,11 +367,11 @@ export function MetricsDashboard() {
             .sort((a, b) => b.count - a.count);
     })();
 
-    const dailyTags = (() => {
-        if (!dailiesData?.availableDailies) return [];
+    const recurringTodoTags = (() => {
+        if (!recurringTodos.length) return [];
         const tagCounts: { [key: string]: number } = {};
-        dailiesData.availableDailies.forEach((daily: any) => {
-            daily.tags.forEach((tag: string) => {
+        recurringTodos.forEach((todo: any) => {
+            todo.tags.forEach((tag: string) => {
                 tagCounts[tag] = (tagCounts[tag] || 0) + 1;
             });
         });
@@ -394,7 +394,7 @@ export function MetricsDashboard() {
     })();
 
     const calculateMetrics = useCallback(() => {
-        if (!habitsAnalytics || !todos || !dailiesData) return;
+        if (!habitsAnalytics || !todos) return;
 
         // Cálculos básicos aprimorados
         const totalHabits = habitsAnalytics.totalHabits;
@@ -413,9 +413,9 @@ export function MetricsDashboard() {
         ).length;
         const recentTodosCompletionRate = totalTodos > 0 ? (recentCompletedTodos / totalTodos) * 100 : 0;
 
-        const availableDailies = dailiesData.availableDailies?.length || 0;
-        const completedDailies = dailiesData.completedToday?.length || 0;
-        const dailiesCompletionRate = availableDailies > 0 ? (completedDailies / availableDailies) * 100 : 0;
+        const totalRecurringTodos = recurringTodos.length;
+        const completedRecurringTodos = recurringTodos.filter(todo => todo.lastCompletedDate).length;
+        const recurringTodosCompletionRate = totalRecurringTodos > 0 ? (completedRecurringTodos / totalRecurringTodos) * 100 : 0;
 
         const totalGoals = goals.length;
         const completedGoals = goals.filter(goal => goal.status === "COMPLETED").length;
@@ -429,43 +429,43 @@ export function MetricsDashboard() {
         const habitConsistency = habitsAnalytics.currentStreaks.length > 0 ?
             Math.min(habitsAnalytics.currentStreaks.reduce((sum, streak) => sum + streak.streakDays, 0) / habitsAnalytics.currentStreaks.length, 30) / 30 * 100 : 0;
 
-        const dailyConsistency = dailiesCompletionRate;
+        const recurringConsistency = recurringTodosCompletionRate;
         const goalConsistency = totalGoals > 0 ? ((completedGoals + (inProgressGoals - overdueGoals)) / totalGoals) * 100 : 0;
 
         const consistencyScore = Math.round(
             (habitConsistency * 0.4) +
-            (dailyConsistency * 0.4) +
+            (recurringConsistency * 0.4) +
             (goalConsistency * 0.2)
         );
 
         // Score geral com pesos dinâmicos baseados na atividade
         const hasHabits = totalHabits > 0;
         const hasTodos = totalTodos > 0;
-        const hasDailies = availableDailies > 0;
+        const hasRecurringTodos = totalRecurringTodos > 0;
         const hasGoals = totalGoals > 0;
 
         let habitsWeight = 0.3;
         let todosWeight = 0.25;
-        let dailiesWeight = 0.25;
+        let recurringTodosWeight = 0.25;
         let goalsWeight = 0.2;
 
         // Ajustar pesos baseado na atividade
         if (!hasHabits) {
             habitsWeight = 0;
-            const remainingWeight = todosWeight + dailiesWeight + goalsWeight;
+            const remainingWeight = todosWeight + recurringTodosWeight + goalsWeight;
             todosWeight = hasTodos ? todosWeight / remainingWeight : 0;
-            dailiesWeight = hasDailies ? dailiesWeight / remainingWeight : 0;
+            recurringTodosWeight = hasRecurringTodos ? recurringTodosWeight / remainingWeight : 0;
             goalsWeight = hasGoals ? goalsWeight / remainingWeight : 0;
         }
         if (!hasTodos) {
             todosWeight = 0;
-            const remainingWeight = habitsWeight + dailiesWeight + goalsWeight;
+            const remainingWeight = habitsWeight + recurringTodosWeight + goalsWeight;
             habitsWeight = hasHabits ? habitsWeight / remainingWeight : 0;
-            dailiesWeight = hasDailies ? dailiesWeight / remainingWeight : 0;
+            recurringTodosWeight = hasRecurringTodos ? recurringTodosWeight / remainingWeight : 0;
             goalsWeight = hasGoals ? goalsWeight / remainingWeight : 0;
         }
-        if (!hasDailies) {
-            dailiesWeight = 0;
+        if (!hasRecurringTodos) {
+            recurringTodosWeight = 0;
             const remainingWeight = habitsWeight + todosWeight + goalsWeight;
             habitsWeight = hasHabits ? habitsWeight / remainingWeight : 0;
             todosWeight = hasTodos ? todosWeight / remainingWeight : 0;
@@ -473,16 +473,16 @@ export function MetricsDashboard() {
         }
         if (!hasGoals) {
             goalsWeight = 0;
-            const remainingWeight = habitsWeight + todosWeight + dailiesWeight;
+            const remainingWeight = habitsWeight + todosWeight + recurringTodosWeight;
             habitsWeight = hasHabits ? habitsWeight / remainingWeight : 0;
             todosWeight = hasTodos ? todosWeight / remainingWeight : 0;
-            dailiesWeight = hasDailies ? dailiesWeight / remainingWeight : 0;
+            recurringTodosWeight = hasRecurringTodos ? recurringTodosWeight / remainingWeight : 0;
         }
 
         const overallScore = Math.round(
             (habitsCompletionRate * habitsWeight) +
             (todosCompletionRate * todosWeight) +
-            (dailiesCompletionRate * dailiesWeight) +
+            (recurringTodosCompletionRate * recurringTodosWeight) +
             (goalsCompletionRate * goalsWeight)
         );
 
@@ -549,26 +549,26 @@ export function MetricsDashboard() {
             ],
         };
 
-        // Insights de dailies aprimorados
-        const dailiesInsights = {
-            completionRate: dailiesCompletionRate,
-            mostConsistent: dailiesData.availableDailies?.slice(0, 3).map(d => d.title) || [],
-            struggleAreas: dailiesCompletionRate < 70 ? ["Manutenção diária"] : [],
+        // Insights de tarefas recorrentes
+        const recurringTodosInsights = {
+            completionRate: recurringTodosCompletionRate,
+            mostConsistent: recurringTodos.slice(0, 3).map(todo => todo.title) || [],
+            struggleAreas: recurringTodosCompletionRate < 70 ? ["Execução recorrente"] : [],
             strongPoints: [
-                dailiesCompletionRate > 90 ? "Excelente consistência diária!" : "",
-                dailiesCompletionRate > 80 ? "Muito consistente com atividades diárias!" : "",
-                completedDailies === availableDailies && availableDailies > 0 ? "Todas as dailies concluídas hoje!" : "",
+                recurringTodosCompletionRate > 90 ? "Excelente consistência em tarefas recorrentes!" : "",
+                recurringTodosCompletionRate > 80 ? "Muito consistente com tarefas recorrentes!" : "",
+                completedRecurringTodos === totalRecurringTodos && totalRecurringTodos > 0 ? "Todas as tarefas recorrentes foram concluídas!" : "",
             ].filter(Boolean),
             attentionAreas: [
-                dailiesCompletionRate < 50 ? "Baixa consistência diária - revise suas rotinas" : "",
-                availableDailies === 0 ? "Nenhuma daily configurada - estabeleça rotinas diárias" : "",
-                dailiesCompletionRate < 70 ? "Dificuldade em manter consistência diária" : "",
+                recurringTodosCompletionRate < 50 ? "Baixa consistência em tarefas recorrentes - revise suas rotinas" : "",
+                totalRecurringTodos === 0 ? "Nenhuma tarefa recorrente configurada - aproveite a recorrência de tarefas" : "",
+                recurringTodosCompletionRate < 70 ? "Dificuldade em manter consistência nas tarefas recorrentes" : "",
             ].filter(Boolean),
             suggestions: [
-                dailiesCompletionRate < 80 ? "Configure lembretes para atividades diárias" : "",
-                availableDailies > 10 ? "Considere reduzir para focar no essencial" : "",
-                "Combine dailies com hábitos existentes para reforço",
-                "Estabeleça horários fixos para suas dailies",
+                recurringTodosCompletionRate < 80 ? "Configure lembretes para tarefas recorrentes" : "",
+                totalRecurringTodos > 10 ? "Considere reduzir tarefas recorrentes para focar no essencial" : "",
+                "Combine tarefas recorrentes com hábitos existentes para reforço",
+                "Estabeleça horários fixos para tarefas recorrentes",
                 "Acompanhe seu progresso diário",
             ].filter(Boolean),
         };
@@ -607,7 +607,7 @@ export function MetricsDashboard() {
         const recommendations = {
             immediate: [
                 overallScore < 60 ? "✨ Comece completando 3 atividades hoje para ganhar momentum" : "",
-                dailiesCompletionRate < 70 ? "📅 Configure lembretes para suas atividades diárias" : "",
+                recurringTodosCompletionRate < 70 ? "🔁 Configure lembretes para suas tarefas recorrentes" : "",
                 habitsAnalytics.currentStreaks.length === 0 ? "🎯 Escolha 1-2 hábitos simples para começar hoje" : "",
             ].filter(Boolean),
             shortTerm: [
@@ -628,11 +628,11 @@ export function MetricsDashboard() {
             consistencyScore,
             habitsInsights,
             todosInsights,
-            dailiesInsights,
+            recurringTodosInsights,
             goalsInsights,
             recommendations,
         });
-    }, [habitsAnalytics, todos, dailiesData, goals]);
+    }, [habitsAnalytics, todos, recurringTodos, goals]);
 
     useEffect(() => {
         calculateMetrics();
@@ -642,12 +642,11 @@ export function MetricsDashboard() {
     useEffect(() => {
         const fetchAttachedTasksStats = async () => {
             if (goals.length === 0) {
-                setAttachedTasksStats({ habits: 0, dailies: 0, todos: 0 });
+                setAttachedTasksStats({ habits: 0, todos: 0 });
                 return;
             }
 
             let habitsCount = 0;
-            let dailiesCount = 0;
             let todosCount = 0;
 
             try {
@@ -658,18 +657,16 @@ export function MetricsDashboard() {
                         const tasks = await response.json();
                         tasks.forEach((task: any) => {
                             if (task.taskType === 'habit') habitsCount++;
-                            else if (task.taskType === 'daily') dailiesCount++;
-                            else if (task.taskType === 'todo') todosCount++;
+                            else todosCount++;
                         });
                     }
                 }
 
-                setAttachedTasksStats({ habits: habitsCount, dailies: dailiesCount, todos: todosCount });
+                setAttachedTasksStats({ habits: habitsCount, todos: todosCount });
             } catch (error) {
                 // Fallback para estimativa
                 setAttachedTasksStats({
                     habits: Math.floor(goals.length * 1.5),
-                    dailies: Math.floor(goals.length * 1.2),
                     todos: Math.floor(goals.length * 2.5)
                 });
             }
@@ -682,7 +679,6 @@ export function MetricsDashboard() {
     const attachedTasksChartData = useMemo(() => {
         // Usar dados reais das tarefas anexadas se disponíveis, senão usar estimativa
         const habitsCount = attachedTasksStats?.habits || Math.floor(goals.length * 1.5);
-        const dailiesCount = attachedTasksStats?.dailies || Math.floor(goals.length * 1.2);
         const todosCount = attachedTasksStats?.todos || Math.floor(goals.length * 2.5);
 
         return [
@@ -690,11 +686,6 @@ export function MetricsDashboard() {
                 name: "Hábitos",
                 value: habitsCount,
                 color: "#10b981"
-            },
-            {
-                name: "Diárias",
-                value: dailiesCount,
-                color: "#3b82f6"
             },
             {
                 name: "Tarefa",
@@ -801,7 +792,7 @@ export function MetricsDashboard() {
                     <TabsTrigger value="insights">Insights</TabsTrigger>
                     <TabsTrigger value="habits">Hábitos</TabsTrigger>
                     <TabsTrigger value="todos">Todos</TabsTrigger>
-                    <TabsTrigger value="dailies">Dailies</TabsTrigger>
+                    <TabsTrigger value="recurring">Recorrentes</TabsTrigger>
                     <TabsTrigger value="goals">Metas</TabsTrigger>
                     <TabsTrigger value="recommendations">Recomendações</TabsTrigger>
                 </TabsList>
@@ -847,12 +838,12 @@ export function MetricsDashboard() {
                                         </div>
                                     )}
 
-                                    {/* Dailies */}
-                                    {metricsData.dailiesInsights.strongPoints.length > 0 && (
+                                    {/* Recorrentes */}
+                                    {metricsData.recurringTodosInsights.strongPoints.length > 0 && (
                                         <div>
-                                            <p className="font-medium text-green-700 text-sm">📅 Diárias:</p>
+                                            <p className="font-medium text-green-700 text-sm">🔁 Recorrentes:</p>
                                             <ul className="space-y-1 mt-1 text-muted-foreground text-sm">
-                                                {metricsData.dailiesInsights.strongPoints.map((point, index) => (
+                                                {metricsData.recurringTodosInsights.strongPoints.map((point, index) => (
                                                     <li key={index} className="flex items-start gap-2">
                                                         <CheckCircle className="flex-shrink-0 mt-0.5 w-4 h-4 text-green-500" />
                                                         {point}
@@ -919,12 +910,12 @@ export function MetricsDashboard() {
                                         </div>
                                     )}
 
-                                    {/* Dailies */}
-                                    {metricsData.dailiesInsights.attentionAreas.length > 0 && (
+                                    {/* Recorrentes */}
+                                    {metricsData.recurringTodosInsights.attentionAreas.length > 0 && (
                                         <div>
-                                            <p className="font-medium text-orange-700 text-sm">📅 Diárias:</p>
+                                            <p className="font-medium text-orange-700 text-sm">🔁 Recorrentes:</p>
                                             <ul className="space-y-1 mt-1 text-muted-foreground text-sm">
-                                                {metricsData.dailiesInsights.attentionAreas.map((area, index) => (
+                                                {metricsData.recurringTodosInsights.attentionAreas.map((area, index) => (
                                                     <li key={index} className="flex items-start gap-2">
                                                         <AlertTriangle className="flex-shrink-0 mt-0.5 w-4 h-4 text-orange-500" />
                                                         {area}
@@ -1191,25 +1182,25 @@ export function MetricsDashboard() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="dailies" className="space-y-4">
+                <TabsContent value="recurring" className="space-y-4">
                     <div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Performance de Dailies</CardTitle>
+                                <CardTitle>Performance de Tarefas Recorrentes</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm">Taxa de Conclusão Hoje</span>
-                                        <span className="font-bold">{metricsData.dailiesInsights.completionRate.toFixed(1)}%</span>
+                                        <span className="text-sm">Taxa de Conclusão</span>
+                                        <span className="font-bold">{metricsData.recurringTodosInsights.completionRate.toFixed(1)}%</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm">Disponíveis</span>
-                                        <span className="font-bold">{dailiesData?.availableDailies?.length || 0}</span>
+                                        <span className="text-sm">Total</span>
+                                        <span className="font-bold">{recurringTodos.length || 0}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm">Concluídas Hoje</span>
-                                        <span className="font-bold">{dailiesData?.completedToday?.length || 0}</span>
+                                        <span className="text-sm">Concluídas</span>
+                                        <span className="font-bold">{recurringTodos.filter(todo => todo.lastCompletedDate).length || 0}</span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -1217,11 +1208,11 @@ export function MetricsDashboard() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Otimização de Dailies</CardTitle>
+                                <CardTitle>Otimização de Tarefas Recorrentes</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ul className="space-y-2 text-sm">
-                                    {metricsData.dailiesInsights.suggestions.map((suggestion, index) => (
+                                    {metricsData.recurringTodosInsights.suggestions.map((suggestion, index) => (
                                         <li key={index} className="flex items-start gap-2">
                                             <Calendar className="flex-shrink-0 mt-0.5 w-4 h-4 text-blue-500" />
                                             {suggestion}
@@ -1232,25 +1223,25 @@ export function MetricsDashboard() {
                         </Card>
                     </div>
 
-                    {/* Gráficos de Dailies */}
+                    {/* Gráficos de tarefas recorrentes */}
                     <div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Dailies por Dificuldade</CardTitle>
+                                <CardTitle>Recorrentes por Dificuldade</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <PieChart>
                                         <Pie
-                                            data={dailiesData?.availableDailies?.reduce((acc, daily) => {
-                                                const existing = acc.find(item => item.name === daily.difficulty);
+                                            data={recurringTodos.reduce((acc, todo) => {
+                                                const existing = acc.find(item => item.name === todo.difficulty);
                                                 if (existing) {
                                                     existing.value += 1;
                                                 } else {
-                                                    acc.push({ name: daily.difficulty, value: 1, color: daily.difficulty === "Fácil" ? "#00C49F" : daily.difficulty === "Médio" ? "#FFBB28" : "#FF8042" });
+                                                    acc.push({ name: todo.difficulty, value: 1, color: todo.difficulty === "Fácil" ? "#00C49F" : todo.difficulty === "Médio" ? "#FFBB28" : "#FF8042" });
                                                 }
                                                 return acc;
-                                            }, [] as Array<{ name: string; value: number; color: string }>) || []}
+                                            }, [] as Array<{ name: string; value: number; color: string }>)}
                                             cx="50%"
                                             cy="50%"
                                             labelLine={false}
@@ -1259,12 +1250,12 @@ export function MetricsDashboard() {
                                             fill="#8884d8"
                                             dataKey="value"
                                         >
-                                            {dailiesData?.availableDailies?.reduce((acc, daily) => {
-                                                const existing = acc.find(item => item.name === daily.difficulty);
+                                            {recurringTodos.reduce((acc, todo) => {
+                                                const existing = acc.find(item => item.name === todo.difficulty);
                                                 if (existing) {
                                                     existing.value += 1;
                                                 } else {
-                                                    acc.push({ name: daily.difficulty, value: 1, color: daily.difficulty === "Fácil" ? "#00C49F" : daily.difficulty === "Médio" ? "#FFBB28" : "#FF8042" });
+                                                    acc.push({ name: todo.difficulty, value: 1, color: todo.difficulty === "Fácil" ? "#00C49F" : todo.difficulty === "Médio" ? "#FFBB28" : "#FF8042" });
                                                 }
                                                 return acc;
                                             }, [] as Array<{ name: string; value: number; color: string }>).map((entry, index) => (
@@ -1279,15 +1270,15 @@ export function MetricsDashboard() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Dailies por Status</CardTitle>
+                                <CardTitle>Recorrentes por Status</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <PieChart>
                                         <Pie
                                             data={[
-                                                { name: "Disponíveis", value: dailiesData?.availableDailies?.length || 0, color: "#FFBB28" },
-                                                { name: "Concluídas Hoje", value: dailiesData?.completedToday?.length || 0, color: "#00C49F" },
+                                                { name: "Pendentes", value: recurringTodos.filter(todo => !todo.lastCompletedDate).length || 0, color: "#FFBB28" },
+                                                { name: "Concluídas", value: recurringTodos.filter(todo => todo.lastCompletedDate).length || 0, color: "#00C49F" },
                                             ].filter(item => item.value > 0)}
                                             cx="50%"
                                             cy="50%"
@@ -1298,8 +1289,8 @@ export function MetricsDashboard() {
                                             dataKey="value"
                                         >
                                             {[
-                                                { name: "Disponíveis", value: dailiesData?.availableDailies?.length || 0, color: "#FFBB28" },
-                                                { name: "Concluídas Hoje", value: dailiesData?.completedToday?.length || 0, color: "#00C49F" },
+                                                { name: "Pendentes", value: recurringTodos.filter(todo => !todo.lastCompletedDate).length || 0, color: "#FFBB28" },
+                                                { name: "Concluídas", value: recurringTodos.filter(todo => todo.lastCompletedDate).length || 0, color: "#00C49F" },
                                             ].filter(item => item.value > 0).map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
@@ -1313,11 +1304,11 @@ export function MetricsDashboard() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Distribuição de Tags em Dailies</CardTitle>
+                            <CardTitle>Distribuição de Tags em Recorrentes</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={dailyTags}>
+                                <BarChart data={recurringTodoTags}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="tag" />
                                     <YAxis />
@@ -1512,7 +1503,6 @@ export function MetricsDashboard() {
                                     <Bar dataKey="value" fill="#8884d8" radius={[4, 4, 0, 0]}>
                                         {[
                                             { name: "Hábitos", color: "#10b981" },
-                                            { name: "Diárias", color: "#3b82f6" },
                                             { name: "Tarefa", color: "#f59e0b" }
                                         ].map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1594,7 +1584,7 @@ export function MetricsDashboard() {
                     recommendations={metricsData.recommendations}
                     habits={habits || []}
                     todos={todos || []}
-                    dailies={dailiesData}
+                    recurringTodos={recurringTodos}
                     goals={goals || []}
                 />
             )}

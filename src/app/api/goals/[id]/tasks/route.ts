@@ -1,9 +1,7 @@
 import { auth } from "@/auth";
-import { PrismaGoalRepository } from "@/infra/database/prisma/prisma-goal-repository";
+import { GoalModule } from "@/modules/goal";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-const goalRepository = new PrismaGoalRepository();
 
 export async function GET(
 	request: NextRequest,
@@ -20,7 +18,7 @@ export async function GET(
 			);
 		}
 
-		const goal = await goalRepository.findById(id);
+		const goal = await GoalModule.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -35,7 +33,7 @@ export async function GET(
 			);
 		}
 
-		const attachedTasks = await goalRepository.getAttachedTasks(id);
+		const attachedTasks = await GoalModule.getAttachedTasks(id);
 
 		return NextResponse.json(attachedTasks);
 	} catch (error) {
@@ -61,7 +59,7 @@ export async function POST(
 			);
 		}
 
-		const goal = await goalRepository.findById(id);
+		const goal = await GoalModule.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -79,21 +77,21 @@ export async function POST(
 		const body = await request.json();
 		const { taskId, taskType } = body;
 
-		if (!taskId || !taskType) {
+		if (!taskType || !taskId) {
 			return NextResponse.json(
 				{ error: "taskId e taskType são obrigatórios" },
 				{ status: 400 },
 			);
 		}
 
-		if (!["habit", "daily", "todo"].includes(taskType)) {
+		if (!["habit", "todo"].includes(taskType)) {
 			return NextResponse.json(
-				{ error: "taskType deve ser habit, daily ou todo" },
+				{ error: "taskType deve ser habit ou todo" },
 				{ status: 400 },
 			);
 		}
 
-		await goalRepository.attachTask(id, taskId, taskType as "habit" | "daily" | "todo");
+		await GoalModule.attachTask(id, taskId, taskType as "habit" | "todo");
 
 		return NextResponse.json({ message: "Tarefa anexada com sucesso" });
 	} catch (error) {
@@ -119,7 +117,7 @@ export async function PUT(
 			);
 		}
 
-		const goal = await goalRepository.findById(id);
+		const goal = await GoalModule.findById(id);
 		if (!goal) {
 			return NextResponse.json(
 				{ error: "Meta não encontrada" },
@@ -148,10 +146,10 @@ export async function PUT(
 			task &&
 			typeof task.taskId === "string" &&
 			typeof task.taskType === "string" &&
-			["habit", "daily", "todo"].includes(task.taskType)
+			["habit", "todo"].includes(task.taskType)
 		);
 
-		await goalRepository.updateAttachedTasks(id, validatedTasks);
+		await GoalModule.updateAttachedTasks(id, validatedTasks);
 
 		return NextResponse.json({ message: "Tarefas atualizadas com sucesso" });
 	} catch (error) {

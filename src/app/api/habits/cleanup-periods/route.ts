@@ -1,20 +1,14 @@
-import { HabitPeriodManager } from "@/domain/services/habit-period-manager";
-import { PrismaHabitPeriodRepository } from "@/infra/database/prisma/prisma-habit-period-repository";
+import { HabitModule } from "@/modules/habit";
 import { NextResponse } from "next/server";
-
-const habitPeriodRepository = new PrismaHabitPeriodRepository();
-const periodManager = new HabitPeriodManager(habitPeriodRepository);
 
 export async function POST() {
 	try {
-		await periodManager.finalizeExpiredPeriods();
-		
-		return NextResponse.json({ 
-			success: true, 
-			message: "Períodos expirados finalizados com sucesso" 
+		await HabitModule.cleanupPeriods();
+		return NextResponse.json({
+			success: true,
+			message: "Períodos expirados finalizados com sucesso",
 		});
 	} catch (error) {
-		
 		return NextResponse.json(
 			{ error: "Erro interno do servidor" },
 			{ status: 500 }

@@ -14,6 +14,7 @@ export interface Todo {
 	createdAt: Date;
 	order?: number;
 	lastCompletedDate?: string;
+	lastCompletedAt?: Date;
 	recurrence: TodoRecurrence;
 	recurrenceInterval?: number; // Para recorrência customizada (ex: a cada 3 dias)
 	todoType: TodoType;

@@ -28,6 +28,7 @@ export interface Habit {
 	updatedAt: Date;
 	order?: number;
 	lastCompletedDate?: string;
+	lastCompletedAt?: Date;
 }
 
 export interface HabitFormData {
