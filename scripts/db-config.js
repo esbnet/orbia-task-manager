@@ -39,23 +39,33 @@ const envVars = loadEnvVars();
 
 // Usar variáveis do sistema se .env não existir (produção)
 const devDatabaseUrl = envVars.DEV_DATABASE_URL || process.env.DEV_DATABASE_URL;
-const devDirectUrl = envVars.DEV_DIRECT_URL || process.env.DEV_DIRECT_URL;
+const devDirectUrl =
+	envVars.DEV_DIRECT_DATABASE_URL ||
+	envVars.DEV_DIRECT_URL ||
+	process.env.DEV_DIRECT_DATABASE_URL ||
+	process.env.DEV_DIRECT_URL;
 const devShadowDatabaseUrl =
 	envVars.DEV_SHADOW_DATABASE_URL || process.env.DEV_SHADOW_DATABASE_URL;
 const prodDatabaseUrl = envVars.PROD_DATABASE_URL || process.env.DATABASE_URL;
-const prodDirectUrl = envVars.PROD_DIRECT_URL || process.env.DIRECT_URL;
+const prodDirectUrl =
+	envVars.PROD_DIRECT_DATABASE_URL ||
+	envVars.PROD_DIRECT_URL ||
+	process.env.PROD_DIRECT_DATABASE_URL ||
+	process.env.DIRECT_DATABASE_URL ||
+	process.env.PROD_DIRECT_URL ||
+	process.env.DIRECT_URL;
 const prodShadowDatabaseUrl =
 	envVars.PROD_SHADOW_DATABASE_URL || process.env.PROD_SHADOW_DATABASE_URL;
 
 if (environment === 'development' && (!devDatabaseUrl || !devDirectUrl)) {
 	console.error('❌ Variáveis de desenvolvimento não encontradas');
-	console.error('Certifique-se de que DEV_DATABASE_URL e DEV_DIRECT_URL estão definidas');
+	console.error('Certifique-se de que DEV_DATABASE_URL e DEV_DIRECT_DATABASE_URL/DEV_DIRECT_URL estão definidas');
 	process.exit(1);
 }
 
 if (environment === 'production' && (!prodDatabaseUrl || !prodDirectUrl)) {
 	console.error('❌ Variáveis de produção não encontradas');
-	console.error('Certifique-se de que DATABASE_URL e DIRECT_URL estão definidas no ambiente');
+	console.error('Certifique-se de que DATABASE_URL e DIRECT_DATABASE_URL/DIRECT_URL estão definidas no ambiente');
 	process.exit(1);
 }
 
@@ -67,6 +77,7 @@ const configs = {
         hasDirectUrl: true,
         envVars: {
             DATABASE_URL: devDatabaseUrl,
+			DIRECT_DATABASE_URL: devDirectUrl,
 			DIRECT_URL: devDirectUrl,
 			...(devShadowDatabaseUrl
 				? { SHADOW_DATABASE_URL: devShadowDatabaseUrl }
@@ -79,6 +90,7 @@ const configs = {
         hasDirectUrl: true,
         envVars: {
             DATABASE_URL: prodDatabaseUrl,
+			DIRECT_DATABASE_URL: prodDirectUrl,
 			DIRECT_URL: prodDirectUrl,
 			...(prodShadowDatabaseUrl
 				? { SHADOW_DATABASE_URL: prodShadowDatabaseUrl }
@@ -109,6 +121,15 @@ if (environment === 'development' && fs.existsSync(envPath)) {
 	);
 
 	if (config.hasDirectUrl) {
+		if (envContent.includes('DIRECT_DATABASE_URL=')) {
+			envContent = envContent.replace(
+				/^DIRECT_DATABASE_URL=.*/m,
+				`DIRECT_DATABASE_URL="${config.envVars.DIRECT_DATABASE_URL}"`
+			);
+		} else {
+			envContent += `\nDIRECT_DATABASE_URL="${config.envVars.DIRECT_DATABASE_URL}"`;
+		}
+
 		if (envContent.includes('DIRECT_URL=')) {
 			envContent = envContent.replace(
 				/^DIRECT_URL=.*/m,

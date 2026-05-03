@@ -40,9 +40,30 @@ function firstNonEmpty(...keys: string[]): string | undefined {
 
 const isProduction = process.env.NODE_ENV === "production";
 
+// Prisma CLI (migrate/introspect) deve usar conexão direta, não prisma:// do Accelerate.
 const databaseUrl = isProduction
-	? firstNonEmpty("PROD_DATABASE_URL", "DATABASE_URL", "DEV_DATABASE_URL")
-	: firstNonEmpty("DATABASE_URL", "DEV_DATABASE_URL", "PROD_DATABASE_URL");
+	? firstNonEmpty(
+		"PROD_DIRECT_DATABASE_URL",
+		"PROD_DIRECT_URL",
+		"DIRECT_DATABASE_URL",
+		"DIRECT_URL",
+		"PROD_DATABASE_URL",
+		"DATABASE_URL",
+		"DEV_DIRECT_DATABASE_URL",
+		"DEV_DIRECT_URL",
+		"DEV_DATABASE_URL",
+	)
+	: firstNonEmpty(
+		"DIRECT_DATABASE_URL",
+		"DIRECT_URL",
+		"DEV_DIRECT_DATABASE_URL",
+		"DEV_DIRECT_URL",
+		"DEV_DATABASE_URL",
+		"DATABASE_URL",
+		"PROD_DIRECT_DATABASE_URL",
+		"PROD_DIRECT_URL",
+		"PROD_DATABASE_URL",
+	);
 
 const shadowDatabaseUrl = isProduction
 	? firstNonEmpty(
