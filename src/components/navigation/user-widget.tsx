@@ -10,22 +10,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   ChevronDown,
+  Cog,
   Globe,
   LogOut,
   Moon,
   Settings,
-  Sun,
-  Cog
+  Sun
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/use-translation";
-import { LOCALE_COOKIE } from "@/i18n/shared";
 import { useUserConfig } from "@/hooks/use-user-config";
+import { LOCALE_COOKIE } from "@/i18n/shared";
+import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function UserWidget() {
   const { data: session } = useSession();
@@ -34,6 +34,7 @@ export function UserWidget() {
   const { config, updateConfig } = useUserConfig();
   const router = useRouter();
   const [language, setLanguage] = useState(locale || "pt-BR");
+  const [open, setOpen] = useState(false);
 
   const user = session?.user;
   const initials = user?.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U";
@@ -49,6 +50,7 @@ export function UserWidget() {
   ];
 
   const handleLanguageChange = async (langCode: string) => {
+    setOpen(false);
     setLanguage(langCode as any);
     document.cookie = `${LOCALE_COOKIE}=${langCode}; path=/; SameSite=Lax`;
     changeLocale(langCode as any);
@@ -64,7 +66,7 @@ export function UserWidget() {
 
   return (
     <div className="top-4 right-4 z-[60] fixed">
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="flex items-center gap-2 bg-white dark:bg-gray-800 shadow-lg">
             <Avatar className="w-6 h-6">
@@ -93,7 +95,7 @@ export function UserWidget() {
               return (
                 <DropdownMenuItem
                   key={themeOption.value}
-                  onClick={() => setTheme(themeOption.value)}
+                  onClick={() => { setTheme(themeOption.value); setOpen(false); }}
                   className={`text-sm ${theme === themeOption.value ? 'bg-accent' : ''}`}
                 >
                   <Icon className="mr-2 w-4 h-4" />
@@ -123,7 +125,7 @@ export function UserWidget() {
           <DropdownMenuSeparator />
 
           {/* Settings */}
-          <DropdownMenuItem onClick={() => router.push('/settings')} className="text-sm">
+          <DropdownMenuItem onClick={() => { router.push('/settings'); setOpen(false); }} className="text-sm">
             <Cog className="mr-2 w-4 h-4" />
             Configurações
           </DropdownMenuItem>
@@ -131,7 +133,7 @@ export function UserWidget() {
           <DropdownMenuSeparator />
 
           {/* Logout */}
-          <DropdownMenuItem onClick={() => signOut()} className="text-red-600">
+          <DropdownMenuItem onClick={() => { setOpen(false); signOut(); }} className="text-red-600">
             <LogOut className="mr-2 w-4 h-4" />
             Sair
           </DropdownMenuItem>
