@@ -1,6 +1,7 @@
+import { existsSync, readFileSync } from "node:fs";
+
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import pkg from "pg";
 
@@ -86,7 +87,7 @@ async function main() {
       data: {
         title: 'Fazer exercícios matinais',
         observations: 'Exercícios físicos pela manhã',
-        difficulty: 'Médio',
+        difficulty: 'Média',
         status: 'Em Andamento',
         priority: 'Alta',
         tags: ['saúde', 'fitness'],
@@ -140,7 +141,7 @@ async function main() {
         title: 'Corrigir bugs',
         observations: 'Correção dos bugs reportados',
         tasks: ['Identificar bugs', 'Corrigir código', 'Testar correções'],
-        difficulty: 'Médio',
+        difficulty: 'Média',
         startDate: new Date(),
         tags: ['manutenção', 'bugs'],
         userId: user.id,

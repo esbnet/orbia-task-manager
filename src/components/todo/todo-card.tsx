@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCompleteTodo, useIncompleteTodo } from "@/hooks/use-complete-todo";
+import { getTodoOverdueOccurrences, isTodoPendingForToday } from "@/lib/todo-recurrence";
 import {
     AlertTriangle,
     Calendar,
@@ -12,9 +14,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Todo } from "@/domain/entities/todo";
-import { getTodoOverdueOccurrences, isTodoPendingForToday } from "@/lib/todo-recurrence";
 import { useState } from "react";
 
 interface TodoCardProps {
@@ -26,7 +26,7 @@ interface TodoCardProps {
 const difficultyConfig = {
 	"Trivial": { color: "bg-gray-50/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-200 border border-gray-200/80 dark:border-gray-600", stars: "⭐" },
 	"Fácil": { color: "bg-green-50/80 dark:bg-green-900/30 text-green-700 dark:text-green-200 border border-green-200/80 dark:border-green-700", stars: "⭐⭐" },
-	"Médio": { color: "bg-yellow-50/80 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200/80 dark:border-yellow-700", stars: "⭐⭐⭐" },
+	"Média": { color: "bg-yellow-50/80 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200/80 dark:border-yellow-700", stars: "⭐⭐⭐" },
 	"Difícil": { color: "bg-red-50/80 dark:bg-red-900/30 text-red-700 dark:text-red-200 border border-red-200/80 dark:border-red-700", stars: "⭐⭐⭐⭐" },
 };
 

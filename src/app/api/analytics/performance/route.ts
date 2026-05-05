@@ -61,7 +61,7 @@ async function calculatePerformanceMetrics(userId: string, timeRange: string) {
             id: log.id,
             title: log.todoTitle || log.todo?.title || "Tarefa",
             completedAt: log.completedAt,
-            difficulty: log.difficulty || log.todo?.difficulty || "Médio",
+            difficulty: log.difficulty || log.todo?.difficulty || "Média",
             tags: log.tags || log.todo?.tags || [],
             type: "todo" as const,
         })),
@@ -123,7 +123,7 @@ async function calculatePerformanceMetrics(userId: string, timeRange: string) {
         difficultyAnalysis: [
             { label: "Trivial", value: countDifficulty(habitLogs, todoLogs, "Trivial") },
             { label: "Fácil", value: countDifficulty(habitLogs, todoLogs, "Fácil") },
-            { label: "Médio", value: countDifficulty(habitLogs, todoLogs, "Médio") },
+            { label: "Média", value: countDifficulty(habitLogs, todoLogs, "Média") },
             { label: "Difícil", value: countDifficulty(habitLogs, todoLogs, "Difícil") },
         ],
         completionLogs,
@@ -159,7 +159,7 @@ function calculateConsistency(habitLogs: any[], todoLogs: any[], startDate: Date
 }
 
 function calculateEfficiency(habitLogs: any[], todoLogs: any[]) {
-    const weights: Record<string, number> = { Trivial: 0.5, "Fácil": 1, "Médio": 2, "Difícil": 3 };
+    const weights: Record<string, number> = { Trivial: 0.5, "Fácil": 1, "Média": 2, "Difícil": 3 };
     const all = [...habitLogs, ...todoLogs];
     if (!all.length) return 0;
     const total = all.reduce((acc, log) => acc + (weights[log.difficulty] || 1), 0);

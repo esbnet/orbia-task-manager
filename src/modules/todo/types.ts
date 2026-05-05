@@ -5,7 +5,7 @@
  *   - src/types/todo.ts
  */
 
-export type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
+export type TodoDifficulty = "Trivial" | "Fácil" | "Média" | "Difícil";
 export type TodoRecurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
 export type TodoType = "pontual" | "recorrente";
 

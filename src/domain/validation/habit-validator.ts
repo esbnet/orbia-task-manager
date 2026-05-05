@@ -22,7 +22,7 @@ export class HabitValidator extends BaseDomainValidator<Habit> {
 		this.isValidEnum(entity.difficulty, {
 			"Trivial": "Trivial",
 			"Fácil": "Fácil",
-			"Médio": "Médio",
+			"Média": "Média",
 			"Difícil": "Difícil"
 		} as Record<string, HabitDifficulty>, "Dificuldade");
 

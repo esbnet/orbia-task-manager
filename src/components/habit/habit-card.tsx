@@ -2,16 +2,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-	AlertTriangle,
-	Archive,
-	Calendar,
-	CheckCircle,
-	ChevronDown,
-	Edit,
-	LoaderCircle,
-	RotateCcw,
-	Tag,
-	TrendingUp
+    AlertTriangle,
+    Archive,
+    Calendar,
+    CheckCircle,
+    ChevronDown,
+    Edit,
+    LoaderCircle,
+    RotateCcw,
+    Tag,
+    TrendingUp
 } from "lucide-react";
 import { memo, useState } from "react";
 
@@ -19,8 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import type { Habit } from "@/domain/entities/habit";
-import { useButtonLoading } from "@/hooks/use-button-loading";
 import { useArchiveHabit } from "@/hooks/use-archive-habit";
+import { useButtonLoading } from "@/hooks/use-button-loading";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ const statusColors: Record<Habit["status"], string> = {
 	"archived": "bg-zinc-50 text-zinc-700 border border-zinc-200",
 };
 
-type DifficultyLevel = "Trivial" | "Fácil" | "Médio" | "Difícil";
+type DifficultyLevel = "Trivial" | "Fácil" | "Média" | "Difícil";
 
 interface DifficultyConfig {
 	color: string;
@@ -50,7 +50,7 @@ interface DifficultyConfig {
 const difficultyConfig: Record<DifficultyLevel, DifficultyConfig> = {
 	"Trivial": { color: "bg-gray-50 text-gray-700 border border-gray-200", stars: "⭐" },
 	"Fácil": { color: "bg-green-50 text-green-700 border border-green-200", stars: "⭐⭐" },
-	"Médio": { color: "bg-yellow-50 text-yellow-800 border border-yellow-200", stars: "⭐⭐⭐" },
+	"Média": { color: "bg-yellow-50 text-yellow-800 border border-yellow-200", stars: "⭐⭐⭐" },
 	"Difícil": { color: "bg-red-50 text-red-700 border border-red-200", stars: "⭐⭐⭐⭐" },
 };
 
@@ -126,7 +126,7 @@ export const HabitCard = memo(function HabitCard({
 				} ${(registerLoading.isLoading || isRegistering) ? "opacity-50 pointer-events-none" : ""}`}
 		>
 			{/* Barra de controles fixa no canto superior direito */}
-			<div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+			<div className="top-2 right-2 z-10 absolute flex items-center gap-1">
 				{habit.status === "Em Andamento" && (
 					<>
 						<Button
@@ -134,7 +134,7 @@ export const HabitCard = memo(function HabitCard({
 							size="icon"
 							variant="ghost"
 							onClick={handleRegister}
-							className="hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200/50 dark:border-green-700/50 p-2 rounded-full w-7 h-7 text-green-600"
+							className="hover:bg-green-100 dark:hover:bg-green-900/30 p-2 border border-green-200/50 dark:border-green-700/50 rounded-full w-7 h-7 text-green-600"
 							disabled={registerLoading.isLoading || isRegistering}
 						>
 							{(registerLoading.isLoading || isRegistering) ? (
@@ -151,7 +151,7 @@ export const HabitCard = memo(function HabitCard({
 								variant="ghost"
 								onClick={() => onEdit(habit)}
 								disabled={editLoading.isLoading}
-								className="hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/50 dark:border-gray-600/50 p-2 rounded-full w-7 h-7 text-gray-600"
+								className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 border border-gray-200/50 dark:border-gray-600/50 rounded-full w-7 h-7 text-gray-600"
 							>
 								{editLoading.isLoading ? (
 									<div className="border-2 border-t-transparent rounded-full w-3 h-3 text-gray-400 animate-spin" />
@@ -162,7 +162,7 @@ export const HabitCard = memo(function HabitCard({
 						)}
 
 						<Button
-							className="hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200/50 dark:border-red-700/50 p-2 rounded-full w-7 h-7 text-red-600"
+							className="hover:bg-red-100 dark:hover:bg-red-900/30 p-2 border border-red-200/50 dark:border-red-700/50 rounded-full w-7 h-7 text-red-600"
 							title="Arquivar hábito"
 							size="icon"
 							variant="ghost"
@@ -182,7 +182,7 @@ export const HabitCard = memo(function HabitCard({
 					size="sm"
 					variant="ghost"
 					onClick={() => setIsExpanded(!isExpanded)}
-					className="border border-gray-200/50 dark:border-gray-600/50 p-0 w-7 h-7"
+					className="p-0 border border-gray-200/50 dark:border-gray-600/50 w-7 h-7"
 				>
 					{isExpanded ? <ChevronDown className="w-3 h-3 rotate-180 transition-all duration-200" /> : <ChevronDown className="w-3 h-3 rotate-0 transition-all duration-200" />}
 				</Button>

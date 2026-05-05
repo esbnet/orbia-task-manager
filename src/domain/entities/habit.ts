@@ -1,4 +1,4 @@
-export type HabitDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
+export type HabitDifficulty = "Trivial" | "Fácil" | "Média" | "Difícil";
 // Hábitos agora ficam sempre disponíveis; mantemos opções antigas para compatibilidade
 export type HabitReset = "Sempre disponível" | "Diariamente" | "Semanalmente" | "Mensalmente";
 export type HabitStatus =

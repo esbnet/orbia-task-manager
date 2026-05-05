@@ -1,21 +1,21 @@
 "use client";
 
 import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { LoaderCircle, SaveIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -41,7 +41,7 @@ interface HabitFormProps {
 }
 
 const priorities: Habit["priority"][] = ["Baixa", "Média", "Alta", "Urgente"];
-const difficulties: Habit["difficulty"][] = ["Trivial", "Fácil", "Médio", "Difícil"];
+const difficulties: Habit["difficulty"][] = ["Trivial", "Fácil", "Média", "Difícil"];
 
 export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormProps) {
 	const { tagOptions } = useTags();
@@ -178,7 +178,7 @@ export function HabitForm({ habit, onSubmit, onCancel, open = true }: HabitFormP
 						</div>
 						<div className="space-y-2">
 							<Label htmlFor="reset">Disponibilidade</Label>
-							<div className="text-sm text-gray-600 dark:text-gray-400 border rounded-md px-3 py-2 bg-muted">
+							<div className="bg-muted px-3 py-2 border rounded-md text-gray-600 dark:text-gray-400 text-sm">
 								Sempre disponível (pode ser registrado várias vezes ao dia)
 							</div>
 						</div>

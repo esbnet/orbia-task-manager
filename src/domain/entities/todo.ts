@@ -1,6 +1,6 @@
 import { TodoTypeValueObject } from "../value-objects/todo-type";
 
-type TodoDifficulty = "Trivial" | "Fácil" | "Médio" | "Difícil";
+type TodoDifficulty = "Trivial" | "Fácil" | "Média" | "Difícil";
 type TodoRecurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
 
 export interface Todo {

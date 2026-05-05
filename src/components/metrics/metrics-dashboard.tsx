@@ -999,7 +999,7 @@ export function MetricsDashboard() {
                                             data={habitsAnalytics?.habitsByDifficulty?.map(item => ({
                                                 name: item.difficulty,
                                                 value: item.count,
-                                                color: item.difficulty === "Fácil" ? "#00C49F" : item.difficulty === "Médio" ? "#FFBB28" : "#FF8042"
+                                                color: item.difficulty === "Fácil" ? "#00C49F" : item.difficulty === "Média" ? "#FFBB28" : "#FF8042"
                                             })) || []}
                                             cx="50%"
                                             cy="50%"
@@ -1010,7 +1010,7 @@ export function MetricsDashboard() {
                                             dataKey="value"
                                         >
                                             {habitsAnalytics?.habitsByDifficulty?.map((item, index) => (
-                                                <Cell key={`cell-${index}`} fill={item.difficulty === "Fácil" ? "#00C49F" : item.difficulty === "Médio" ? "#FFBB28" : "#FF8042"} />
+                                                <Cell key={`cell-${index}`} fill={item.difficulty === "Fácil" ? "#00C49F" : item.difficulty === "Média" ? "#FFBB28" : "#FF8042"} />
                                             ))}
                                         </Pie>
                                         <Tooltip />
@@ -1150,7 +1150,7 @@ export function MetricsDashboard() {
                                 <ResponsiveContainer width="100%" height={300}>
                                     <BarChart data={[
                                         { name: "Fácil", value: todos?.filter(t => t.difficulty === "Fácil").length || 0 },
-                                        { name: "Médio", value: todos?.filter(t => t.difficulty === "Médio").length || 0 },
+                                        { name: "Média", value: todos?.filter(t => t.difficulty === "Média").length || 0 },
                                         { name: "Difícil", value: todos?.filter(t => t.difficulty === "Difícil").length || 0 },
                                     ]}>
                                         <CartesianGrid strokeDasharray="3 3" />
@@ -1238,7 +1238,7 @@ export function MetricsDashboard() {
                                                 if (existing) {
                                                     existing.value += 1;
                                                 } else {
-                                                    acc.push({ name: todo.difficulty, value: 1, color: todo.difficulty === "Fácil" ? "#00C49F" : todo.difficulty === "Médio" ? "#FFBB28" : "#FF8042" });
+                                                    acc.push({ name: todo.difficulty, value: 1, color: todo.difficulty === "Fácil" ? "#00C49F" : todo.difficulty === "Média" ? "#FFBB28" : "#FF8042" });
                                                 }
                                                 return acc;
                                             }, [] as Array<{ name: string; value: number; color: string }>)}
@@ -1255,7 +1255,7 @@ export function MetricsDashboard() {
                                                 if (existing) {
                                                     existing.value += 1;
                                                 } else {
-                                                    acc.push({ name: todo.difficulty, value: 1, color: todo.difficulty === "Fácil" ? "#00C49F" : todo.difficulty === "Médio" ? "#FFBB28" : "#FF8042" });
+                                                    acc.push({ name: todo.difficulty, value: 1, color: todo.difficulty === "Fácil" ? "#00C49F" : todo.difficulty === "Média" ? "#FFBB28" : "#FF8042" });
                                                 }
                                                 return acc;
                                             }, [] as Array<{ name: string; value: number; color: string }>).map((entry, index) => (
