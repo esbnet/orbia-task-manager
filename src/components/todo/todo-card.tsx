@@ -1,18 +1,20 @@
-import {
-	Calendar,
-	CheckCircle,
-	ChevronDown,
-	Edit,
-	LoaderCircle,
-	Tag
-} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCompleteTodo, useIncompleteTodo } from "@/hooks/use-complete-todo";
+import {
+    AlertTriangle,
+    Calendar,
+    CheckCircle,
+    ChevronDown,
+    Edit,
+    LoaderCircle,
+    Tag
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Todo } from "@/domain/entities/todo";
-import { isTodoPendingForToday } from "@/lib/todo-recurrence";
+import { getTodoOverdueOccurrences, isTodoPendingForToday } from "@/lib/todo-recurrence";
 import { useState } from "react";
 
 interface TodoCardProps {
@@ -33,6 +35,11 @@ const statusConfig = {
 	pending: "bg-blue-50/80 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border border-blue-200/80 dark:border-blue-700",
 };
 
+function formatOverdueOccurrences(occurrences: number): string {
+	if (occurrences <= 0) return "em dia";
+	return `${occurrences} ${occurrences === 1 ? "ocorrência" : "ocorrências"}`;
+}
+
 export function TodoCard({
 	todo,
 	onEdit,
@@ -46,6 +53,9 @@ export function TodoCard({
 	const isPending = isTodoPendingForToday(todo);
 	const isCompleted = !isPending;
 	const shouldShow = isPending;
+	const overdueOccurrences = getTodoOverdueOccurrences(todo);
+	const isOverdue = overdueOccurrences > 0;
+	const overdueLabel = formatOverdueOccurrences(overdueOccurrences);
 
 	if (!shouldShow) return null;
 
@@ -117,9 +127,23 @@ export function TodoCard({
 			</div>
 			<CardHeader className="pb-0">
 				<div className="pr-20">
-					<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base break-words leading-snug">
-						{todo.title}
-					</CardTitle>
+					<div className="flex items-center gap-2">
+						<CardTitle className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base break-words leading-snug">
+							{todo.title}
+						</CardTitle>
+						{isOverdue && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<span className="inline-flex items-center" aria-label={`Tarefa com ${overdueLabel} em atraso`}>
+										<AlertTriangle className="w-3.5 h-3.5 text-red-400 dark:text-red-500" />
+									</span>
+								</TooltipTrigger>
+								<TooltipContent side="top" align="start" className="max-w-60">
+									{overdueLabel} em atraso
+								</TooltipContent>
+							</Tooltip>
+						)}
+					</div>
 				</div>
 			</CardHeader>
 
