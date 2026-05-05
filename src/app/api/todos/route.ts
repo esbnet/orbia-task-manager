@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
 			observations: String(validated.observations),
 			tasks: [],
 			difficulty: validated.difficulty as any,
-			startDate: new Date(),
+			startDate: validated.startDate ?? new Date(),
 			tags: Array.isArray(validated.tags) ? validated.tags.map(String) : [],
 			recurrence: validated.recurrence as any,
-			recurrenceInterval: validated.recurrenceInterval ? Number(validated.recurrenceInterval) : undefined,
+			recurrenceInterval: validated.recurrenceInterval !== undefined ? Number(validated.recurrenceInterval) : undefined,
 		});
 
 		return Response.json({ todo }, { status: 201 });
@@ -161,9 +161,10 @@ export async function PATCH(request: NextRequest) {
 			...(validated.title && { title: String(validated.title) }),
 			...(validated.observations && { observations: String(validated.observations) }),
 			...(validated.difficulty && { difficulty: validated.difficulty as any }),
+			...(validated.startDate && { startDate: validated.startDate }),
 			...(validated.tags && { tags: Array.isArray(validated.tags) ? validated.tags.map(String) : existing.tags }),
 			...(validated.recurrence && { recurrence: validated.recurrence as any }),
-			...(validated.recurrenceInterval && { recurrenceInterval: Number(validated.recurrenceInterval) }),
+			...(validated.recurrenceInterval !== undefined && { recurrenceInterval: Number(validated.recurrenceInterval) }),
 		});
 		return Response.json({ todo });
 	} catch (error) {

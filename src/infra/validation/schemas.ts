@@ -10,6 +10,7 @@ export const createTodoSchema = z.object({
 	observations: z.string().optional().default(""),
 	tasks: z.array(z.string()).optional().default([]),
 	difficulty: z.enum(["Trivial", "Fácil", "Média", "Difícil"]).optional().default("Fácil"),
+	startDate: z.coerce.date().optional(),
 	recurrence: z.enum(["none", "daily", "weekly", "monthly", "custom"]).optional().default("none"),
 	recurrenceInterval: z.number().optional(),
 	tags: z.array(z.string()).optional().default([]),
