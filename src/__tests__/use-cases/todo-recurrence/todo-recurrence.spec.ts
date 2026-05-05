@@ -1,4 +1,5 @@
 import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
+import { getTodoOverdueOccurrences, isTodoPendingForToday } from "@/lib/todo-recurrence";
 import { listTodos, toggleTodo } from "@/modules/todo/use-cases";
 
 interface TestTodo {
@@ -118,14 +119,12 @@ function makeLogRepo(storage: TestTodoLogCreateData[]) {
 
 describe("todo recurrence flow", () => {
     it("redisponibiliza tarefa recorrente no novo período ao listar", async () => {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-
         const repo = makeRepo([
             makeTodo({
                 recurrence: "daily",
-                lastCompletedDate: yesterday.toISOString().split("T")[0],
-                lastCompletedAt: yesterday,
+                startDate: new Date("2024-01-01T12:00:00.000Z"),
+                lastCompletedDate: "2024-01-01",
+                lastCompletedAt: new Date("2024-01-01T12:00:00.000Z"),
             }),
         ]);
 
@@ -136,13 +135,11 @@ describe("todo recurrence flow", () => {
     });
 
     it("registra histórico ao completar tarefa recorrente", async () => {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-
         const repo = makeRepo([
             makeTodo({
                 recurrence: "daily",
-                lastCompletedDate: yesterday.toISOString().split("T")[0],
+                startDate: new Date("2024-01-01T12:00:00.000Z"),
+                lastCompletedDate: "2024-01-01",
             }),
         ]);
         const logs: TestTodoLogCreateData[] = [];
@@ -170,5 +167,50 @@ describe("todo recurrence flow", () => {
 
         expect(logs).toHaveLength(0);
         expect(updated.lastCompletedDate).toBeUndefined();
+    });
+
+    it("exibe tarefa semanal somente no dia agendado", () => {
+        const weeklyTodo = makeTodo({
+            recurrence: "weekly",
+            startDate: new Date("2026-05-07T12:00:00.000Z"), // quinta-feira
+            lastCompletedDate: undefined,
+        });
+
+        expect(isTodoPendingForToday(weeklyTodo, "2026-05-07")).toBe(true);
+        expect(isTodoPendingForToday(weeklyTodo, "2026-05-08")).toBe(false);
+        expect(isTodoPendingForToday(weeklyTodo, "2026-05-14")).toBe(true);
+    });
+
+    it("calcula ocorrências em atraso para tarefa semanal", () => {
+        const weeklyTodo = makeTodo({
+            recurrence: "weekly",
+            startDate: new Date("2026-04-02T12:00:00.000Z"),
+            lastCompletedDate: "2026-04-02",
+        });
+
+        expect(getTodoOverdueOccurrences(weeklyTodo, "2026-04-23")).toBe(2);
+        expect(isTodoPendingForToday(weeklyTodo, "2026-04-23")).toBe(true);
+    });
+
+    it("não conta atraso quando tarefa recorrente é reaberta sem histórico (lastCompletedDate null)", () => {
+        const reopenedWeekly = makeTodo({
+            recurrence: "weekly",
+            startDate: new Date("2026-04-02T12:00:00.000Z"),
+            lastCompletedDate: undefined,
+        });
+
+        // Sem lastCompletedDate, não há período confirmado como perdido.
+        expect(getTodoOverdueOccurrences(reopenedWeekly, "2026-05-07")).toBe(0);
+    });
+
+    it("calcula ocorrências em atraso para tarefa diária", () => {
+        const dailyTodo = makeTodo({
+            recurrence: "daily",
+            startDate: new Date("2026-05-01T12:00:00.000Z"),
+            lastCompletedDate: "2026-05-01",
+        });
+
+        expect(getTodoOverdueOccurrences(dailyTodo, "2026-05-05")).toBe(3);
+        expect(isTodoPendingForToday(dailyTodo, "2026-05-05")).toBe(true);
     });
 });
