@@ -39,7 +39,7 @@ export class TodoValidator extends BaseDomainValidator<Todo> {
 		this.isValidEnum(entity.difficulty, {
 			"Trivial": "Trivial",
 			"Fácil": "Fácil",
-			"Médio": "Médio",
+			"Média": "Média",
 			"Difícil": "Difícil"
 		}, "Dificuldade");
 

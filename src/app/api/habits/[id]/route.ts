@@ -57,7 +57,7 @@ export async function PATCH(
 				title: z.string().optional(),
 				observations: z.string().optional(),
 				description: z.string().optional(),
-				difficulty: z.enum(["Trivial", "Fácil", "Médio", "Difícil"]).optional(),
+				difficulty: z.enum(["Trivial", "Fácil", "Média", "Difícil"]).optional(),
 				reset: z.enum(["Sempre disponível", "Diariamente", "Semanalmente", "Mensalmente"]).optional(),
 				resetType: z.enum(["daily", "weekly", "monthly"]).optional(),
 				priority: z.enum(["Baixa", "Média", "Alta", "Urgente"]).optional(),

@@ -9,7 +9,7 @@ export const createTodoSchema = z.object({
 	title: z.string().min(1),
 	observations: z.string().optional().default(""),
 	tasks: z.array(z.string()).optional().default([]),
-	difficulty: z.enum(["Trivial", "Fácil", "Médio", "Difícil"]).optional().default("Fácil"),
+	difficulty: z.enum(["Trivial", "Fácil", "Média", "Difícil"]).optional().default("Fácil"),
 	recurrence: z.enum(["none", "daily", "weekly", "monthly", "custom"]).optional().default("none"),
 	recurrenceInterval: z.number().optional(),
 	tags: z.array(z.string()).optional().default([]),
@@ -19,7 +19,7 @@ export const createTodoSchema = z.object({
 export const createHabitSchema = z.object({
 	title: z.string().min(1),
 	description: z.string().optional().default(""),
-	difficulty: z.enum(["Trivial", "Fácil", "Médio", "Difícil"]).optional().default("Fácil"),
+	difficulty: z.enum(["Trivial", "Fácil", "Média", "Difícil"]).optional().default("Fácil"),
 	tags: z.array(z.string()).optional().default([]),
 });
 

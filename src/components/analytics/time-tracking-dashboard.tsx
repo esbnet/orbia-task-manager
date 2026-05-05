@@ -2,21 +2,21 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  BarChart3,
-  Clock,
-  Pause,
-  Play,
-  Square,
-  Target,
-  Timer
+    BarChart3,
+    Clock,
+    Pause,
+    Play,
+    Square,
+    Target,
+    Timer
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip
+    Cell,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip
 } from "recharts";
 
 import { Badge } from "@/components/ui/badge";
@@ -80,7 +80,7 @@ export function TimeTrackingDashboard() {
         if (todo.lastCompletedDate) {
           const category = todo.tags?.[0] || "Geral";
           const duration = todo.difficulty === "Difícil" ? 45 :
-            todo.difficulty === "Médio" ? 25 : 15;
+            todo.difficulty === "Média" ? 25 : 15;
 
           entries.push({
             category,
@@ -328,7 +328,7 @@ export function TimeTrackingDashboard() {
                 <select
                   value={currentTask}
                   onChange={(e) => setCurrentTask(e.target.value)}
-                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input dark:border-gray-600 focus:border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
+                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input focus:border-transparent dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
                 >
                   <option value="">Selecione uma tarefa...</option>
                   {taskOptions.map(task => (
@@ -343,7 +343,7 @@ export function TimeTrackingDashboard() {
                 <select
                   value={currentCategory}
                   onChange={(e) => setCurrentCategory(e.target.value)}
-                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input dark:border-gray-600 focus:border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
+                  className="bg-background dark:bg-gray-800 mt-1 px-3 py-2 border border-input focus:border-transparent dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full text-foreground dark:text-gray-100 text-sm"
                 >
                   {categoryOptions.map(category => (
                     <option key={category} value={category}>{category}</option>

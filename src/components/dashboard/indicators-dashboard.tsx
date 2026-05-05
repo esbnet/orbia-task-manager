@@ -64,7 +64,7 @@ export function IndicatorsDashboard() {
         const todoPoints = recentTodos.reduce((sum, todo) => {
             const isCompleted = !!todo.lastCompletedDate;
             const difficultyMultiplier = todo.difficulty === 'Difícil' ? 3 :
-                todo.difficulty === 'Médio' ? 2 : 1;
+                todo.difficulty === 'Média' ? 2 : 1;
             return sum + (isCompleted ? 10 * difficultyMultiplier : 0);
         }, 0);
 
