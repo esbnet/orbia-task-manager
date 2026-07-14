@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 // Tipos para tarefas ativas
 export interface ActiveTask {
@@ -16,6 +17,8 @@ export const activeTasksKeys = {
 
 // Hook para buscar todas as tarefas ativas (habits e todos)
 export function useActiveTasks() {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery({
 		queryKey: activeTasksKeys.all,
 		queryFn: async (): Promise<ActiveTask[]> => {
@@ -40,6 +43,7 @@ export function useActiveTasks() {
 		},
 		staleTime: 5 * 60 * 1000, // 5 minutos
 		gcTime: 10 * 60 * 1000, // 10 minutos
+		enabled: isAuthenticated,
 		retry: 1,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false

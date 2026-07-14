@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
 import { isTodoPendingForToday } from "@/lib/todo-recurrence";
 
@@ -45,11 +46,13 @@ export function useInvalidateTaskCounts() {
 // Hook para buscar contagens de tarefas por tipo
 export function useTaskCounts() {
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuthenticatedApi();
 
   return useQuery({
     queryKey: taskCountKeys.counts(),
     staleTime: 60 * 1000,
     gcTime: 30 * 1000,
+    enabled: isAuthenticated,
     refetchOnWindowFocus: true,
     queryFn: async (): Promise<TaskCountsResponse> => {
       const habitsData = await queryClient.fetchQuery({
@@ -122,6 +125,8 @@ export function useTaskCounts() {
 
 // Hook para buscar contagens detalhadas de tarefas
 export function useDetailedTaskCounts() {
+  const { isAuthenticated } = useAuthenticatedApi();
+
   return useQuery({
     queryKey: taskCountKeys.detailed(),
     queryFn: async (): Promise<DetailedTaskCounts> => {
@@ -173,6 +178,7 @@ export function useDetailedTaskCounts() {
         }
       };
     },
+    enabled: isAuthenticated,
     staleTime: 30 * 1000, // 30 segundos
     refetchOnWindowFocus: true,
     retry: (failureCount, error) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Tag } from "@/types";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	type ReactNode,
@@ -26,6 +27,7 @@ interface TagsProviderProps {
 
 export function TagsProvider({ children }: TagsProviderProps) {
 	const queryClient = useQueryClient();
+	const { isAuthenticated, assertAuthenticated } = useAuthenticatedApi();
 
 	const {
 		data: tags = [],
@@ -41,6 +43,7 @@ export function TagsProvider({ children }: TagsProviderProps) {
 			const data = await response.json();
 			return data.tags || [];
 		},
+		enabled: isAuthenticated,
 		staleTime: 5 * 60 * 1000,
 		gcTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: true,
@@ -53,6 +56,7 @@ export function TagsProvider({ children }: TagsProviderProps) {
 	}));
 
 	const createTag = async (data: Omit<Tag, "id" | "createdAt">) => {
+		assertAuthenticated();
 		const response = await fetch("/api/tags", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -65,6 +69,7 @@ export function TagsProvider({ children }: TagsProviderProps) {
 	};
 
 	const updateTag = async (tagToUpdate: Tag) => {
+		assertAuthenticated();
 		const response = await fetch("/api/tags", {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
@@ -79,6 +84,7 @@ export function TagsProvider({ children }: TagsProviderProps) {
 	};
 
 	const deleteTag = async (id: string) => {
+		assertAuthenticated();
 		await fetch(`/api/tags?id=${id}`, { method: "DELETE" });
 		queryClient.setQueryData<Tag[]>(["tags"], (previous = []) =>
 			previous.filter((tag) => tag.id !== id),

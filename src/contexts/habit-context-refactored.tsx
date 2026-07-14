@@ -1,6 +1,7 @@
 "use client";
 
 import type { Habit } from "@/domain/entities/habit";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import type { HabitFormData } from "@/types";
 import React from "react";
 import { toast } from "sonner";
@@ -69,11 +70,14 @@ const httpHabitService: HabitService = {
 };
 
 export function HabitProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, assertAuthenticated } = useAuthenticatedApi();
   const [habits, setHabits] = React.useState<Habit[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const refreshHabits = async () => {
+    if (!isAuthenticated) return;
+
     try {
       setLoading(true);
       setError(null);
@@ -87,21 +91,25 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
   };
 
   const createHabit = async (data: HabitFormData) => {
+    assertAuthenticated();
     await httpHabitService.create(data);
     await refreshHabits();
   };
 
   const updateHabit = async (id: string, data: Partial<Habit>) => {
+    assertAuthenticated();
     await httpHabitService.update(id, data);
     await refreshHabits();
   };
 
   const deleteHabit = async (id: string) => {
+    assertAuthenticated();
     await httpHabitService.delete(id);
     await refreshHabits();
   };
 
   const registerHabit = async (habitId: string, note?: string) => {
+    assertAuthenticated();
     try {
       const response = await fetch('/api/habits/register', {
         method: 'POST',
@@ -119,6 +127,7 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
   };
 
   const completeHabit = async (habitId: string) => {
+    assertAuthenticated();
     try {
       const response = await fetch('/api/habit-logs', {
         method: 'POST',
@@ -136,6 +145,7 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleComplete = async (habitId: string) => {
+    assertAuthenticated();
     const habit = habits.find(h => h.id === habitId);
     if (habit) {
       try {
@@ -155,11 +165,13 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateStatus = async (id: string, status: Habit["status"]) => {
+    assertAuthenticated();
     await httpHabitService.update(id, { status });
     await refreshHabits();
   };
 
   const updatePriority = async (id: string, priority: Habit["priority"]) => {
+    assertAuthenticated();
     await httpHabitService.update(id, { priority });
     await refreshHabits();
   };
@@ -173,6 +185,7 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
   };
 
   const reorderHabits = async (habitIds: string[]) => {
+    assertAuthenticated();
     try {
       const response = await fetch('/api/habits/reorder', {
         method: 'PATCH',
@@ -189,8 +202,12 @@ export function HabitProvider({ children }: { children: React.ReactNode }) {
   };
 
   React.useEffect(() => {
-    refreshHabits();
-  }, []);
+    if (isAuthenticated) {
+      refreshHabits();
+    } else {
+      setHabits([]);
+    }
+  }, [isAuthenticated]);
 
   const contextValue: HabitContextType = {
     habits,

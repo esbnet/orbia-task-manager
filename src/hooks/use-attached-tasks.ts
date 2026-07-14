@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 export interface AttachedTask {
 	id: string;
@@ -10,6 +11,8 @@ export interface AttachedTask {
 
 // Hook para buscar tarefas anexadas a uma meta específica
 export function useAttachedTasks(goalId?: string) {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery({
 		queryKey: ["attached-tasks", goalId],
 		queryFn: async (): Promise<AttachedTask[]> => {
@@ -26,7 +29,7 @@ export function useAttachedTasks(goalId?: string) {
 
 			return data;
 		},
-		enabled: !!goalId, // Só executa se goalId estiver definido
+		enabled: isAuthenticated && !!goalId, // Só executa se goalId estiver definido
 		staleTime: 2 * 60 * 1000, // 2 minutos
 		retry: 1,
 	});

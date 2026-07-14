@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 export interface PerformanceMetrics {
   productivity: number;
@@ -85,6 +86,8 @@ export interface CompletionLog {
 }
 
 export function usePerformanceAnalytics(timeRange: "week" | "month" | "quarter" = "month") {
+  const { isAuthenticated } = useAuthenticatedApi();
+
   return useQuery({
     queryKey: ["performance-analytics", timeRange],
     queryFn: async (): Promise<PerformanceAnalyticsData> => {
@@ -94,6 +97,7 @@ export function usePerformanceAnalytics(timeRange: "week" | "month" | "quarter" 
       }
       return response.json();
     },
+    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }

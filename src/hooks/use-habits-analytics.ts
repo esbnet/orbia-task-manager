@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 export interface HabitAnalyticsData {
 	totalHabits: number;
@@ -38,6 +39,8 @@ export interface HabitAnalyticsData {
 }
 
 export function useHabitsAnalytics(timeRange: "week" | "month" | "quarter" | "year" = "month") {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery({
 		queryKey: ["habits-analytics", timeRange],
 		queryFn: async (): Promise<HabitAnalyticsData> => {
@@ -47,6 +50,7 @@ export function useHabitsAnalytics(timeRange: "week" | "month" | "quarter" | "ye
 			}
 			return response.json();
 		},
+		enabled: isAuthenticated,
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 }

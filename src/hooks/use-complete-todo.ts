@@ -1,6 +1,7 @@
 import type { Todo } from "@/domain/entities/todo";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
 import { todoKeys } from "./use-todos";
@@ -10,9 +11,11 @@ import { todoKeys } from "./use-todos";
 export function useCompleteTodo() {
 	const queryClient = useQueryClient();
 	const { playComplete } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (todo: Todo): Promise<Todo> => {
+			assertAuthenticated();
 			const endpoint = todo.todoType.isPontual()
 				? `/api/todos/${todo.id}/complete-pontual`
 				: `/api/todos/${todo.id}/complete`;
@@ -48,9 +51,11 @@ export function useCompleteTodo() {
 export function useIncompleteTodo() {
 	const queryClient = useQueryClient();
 	const { playUpdate } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<Todo> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/todos/${id}/complete`, {
 				method: "POST",
 			});

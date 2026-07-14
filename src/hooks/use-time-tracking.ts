@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 interface TimeEntry {
   id: string;
@@ -26,6 +27,8 @@ export function useTimeEntries(filters?: {
   taskType?: string;
   category?: string;
 }) {
+  const { isAuthenticated } = useAuthenticatedApi();
+
   return useQuery({
     queryKey: timeTrackingKeys.list(filters || {}),
     queryFn: async (): Promise<TimeEntry[]> => {
@@ -51,6 +54,7 @@ export function useTimeEntries(filters?: {
       const data = await response.json();
       return data.timeEntries || [];
     },
+    enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000, // 2 minutos
   });
 }
@@ -58,9 +62,11 @@ export function useTimeEntries(filters?: {
 // Hook para criar registro de tempo
 export function useCreateTimeEntry() {
   const queryClient = useQueryClient();
+  const { assertAuthenticated } = useAuthenticatedApi();
 
   return useMutation({
     mutationFn: async (data: Omit<TimeEntry, "id" | "userId">): Promise<TimeEntry> => {
+      assertAuthenticated();
       const response = await fetch("/api/time-tracking", {
         method: "POST",
         headers: {

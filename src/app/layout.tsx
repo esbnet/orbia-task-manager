@@ -1,7 +1,6 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { Kode_Mono, Lobster } from "next/font/google";
 
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { QueryClientProviderWrapper } from "@/components/providers/query-client-provider";
@@ -11,18 +10,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { getRequestLocale } from "@/i18n/index";
 import { getDictionary } from "@/i18n/shared";
 import { PWARegister } from "./pwa-register";
-
-const lobster = Lobster({
-	subsets: ["latin"],
-	weight: "400", // Lobster geralmente só tem peso 400
-	variable: "--font-lobster",
-});
-
-const kodeMono = Kode_Mono({
-	subsets: ["latin"],
-	weight: "400", // Lobster geralmente só tem peso 400
-	variable: "--font-kode-mono",
-});
 
 export const metadata: Metadata = {
 	title: {
@@ -58,7 +45,7 @@ export default async function RootLayout({
 		return (
 			<html lang={locale} suppressHydrationWarning>
 				<body
-					className={`${lobster.className}  ${kodeMono.className} antialiased flex min-h-screen flex-col`}
+					className="antialiased flex min-h-screen flex-col"
 				>
 					<I18nProvider locale={locale} dict={dict}>
 						<AuthProvider>
@@ -80,7 +67,7 @@ export default async function RootLayout({
 		return (
 			<html lang="pt-BR" suppressHydrationWarning>
 				<body
-					className={`${lobster.className}  ${kodeMono.className} antialiased flex min-h-screen flex-col`}
+					className="antialiased flex min-h-screen flex-col"
 				>
 					<I18nProvider locale="pt-BR" dict={dict}>
 						<AuthProvider>

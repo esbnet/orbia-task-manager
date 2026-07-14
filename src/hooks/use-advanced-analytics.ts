@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 export interface ProductiveHour {
   hour: number;
@@ -47,6 +48,8 @@ export interface AdvancedAnalyticsData {
 }
 
 export function useAdvancedAnalytics(timeRange: "week" | "month" | "quarter" = "month") {
+  const { isAuthenticated } = useAuthenticatedApi();
+
   return useQuery({
     queryKey: ["advanced-analytics", timeRange],
     queryFn: async (): Promise<AdvancedAnalyticsData> => {
@@ -56,6 +59,7 @@ export function useAdvancedAnalytics(timeRange: "week" | "month" | "quarter" = "
       }
       return response.json();
     },
+    enabled: isAuthenticated,
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }

@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/db-config.js development && pnpm run prisma:generate && next dev",
+    "dev": "node scripts/db-config.js development && pnpm run prisma:generate && NODE_OPTIONS=--dns-result-order=ipv4first next dev",
     "build": "node scripts/db-config.js production && NODE_ENV=production pnpm run prisma:setup && next build",
-    "start": "pnpm run prisma:generate && next start",
+    "start": "pnpm run prisma:generate && NODE_OPTIONS=--dns-result-order=ipv4first next start",
     "lint": "next lint",
     "test": "vitest",
     "test:watch": "vitest --watch",

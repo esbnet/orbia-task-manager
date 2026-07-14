@@ -47,6 +47,7 @@ import {
 } from "recharts";
 
 import { useGoals } from "@/contexts/goal-context";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { useHabits } from "@/hooks/use-habits";
 import { useHabitsAnalytics } from "@/hooks/use-habits-analytics";
 import { useTodos } from "@/hooks/use-todos";
@@ -322,6 +323,7 @@ function RecommendationsDialog({
 export function MetricsDashboard() {
     const { goals } = useGoals();
     const { data: todos } = useTodos();
+    const { isAuthenticated } = useAuthenticatedApi();
     const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("month");
     const { data: habitsAnalytics } = useHabitsAnalytics(timeRange);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
@@ -641,7 +643,7 @@ export function MetricsDashboard() {
     // Buscar estatísticas de tarefas anexadas
     useEffect(() => {
         const fetchAttachedTasksStats = async () => {
-            if (goals.length === 0) {
+            if (!isAuthenticated || goals.length === 0) {
                 setAttachedTasksStats({ habits: 0, todos: 0 });
                 return;
             }
@@ -673,7 +675,7 @@ export function MetricsDashboard() {
         };
 
         fetchAttachedTasksStats();
-    }, [goals]);
+    }, [isAuthenticated, goals]);
 
     // Calcular dados do gráfico de tarefas relacionadas
     const attachedTasksChartData = useMemo(() => {

@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useGoals } from "@/contexts/goal-context";
 import type { Goal } from "@/domain/entities/goal";
 import { useActiveTasks } from "@/hooks/use-active-tasks";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { useTags } from "@/hooks/use-tags";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -51,6 +52,8 @@ interface AttachedTask {
 
 // Hook inline para buscar tarefas anexadas
 function useAttachedTasks(goalId?: string) {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery({
 		queryKey: ["attached-tasks", goalId],
 		queryFn: async (): Promise<AttachedTask[]> => {
@@ -66,7 +69,7 @@ function useAttachedTasks(goalId?: string) {
 
 			return data;
 		},
-		enabled: !!goalId,
+		enabled: isAuthenticated && !!goalId,
 		staleTime: 2 * 60 * 1000,
 		retry: 1,
 	});

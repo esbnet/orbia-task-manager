@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { Goal } from "@/types";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
 
@@ -16,6 +17,7 @@ export const goalKeys = {
 
 // Hook para buscar todos os goals
 export function useGoals(status?: string) {
+	const { isAuthenticated } = useAuthenticatedApi();
 	const safeStatus = status ? InputSanitizer.sanitizeForLog(status) : 'none';
 	const queryKey = status ? ["goals", status] : ["goals"];
 
@@ -29,6 +31,7 @@ export function useGoals(status?: string) {
 			const data = await response.json();
 			return Array.isArray(data) ? data : (data.goals || []);
 		},
+		enabled: isAuthenticated,
 		staleTime: 2 * 60 * 1000,
 		refetchOnWindowFocus: true,
 	});
@@ -36,6 +39,7 @@ export function useGoals(status?: string) {
 
 // Hook para buscar um goal específico
 export function useGoal(id: string) {
+	const { isAuthenticated } = useAuthenticatedApi();
 	return useQuery({
 		queryKey: goalKeys.detail(id),
 		queryFn: async (): Promise<Goal | null> => {
@@ -60,7 +64,7 @@ export function useGoal(id: string) {
 				return null;
 			}
 		},
-		enabled: !!id,
+		enabled: isAuthenticated && !!id,
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 }
@@ -69,9 +73,11 @@ export function useGoal(id: string) {
 export function useCreateGoal() {
 	const queryClient = useQueryClient();
 	const { playCreate } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (data: Omit<Goal, "id" | "createdAt" | "updatedAt">): Promise<Goal> => {
+			assertAuthenticated();
 			const response = await fetch("/api/goals", {
 				method: "POST",
 				headers: {
@@ -111,9 +117,11 @@ export function useCreateGoal() {
 export function useUpdateGoal() {
 	const queryClient = useQueryClient();
 	const { playUpdate } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async ({ id, data }: { id: string; data: Partial<Goal> }): Promise<Goal> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/goals/${id}`, {
 				method: "PUT",
 				headers: {
@@ -157,9 +165,11 @@ export function useUpdateGoal() {
 export function useDeleteGoal() {
 	const queryClient = useQueryClient();
 	const { playDelete } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<void> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/goals/${id}`, {
 				method: "DELETE",
 			});

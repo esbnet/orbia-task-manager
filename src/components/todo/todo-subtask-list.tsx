@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import type { TodoSubtask } from "@/types";
 import { toast } from "sonner";
 import { useTodoSubtaskContext } from "@/contexts/todo-subtask-context";
@@ -23,11 +24,12 @@ export function TodoSubtaskList({
 	const [newTaskTitle, setNewTaskTitle] = useState("");
 	const [editingTodoSubtask, setEditingTodoSubtask] = useState<TodoSubtask | null>(null);
 	const [isLoadingSubtasks, setIsLoadingSubtasks] = useState(false);
+	const { isAuthenticated } = useAuthenticatedApi();
 
 	// Fetch subtasks from API when component loads or todoId changes
 	useEffect(() => {
 		const fetchSubtasks = async () => {
-			if (!todoId) return;
+			if (!isAuthenticated || !todoId) return;
 
 			setIsLoadingSubtasks(true);
 			try {
@@ -49,7 +51,7 @@ export function TodoSubtaskList({
 		};
 
 		fetchSubtasks();
-	}, [todoId]); // Only depend on todoId, not initialSubtasks
+	}, [isAuthenticated, todoId]); // Only depend on auth and todoId, not initialSubtasks
 
 	// Also update from initialSubtasks when they change (as fallback)
 	useEffect(() => {
