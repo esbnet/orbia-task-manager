@@ -30,8 +30,9 @@ function normalizeParam(value: string | string[] | undefined): string {
 
 export default async function Home({ searchParams }: HomeProps) {
 	const session = await auth();
+	const userId = session?.user?.id;
 
-	if (!session) {
+	if (!session || !userId) {
 		return <SignInForm />;
 	}
 
@@ -39,7 +40,7 @@ export default async function Home({ searchParams }: HomeProps) {
 	const layoutParam = normalizeParam(params.layout);
 	const variantParam = normalizeParam(params.variant);
 	const layoutFromEnv = process.env.HOME_LAYOUT_VARIANT?.toLowerCase() ?? "";
-	const persistedLayout = (await getUserConfigUseCase.execute({ userId: session.user.id })).config?.homeLayout;
+	const persistedLayout = (await getUserConfigUseCase.execute({ userId })).config?.homeLayout;
 	const wantsAlternative =
 		layoutParam === "openclaw" ||
 		layoutParam === "alt" ||
