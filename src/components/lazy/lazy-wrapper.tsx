@@ -13,7 +13,7 @@ interface LazyWrapperProps {
 
 export function LazyWrapper({ children }: LazyWrapperProps) {
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<LoadingSpinner variant="page" />}>
       {children}
     </Suspense>
   );

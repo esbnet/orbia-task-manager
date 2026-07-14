@@ -42,3 +42,6 @@ next-env.d.ts
 
 .early.coverage
 /src/generated/prisma
+
+.odysseusignore
+.odysseusrules

@@ -1,9 +1,10 @@
-import type { Language, Theme } from "@/domain/entities/user-config";
+import type { HomeLayout, Language, Theme } from "@/domain/entities/user-config";
 
 export type UpdateUserConfigInput = {
 	userId: string;
 	theme?: Theme;
 	language?: Language;
+	homeLayout?: HomeLayout;
 	notifications?: boolean;
 	timezone?: string;
 };
@@ -14,6 +15,7 @@ export type UpdateUserConfigOutput = {
 		userId: string;
 		theme: Theme;
 		language: Language;
+		homeLayout: HomeLayout;
 		notifications: boolean;
 		timezone: string;
 		createdAt: Date;

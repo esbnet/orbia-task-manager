@@ -196,6 +196,7 @@ model UserConfig {
     userId        String   @unique
     theme         String   @default("light") // "light", "dark", "system"
     language      String   @default("pt-BR") // idioma do usuário
+    homeLayout    String   @default("default") // "default", "openclaw"
     notifications Boolean  @default(true) // notificações habilitadas
     timezone      String   @default("America/Sao_Paulo")
     createdAt     DateTime @default(now())

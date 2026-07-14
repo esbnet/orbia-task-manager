@@ -1,7 +1,19 @@
-export function LoadingSpinner() {
+import { cn } from "@/lib/utils";
+
+interface LoadingSpinnerProps {
+  className?: string;
+  variant?: "inline" | "page";
+}
+
+export function LoadingSpinner({ className, variant = "inline" }: LoadingSpinnerProps) {
+  const variantClasses = {
+    inline: "min-h-32",
+    page: "min-h-[50vh]",
+  };
+
   return (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <div className={cn("flex justify-center items-center p-8 w-full", variantClasses[variant], className)}>
+      <div className="border-2 border-foreground/20 border-t-foreground rounded-full w-8 h-8 animate-spin" />
     </div>
   );
 }

@@ -11,6 +11,7 @@ export class PrismaUserConfigRepository implements UserConfigRepository {
 				userId: true,
 				theme: true,
 				language: true,
+				homeLayout: true,
 				notifications: true,
 				timezone: true,
 				createdAt: true,
@@ -26,6 +27,7 @@ export class PrismaUserConfigRepository implements UserConfigRepository {
 				userId: data.userId,
 				theme: data.theme,
 				language: data.language,
+				homeLayout: data.homeLayout,
 				notifications: data.notifications,
 				timezone: data.timezone,
 			},
@@ -39,6 +41,7 @@ export class PrismaUserConfigRepository implements UserConfigRepository {
 			data: {
 				theme: config.theme,
 				language: config.language,
+				homeLayout: config.homeLayout,
 				notifications: config.notifications,
 				timezone: config.timezone,
 			},
@@ -70,6 +73,7 @@ export class PrismaUserConfigRepository implements UserConfigRepository {
 			update: {
 				theme: configData.theme,
 				language: configData.language,
+				homeLayout: configData.homeLayout,
 				notifications: configData.notifications,
 				timezone: configData.timezone,
 			},
@@ -77,6 +81,7 @@ export class PrismaUserConfigRepository implements UserConfigRepository {
 				userId,
 				theme: configData.theme || "light",
 				language: configData.language || "pt-BR",
+				homeLayout: configData.homeLayout || "default",
 				notifications: configData.notifications ?? true,
 				timezone: configData.timezone || "America/Sao_Paulo",
 			},
@@ -93,6 +98,7 @@ export class PrismaUserConfigRepository implements UserConfigRepository {
 		userId: string;
 		theme: string;
 		language: string;
+		homeLayout: string;
 		notifications: boolean;
 		timezone: string;
 		createdAt: Date;
@@ -103,6 +109,7 @@ export class PrismaUserConfigRepository implements UserConfigRepository {
 			userId: config.userId,
 			theme: config.theme as UserConfig["theme"],
 			language: config.language as UserConfig["language"],
+			homeLayout: config.homeLayout as UserConfig["homeLayout"],
 			notifications: config.notifications,
 			timezone: config.timezone,
 			createdAt: config.createdAt,

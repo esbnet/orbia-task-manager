@@ -1,4 +1,4 @@
-import type { Language, Theme, UserConfig } from "@/domain/entities/user-config";
+import type { HomeLayout, Language, Theme, UserConfig } from "@/domain/entities/user-config";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useAuthenticatedApi } from "./use-authenticated-api";
@@ -7,6 +7,7 @@ import { useAuthenticatedApi } from "./use-authenticated-api";
 interface LocalUserConfig {
 	theme: Theme;
 	language: Language;
+	homeLayout: HomeLayout;
 	notifications: boolean;
 	timezone: string;
 }
@@ -15,6 +16,7 @@ interface LocalUserConfig {
 const DEFAULT_CONFIG: LocalUserConfig = {
 	theme: "light",
 	language: "pt-BR",
+	homeLayout: "default",
 	notifications: true,
 	timezone: "America/Sao_Paulo",
 };
@@ -93,6 +95,7 @@ export function useUserConfig() {
 			const serverLocalConfig: LocalUserConfig = {
 				theme: serverConfig.theme,
 				language: serverConfig.language,
+				homeLayout: serverConfig.homeLayout,
 				notifications: serverConfig.notifications,
 				timezone: serverConfig.timezone,
 			};
@@ -128,6 +131,7 @@ export function useUserConfig() {
 			const updatedLocalConfig: LocalUserConfig = {
 				theme: data.theme,
 				language: data.language,
+				homeLayout: data.homeLayout,
 				notifications: data.notifications,
 				timezone: data.timezone,
 			};
