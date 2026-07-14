@@ -1,5 +1,6 @@
 import { HeaderWrapper } from "@/components/layout/header-wrapper";
 import { UserWidget } from "@/components/navigation/user-widget";
+import { GoalProvider } from "@/contexts/goal-context";
 import { getCurrentUserId } from "@/hooks/use-current-user";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -32,11 +33,13 @@ export default async function RootLayout({
 
 	return (
 		<div className="m-auto">
-			<HeaderWrapper />
-			<div className="flex-1">
-				<UserWidget />
-				{children}
-			</div>
+			<GoalProvider>
+				<HeaderWrapper />
+				<div className="flex-1">
+					<UserWidget />
+					{children}
+				</div>
+			</GoalProvider>
 		</div>
 	);
 }

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 import { habitKeys } from "./use-habits";
 import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
@@ -6,9 +7,11 @@ import { taskCountKeys } from "./use-task-counts";
 export function useArchiveHabit() {
 	const queryClient = useQueryClient();
 	const { playArchive } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<void> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/habits/${id}/archive`, {
 				method: "PATCH",
 			});

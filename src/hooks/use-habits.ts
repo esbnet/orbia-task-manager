@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Habit } from "@/domain/entities/habit";
 import type { HabitFormData } from "@/types/habit";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
 
@@ -36,6 +37,8 @@ export async function fetchAvailableHabits(): Promise<AvailableHabitsResponse> {
 
 // Hook para buscar todos os hábitos
 export function useHabits() {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery({
 		queryKey: habitKeys.lists(),
 		queryFn: async (): Promise<Habit[]> => {
@@ -46,6 +49,7 @@ export function useHabits() {
 			const data = await response.json();
 			return data.habits || [];
 		},
+		enabled: isAuthenticated,
 		staleTime: 30 * 1000, // 30 segundos
 		refetchOnWindowFocus: true,
 	});
@@ -53,6 +57,8 @@ export function useHabits() {
 
 // Hook para buscar um hábito específico
 export function useHabit(id: string) {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery({
 		queryKey: habitKeys.detail(id),
 		queryFn: async (): Promise<Habit | null> => {
@@ -64,16 +70,19 @@ export function useHabit(id: string) {
 			const data = await response.json();
 			return data.habit || null;
 		},
-		enabled: !!id,
+		enabled: isAuthenticated && !!id,
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 }
 
 // Hook para buscar hábitos disponíveis
 export function useAvailableHabits() {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery({
 		queryKey: habitKeys.available(),
 		queryFn: fetchAvailableHabits,
+		enabled: isAuthenticated,
 		staleTime: 1 * 60 * 1000, // 1 minuto
 	});
 }
@@ -82,9 +91,11 @@ export function useAvailableHabits() {
 export function useCreateHabit() {
 	const queryClient = useQueryClient();
 	const { playCreate } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (data: HabitFormData): Promise<Habit> => {
+			assertAuthenticated();
 			const response = await fetch("/api/habits", {
 				method: "POST",
 				headers: {
@@ -124,6 +135,7 @@ export function useCreateHabit() {
 export function useUpdateHabit() {
 	const queryClient = useQueryClient();
 	const { playUpdate } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async ({
@@ -133,6 +145,7 @@ export function useUpdateHabit() {
 			id: string;
 			data: Partial<Habit>;
 		}): Promise<Habit> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/habits/${id}`, {
 				method: "PATCH",
 				headers: {
@@ -172,9 +185,11 @@ export function useUpdateHabit() {
 export function useDeleteHabit() {
 	const queryClient = useQueryClient();
 	const { playDelete } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<void> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/habits?id=${id}`, {
 				method: "DELETE",
 			});
@@ -207,9 +222,11 @@ export function useDeleteHabit() {
 export function useCompleteHabit() {
 	const queryClient = useQueryClient();
 	const { playComplete } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<Habit> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/habits/${id}/complete`, {
 				method: "PATCH",
 			});
@@ -244,6 +261,7 @@ export function useCompleteHabit() {
 export function useRegisterHabit() {
 	const queryClient = useQueryClient();
 	const { playComplete } = useSound();
+	const { assertAuthenticated } = useAuthenticatedApi();
 
 	return useMutation({
 		mutationFn: async ({
@@ -258,6 +276,7 @@ export function useRegisterHabit() {
 			todayCount: number;
 			message: string;
 		}> => {
+			assertAuthenticated();
 			const response = await fetch(`/api/habits/${id}/register`, {
 				method: "POST",
 				headers: {

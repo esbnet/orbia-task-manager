@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 interface HabitPeriod {
     id: string;
@@ -29,8 +30,11 @@ async function fetchHabitPeriods(): Promise<HabitPeriod[]> {
 }
 
 export function useHabitPeriods() {
+    const { isAuthenticated } = useAuthenticatedApi();
+
     return useQuery({
         queryKey: ["habitPeriods"],
         queryFn: fetchHabitPeriods,
+        enabled: isAuthenticated,
     });
 }

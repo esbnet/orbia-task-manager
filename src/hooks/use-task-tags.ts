@@ -1,4 +1,5 @@
 import { useGoals } from "@/contexts/goal-context";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { useTodos } from "@/hooks/use-todos";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -12,6 +13,8 @@ export interface TagCount {
  * Hook para obter distribuição de tags dos hábitos
  */
 export function useHabitTags(): TagCount[] {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	const { data: tagStats } = useQuery({
 		queryKey: ["habit-tag-stats"],
 		queryFn: async (): Promise<TagCount[]> => {
@@ -22,6 +25,7 @@ export function useHabitTags(): TagCount[] {
 			const data = await response.json();
 			return data.tagStats || [];
 		},
+		enabled: isAuthenticated,
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 

@@ -1,6 +1,7 @@
 import type { Language, Theme, UserConfig } from "@/domain/entities/user-config";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 // Tipos para localStorage
 interface LocalUserConfig {
@@ -54,6 +55,7 @@ const setLocalConfig = (config: Partial<LocalUserConfig>) => {
 // Hook principal para gerenciar configurações do usuário
 export function useUserConfig() {
 	const queryClient = useQueryClient();
+	const { isAuthenticated, assertAuthenticated } = useAuthenticatedApi();
 	const [localConfig, setLocalConfigState] = useState<LocalUserConfig>(DEFAULT_CONFIG);
 
 	// Carregar configurações do localStorage no primeiro render
@@ -81,6 +83,7 @@ export function useUserConfig() {
 			const data = await response.json();
 			return data.config;
 		},
+		enabled: isAuthenticated,
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 
@@ -101,6 +104,7 @@ export function useUserConfig() {
 	// Mutation para atualizar configurações
 	const updateConfigMutation = useMutation({
 		mutationFn: async (config: Partial<LocalUserConfig>): Promise<UserConfig> => {
+			assertAuthenticated();
 			const response = await fetch("/api/user/config", {
 				method: "PUT",
 				headers: {
@@ -140,7 +144,9 @@ export function useUserConfig() {
 		setLocalConfigState(updatedConfig);
 
 		// Enviar para o servidor em background
-		updateConfigMutation.mutate(config);
+		if (isAuthenticated) {
+			updateConfigMutation.mutate(config);
+		}
 	};
 
 	return {

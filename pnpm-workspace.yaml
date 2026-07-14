@@ -1,3 +1,16 @@
+allowBuilds:
+  '@biomejs/biome': true
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  '@tailwindcss/oxide': true
+  '@tree-sitter-grammars/tree-sitter-yaml': true
+  core-js-pure: true
+  esbuild: true
+  prisma: true
+  sharp: true
+  tree-sitter: true
+  tree-sitter-json: true
+  unrs-resolver: true
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - '@prisma/client'

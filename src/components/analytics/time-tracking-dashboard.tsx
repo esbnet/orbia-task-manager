@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAnalyticsTags } from "@/hooks/use-analytics-tags";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { useGoals } from "@/hooks/use-goals";
 import { useHabits } from "@/hooks/use-habits";
 import { useTodos } from "@/hooks/use-todos";
@@ -55,6 +56,7 @@ export function TimeTrackingDashboard() {
   const { data: habits } = useHabits();
   const { data: goals } = useGoals();
   const { data: userTags } = useAnalyticsTags();
+  const { isAuthenticated } = useAuthenticatedApi();
 
   // Dados reais de registros de tempo (temporariamente mock até resolver problema dos hooks)
   const realTimeEntries: any[] = [];
@@ -253,7 +255,7 @@ export function TimeTrackingDashboard() {
   const stopTracking = async () => {
     setIsTracking(false);
 
-    if (currentTask && elapsedTime > 0) {
+    if (isAuthenticated && currentTask && elapsedTime > 0) {
       try {
         // Extrair informações da tarefa selecionada
         const [taskType, taskId] = currentTask.split('-');

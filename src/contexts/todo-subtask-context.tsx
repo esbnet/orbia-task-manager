@@ -5,6 +5,7 @@ import { DeleteTodoSubtaskUseCase } from "@/application/use-cases/todo-subtask/d
 import { UpdateTodoSubtaskUseCase } from "@/application/use-cases/todo-subtask/update-todo-subtask/update-todo-subtask-use-case";
 import { TaskTitle } from "@/domain/value-objects/task-title";
 import { ApiTodoSubtaskRepository } from "@/infra/repositories/http/api-todo-subtask-repository";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { ErrorHandler } from "@/infra/services/error-handler";
 import { InputSanitizer } from "@/infra/validation/input-sanitizer";
 import type { TodoSubtask } from "@/types";
@@ -39,12 +40,15 @@ export function TodoSubtaskProvider({
 	children,
 	refreshTodos,
 }: TodoSubtaskProviderProps) {
+	const { assertAuthenticated } = useAuthenticatedApi();
+
 	const createSubtask = async (
 		title: string,
 		todoId: string,
 		order: number,
 	): Promise<TodoSubtask> => {
 		try {
+			assertAuthenticated();
 			const sanitizedTodoId = InputSanitizer.sanitizeId(todoId);
 			const taskTitle = TaskTitle.create(title);
 			const sanitizedOrder = Number(order);
@@ -68,6 +72,7 @@ export function TodoSubtaskProvider({
 		subtask: TodoSubtask,
 	): Promise<TodoSubtask> => {
 		try {
+			assertAuthenticated();
 			const sanitizedSubtask = {
 				...subtask,
 				id: InputSanitizer.sanitizeId(subtask.id),
@@ -86,6 +91,7 @@ export function TodoSubtaskProvider({
 
 	const deleteSubtask = async (id: string): Promise<void> => {
 		try {
+			assertAuthenticated();
 			const sanitizedId = InputSanitizer.sanitizeId(id);
 			await deleteUseCase.execute({ id: String(sanitizedId) });
 		} catch (error) {

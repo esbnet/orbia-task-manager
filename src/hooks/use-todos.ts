@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Todo } from "@/types";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 import { useSound } from "./use-sound";
 import { taskCountKeys } from "./use-task-counts";
 
@@ -13,6 +14,8 @@ export const todoKeys = {
 };
 
 export function useTodos() {
+  const { isAuthenticated } = useAuthenticatedApi();
+
   return useQuery({
     queryKey: todoKeys.lists(),
     queryFn: async (): Promise<Todo[]> => {
@@ -25,6 +28,7 @@ export function useTodos() {
     },
     staleTime: 30 * 1000, // 30 segundos
     gcTime: 5 * 60 * 1000, // 5 minutos
+    enabled: isAuthenticated,
     refetchOnWindowFocus: true,
   });
 }
@@ -32,9 +36,11 @@ export function useTodos() {
 export function useCreateTodo() {
   const queryClient = useQueryClient();
   const { playCreate } = useSound();
+  const { assertAuthenticated } = useAuthenticatedApi();
 
   return useMutation({
     mutationFn: async (data: Omit<Todo, "id" | "createdAt">): Promise<Todo> => {
+      assertAuthenticated();
       const response = await fetch("/api/todos", {
         method: "POST",
         headers: {
@@ -64,9 +70,11 @@ export function useCreateTodo() {
 export function useUpdateTodo() {
   const queryClient = useQueryClient();
   const { playUpdate } = useSound();
+  const { assertAuthenticated } = useAuthenticatedApi();
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Todo> }): Promise<Todo> => {
+      assertAuthenticated();
       const response = await fetch("/api/todos", {
         method: "PATCH",
         headers: {
@@ -99,9 +107,11 @@ export function useUpdateTodo() {
 export function useDeleteTodo() {
   const queryClient = useQueryClient();
   const { playDelete } = useSound();
+  const { assertAuthenticated } = useAuthenticatedApi();
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
+      assertAuthenticated();
       const response = await fetch(`/api/todos?id=${id}`, {
         method: "DELETE",
       });
@@ -125,9 +135,11 @@ export function useDeleteTodo() {
 export function useCompleteTodo() {
   const queryClient = useQueryClient();
   const { playComplete } = useSound();
+  const { assertAuthenticated } = useAuthenticatedApi();
 
   return useMutation({
     mutationFn: async (id: string): Promise<Todo> => {
+      assertAuthenticated();
       const response = await fetch(`/api/todos/${id}/complete`, {
         method: "POST",
       });
@@ -155,9 +167,11 @@ export function useCompleteTodo() {
 export function useCompletePontualTodo() {
   const queryClient = useQueryClient();
   const { playComplete } = useSound();
+  const { assertAuthenticated } = useAuthenticatedApi();
 
   return useMutation({
     mutationFn: async (id: string): Promise<Todo> => {
+      assertAuthenticated();
       const response = await fetch(`/api/todos/${id}/complete-pontual`, {
         method: "POST",
       });

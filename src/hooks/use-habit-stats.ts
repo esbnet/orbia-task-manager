@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 export interface HabitStats {
 	habitId: string;
@@ -25,6 +26,8 @@ export interface HabitStats {
 }
 
 export function useHabitStats(habitId: string) {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery<HabitStats>({
 		queryKey: ["habit-stats", habitId],
 		queryFn: async () => {
@@ -34,13 +37,15 @@ export function useHabitStats(habitId: string) {
 			}
 			return response.json();
 		},
-		enabled: !!habitId,
+		enabled: isAuthenticated && !!habitId,
 		staleTime: 1000 * 60 * 5, // 5 minutes
 		refetchOnWindowFocus: false,
 	});
 }
 
 export function useMultipleHabitStats(habitIds: string[]) {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	return useQuery<Record<string, HabitStats>>({
 		queryKey: ["multiple-habit-stats", habitIds],
 		queryFn: async () => {
@@ -56,7 +61,7 @@ export function useMultipleHabitStats(habitIds: string[]) {
 			const results = await Promise.all(promises);
 			return Object.fromEntries(results);
 		},
-		enabled: habitIds.length > 0,
+		enabled: isAuthenticated && habitIds.length > 0,
 		staleTime: 1000 * 60 * 5, // 5 minutes
 		refetchOnWindowFocus: false,
 	});

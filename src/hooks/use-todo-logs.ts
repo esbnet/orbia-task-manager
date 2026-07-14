@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedApi } from "./use-authenticated-api";
 
 interface TodoLog {
     id: string;
@@ -20,8 +21,11 @@ async function fetchTodoLogs(): Promise<TodoLog[]> {
 }
 
 export function useTodoLogs() {
+    const { isAuthenticated } = useAuthenticatedApi();
+
     return useQuery({
         queryKey: ["todoLogs"],
         queryFn: fetchTodoLogs,
+        enabled: isAuthenticated,
     });
 }

@@ -57,7 +57,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     pages: {
         signIn: "/auth/signin",
     },
-    debug:
-        process.env.NODE_ENV === "development" ||
-        process.env.AUTH_DEBUG === "true",
+    debug: process.env.AUTH_DEBUG === "true",
 })

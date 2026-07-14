@@ -1,4 +1,5 @@
 import { InitialDialogManager } from "@/domain/services/initial-dialog-manager";
+import { useAuthenticatedApi } from "@/hooks/use-authenticated-api";
 import { fetchAvailableHabits } from "@/hooks/use-habits";
 import { getTodayDateInSaoPaulo } from "@/lib/date-utils";
 import { isTodoPendingForToday } from "@/lib/todo-recurrence";
@@ -6,11 +7,14 @@ import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 export function useTodayTasks() {
+	const { isAuthenticated } = useAuthenticatedApi();
+
 	const [habitsQuery, todosQuery, goalsQuery] = useQueries({
 		queries: [
 			{
 				queryKey: ["habits", "available"] as const,
 				queryFn: fetchAvailableHabits,
+				enabled: isAuthenticated,
 				staleTime: 60 * 1000,
 				refetchOnWindowFocus: true,
 			},
@@ -24,6 +28,7 @@ export function useTodayTasks() {
 					const data = await response.json();
 					return data.todos || [];
 				},
+				enabled: isAuthenticated,
 				staleTime: 30 * 1000,
 				refetchOnWindowFocus: true,
 			},
@@ -37,6 +42,7 @@ export function useTodayTasks() {
 					const data = await response.json();
 					return Array.isArray(data) ? data : (data.goals || []);
 				},
+				enabled: isAuthenticated,
 				staleTime: 2 * 60 * 1000,
 				refetchOnWindowFocus: true,
 			},
@@ -97,6 +103,7 @@ export function useTodayTasks() {
 	const isLoading = habitsQuery.isLoading || todosQuery.isLoading || goalsQuery.isLoading;
 	const error = habitsQuery.error || todosQuery.error || goalsQuery.error;
 	const refetch = async () => {
+		if (!isAuthenticated) return;
 		await Promise.all([habitsQuery.refetch(), todosQuery.refetch(), goalsQuery.refetch()]);
 	};
 

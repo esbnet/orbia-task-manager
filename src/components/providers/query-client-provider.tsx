@@ -1,6 +1,5 @@
 "use client";
 
-import { GoalProvider } from "@/contexts/goal-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
 
@@ -31,9 +30,7 @@ export function QueryClientProviderWrapper({
     
     return (
         <QueryClientProvider client={client}>
-            <GoalProvider>
-                {children}
-            </GoalProvider>
+            {children}
         </QueryClientProvider>
     );
 }
