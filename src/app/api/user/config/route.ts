@@ -72,6 +72,9 @@ export async function GET() {
  *               language:
  *                 type: string
  *                 enum: ["pt-BR", "en-US", "es-ES"]
+ *               homeLayout:
+ *                 type: string
+ *                 enum: [default, openclaw]
  *               notifications:
  *                 type: boolean
  *               timezone:
@@ -108,7 +111,7 @@ export async function PUT(request: NextRequest) {
 			);
 		}
 
-		const { theme, language, notifications, timezone } = body;
+		const { theme, language, homeLayout, notifications, timezone } = body;
 
 		/**
 		 * Validação de entrada - idiomas suportados limitados a pt-BR, en-US e es-ES
@@ -116,6 +119,7 @@ export async function PUT(request: NextRequest) {
 		 */
 		const validThemes = ["light", "dark", "system"];
 		const validLanguages = ["pt-BR", "en-US", "es-ES"];
+		const validHomeLayouts = ["default", "openclaw"];
 
 		if (theme && !validThemes.includes(theme)) {
 			return NextResponse.json(
@@ -131,12 +135,20 @@ export async function PUT(request: NextRequest) {
 			);
 		}
 
+		if (homeLayout && !validHomeLayouts.includes(homeLayout)) {
+			return NextResponse.json(
+				{ error: "Layout da home inválido" },
+				{ status: 400 },
+			);
+		}
+
 		// Sanitizar userId e dados de entrada
 		const sanitizedUserId = InputSanitizer.sanitizeId(session.user.id);
 		const sanitizedInput = {
 			userId: sanitizedUserId,
 			...(theme && { theme: String(theme) }),
 			...(language && { language: String(language) }),
+			...(homeLayout && { homeLayout: String(homeLayout) }),
 			...(typeof notifications === "boolean" && { notifications }),
 			...(timezone && { timezone: String(timezone) }),
 		};

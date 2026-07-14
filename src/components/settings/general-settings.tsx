@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { useUserConfig } from "@/hooks/use-user-config";
 import { useTranslation } from "@/hooks/use-translation";
+import { useUserConfig } from "@/hooks/use-user-config";
 import { toast } from "sonner";
 
 export function GeneralSettings() {
@@ -73,6 +73,25 @@ export function GeneralSettings() {
                         </select>
                         <p className="text-muted-foreground text-sm">
                             {t("settings.languageDescription")}
+                        </p>
+                    </div>
+
+                    {/* Layout da Home */}
+                    <div className="space-y-2">
+                        <label htmlFor="homeLayout" className="font-medium text-sm">{t("settings.homeLayout")}</label>
+                        <select
+                            id="homeLayout"
+                            value={localConfig.homeLayout}
+                            onChange={(e) =>
+                                setLocalConfig(prev => ({ ...prev, homeLayout: e.target.value as "default" | "openclaw" }))
+                            }
+                            className="bg-background p-2 border rounded-md w-full"
+                        >
+                            <option value="default">{t("settings.homeLayoutDefault")}</option>
+                            <option value="openclaw">{t("settings.homeLayoutAlternative")}</option>
+                        </select>
+                        <p className="text-muted-foreground text-sm">
+                            {t("settings.homeLayoutDescription")}
                         </p>
                     </div>
 

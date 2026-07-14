@@ -220,3 +220,46 @@
 .animation-delay-1200 {
 	animation-delay: 1.2s;
 }
+
+@keyframes orbia-alt-in {
+	from {
+		opacity: 0;
+		transform: translateY(18px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.orbia-alt-reveal {
+	opacity: 0;
+	animation: orbia-alt-in 580ms ease-out forwards;
+}
+
+.orbia-alt-reveal:nth-of-type(1) {
+	animation-delay: 40ms;
+}
+
+.orbia-alt-reveal:nth-of-type(2) {
+	animation-delay: 100ms;
+}
+
+.orbia-alt-reveal:nth-of-type(3) {
+	animation-delay: 160ms;
+}
+
+.orbia-alt-reveal:nth-of-type(4) {
+	animation-delay: 220ms;
+}
+
+.orbia-alt-reveal:nth-of-type(5) {
+	animation-delay: 280ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.orbia-alt-reveal {
+		opacity: 1;
+		animation: none;
+	}
+}
